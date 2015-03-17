@@ -1,0 +1,25 @@
+#!/bin/bash
+# update-deps --- Updates external dependencies used by this project's different
+# components
+#
+# Copyright (c) 2015 Diffeo
+#
+# Comments:
+#
+
+set -e
+
+readonly dir_root="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
+readonly dir_src="$dir_root/src"
+readonly dir_lib="$dir_root/lib"
+
+source "$dir_root/sh/libtools.sh"
+
+# Start: function definition
+# End: function definition
+
+
+# Start: main
+
+echo -e "\ndone."
+# End: main
