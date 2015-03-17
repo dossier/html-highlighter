@@ -1,0 +1,85 @@
+/* Utility classes */
+.clear {
+  clear: both;
+  height: 0;
+}
+
+
+/* Styling */
+HTML {
+  font-family: "Liberation Sans", sans-serif;
+}
+
+BODY {
+  margin: 0;
+}
+
+.wrapper-outer {
+  width: 100%;
+}
+
+.wrapper-outer.header {
+  background-color: #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.wrapper-inner {
+  width: 960px;
+  margin: auto;
+}
+
+HEADER {
+  padding: 10px 5px 10px 0;
+  font-size: 120%;
+}
+
+HEADER > * {
+  float: left;
+}
+
+HEADER > IMG {
+  height: 50px;
+  margin: -5px 0 0 -17px;
+}
+
+HEADER > SPAN {
+  margin-top: 10px;
+}
+
+HEADER > .filters {
+  float: right;
+  margin-top: 10px;
+  font-size: 15px;
+}
+
+LABEL {
+  margin-right: 5px;
+  font-weight: normal;
+}
+
+#filter-data {
+  min-width: 100px;
+}
+
+#filter-data:disabled {
+  cursor: no-drop;
+}
+
+.widget-bar {
+  position: fixed;
+  bottom: 0;
+}
+
+.widget-bar-inner {
+  width: 960px;
+}
+
+.widget {
+  float: right;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  border-bottom: none;
+  padding: 5px;
+  border-radius: 4px 4px 0 0;
+}
