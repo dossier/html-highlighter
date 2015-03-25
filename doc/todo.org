@@ -1,0 +1,7 @@
+* To-do items
+** TODO Employ binary search algorithm
+Employ binary search algorithm to look up offset.
+
+** TODO =remove=: must update the `highlight-*´ class of all items
+
+** TODO =remove=: not recalculating the current query status
