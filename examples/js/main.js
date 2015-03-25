@@ -7,8 +7,8 @@ var MainModule = function (window, $, hh, undefined) {
 
   var dataBaseUrl = 'data/',
       dataSources = [ /* { */
-/*         name: 'Two paragraphs', */
-/*         url: 'two-paras.json' */
+/*         name: 'One paragraph', */
+/*         url: 'one-para.json' */
 /*       }, */{
         name: 'Viber hacked',
         url: 'viber-attacked-by-syrian-electronic-army.json'
