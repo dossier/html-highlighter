@@ -111,6 +111,10 @@ LABEL {
   margin: 10px;
 }
 
+.entities LI * {
+  margin-right: 5px;
+}
+
 .search-stats {
   margin: 0 5px 0 5px;
 }
