@@ -502,14 +502,29 @@
   {
     if(!this.options) return false;
 
-    this.elStatsCurrent.html(this.owner.stats.current);
-    this.elStatsTotal.html(this.owner.stats.total);
+    this.nodes.statsCurrent.html(this.owner.stats.current);
+    this.nodes.statsTotal.html(this.owner.stats.total);
+
+    var elu = $('<ul/>');
+    for(var k in this.owner.queries) {
+      elu.append(
+        $('<li/>')
+          .append($('<input type="checkbox" disabled/>'))
+          .append($('<span/>').text(k + ':').addClass(Css.name))
+          .append($('<span/>').text(this.owner.queries[k].set.length)
+                  .addClass(Css.count)));
+    }
+
+    this.nodes.entities.children().remove();
+    this.nodes.entities.append(elu);
   };
 
 
   var Css = {
     highlight: 'hh-highlight',
-    enabled: 'hh-enabled'
+    enabled: 'hh-enabled',
+    name: 'hh-name',
+    count: 'hh-count'
   };
 
 
