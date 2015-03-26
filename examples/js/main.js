@@ -49,10 +49,9 @@ var MainModule = function (window, $, hh, undefined) {
     elSearch.val('').trigger('keyup').focus();
 
     elAdd.click(function () {
-      var name = 'search#' + ++count;
+      var name = elSearch.val();
       console.log('Creating search query: name=%s | query=%s',
-                  name,
-                  elSearch.val());
+                  name, name);
 
       highlighter.add(name, [ elSearch.val() ]);
       elSearch.select().focus();
