@@ -38,7 +38,8 @@
     this.stats = {
       queries: 0,
       current: 0,
-      total: 0
+      total: 0,
+      highlight: 0
     };
 
     this.content = new TextContent(this.options.container.get(0));
@@ -54,7 +55,7 @@
       throw 'Invalid or no queries array specified';
 
     var self = this,
-        highlighter = new RangeHighlighter(this.stats.queries + 1),
+        highlighter = new RangeHighlighter(this.stats.highlight),
         q;
 
     if(name in this.queries)
@@ -66,7 +67,11 @@
       set: [ ]
     };
 
+    ++this.stats.highlight;
     ++this.stats.queries;
+
+    if(this.stats.highlight >= this.options.maxHighlight)
+      this.stats.highlight = 0;
 
     queries.forEach(function (i) {
       var hit,
