@@ -89,7 +89,7 @@
 
     /* TODO: must recalculate current query (`this.stats.current´). */
     q.set.forEach(function (i) {
-      highlighter.undo(i.el);
+      highlighter.undo(i);
     } );
 
     return delete this.queries[name];
@@ -332,7 +332,15 @@
       return RangeHighlighter.id ++;
     };
 
-    this.undo = function (el) { };
+    this.undo = function (id) {
+      var coll = $('.' + Css.highlight + '-id-' + id);
+      coll.each(function () {
+        var el = $(this);
+
+        el.contents().insertBefore(el);
+        el.remove();
+      } );
+    };
   };
 
   RangeHighlighter.id = 0;
