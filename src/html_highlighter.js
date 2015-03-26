@@ -92,19 +92,8 @@
 
   Main.prototype.remove = function (name)
   {
-    var q = this.queries[name],
-        highlighter = new RangeHighlighter(0);
+    this.remove_(name);
 
-    if(q === undefined)
-      throw 'Query set non-existent';
-
-    this.stats.total -= q.set.length;
-
-    q.set.forEach(function (i) {
-      highlighter.undo(i);
-    } );
-
-    delete this.queries[name];
     this.clearCursor_();
     this.ui.update();
   };
@@ -149,6 +138,14 @@
 
   Main.prototype.clear = function ()
   {
+    for(var k in this.queries)
+      this.remove_(k);
+
+    if(!std.is_obj_empty(this.queries))
+      throw "Query set object not empty";
+
+    this.clearCursor_();
+    this.ui.update();
   };
 
   Main.prototype.clearCursor = function ()
@@ -170,6 +167,24 @@
   };
 
   /* Private interface */
+  Main.prototype.remove_ = function (name)
+  {
+    var q = this.queries[name];
+
+    if(q === undefined)
+      throw 'Query set non-existent';
+
+
+    var highlighter = new RangeHighlighter(0);
+
+    this.stats.total -= q.set.length;
+    q.set.forEach(function (i) {
+      highlighter.undo(i);
+    } );
+
+    delete this.queries[name];
+  };
+
   Main.prototype.clearCursor_ = function ()
   {
     if(this.empty_())
