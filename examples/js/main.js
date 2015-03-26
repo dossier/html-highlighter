@@ -85,7 +85,7 @@ var MainModule = function (window, $, hh, undefined) {
          * global variable `g_descriptor´. */
         if(g_descriptor !== undefined) {
           d.content = g_descriptor;
-          delete g_descriptor;
+          g_descriptor = null;
           ++i;
         } else
           dataSources.splice(i, 1);
