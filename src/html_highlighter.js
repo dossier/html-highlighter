@@ -28,6 +28,9 @@
     if(std === undefined)
       throw "Sorting Common not defined";
 
+    /* Assign defaults. */
+    options = $.extend(true, $.extend(true, {}, defaults), options);
+
     Object.defineProperty(this, 'ui', { value: new Ui(this, options) } );
     Object.defineProperty(this, 'options', { value: options } );
 
@@ -579,6 +582,9 @@
   var Css = {
     highlight: 'hh-highlight',
     enabled: 'hh-enabled'
+
+  var defaults = {
+    maxHighlight: 1
   };
 
 
