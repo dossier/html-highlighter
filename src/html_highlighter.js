@@ -489,6 +489,12 @@
       entities: finder.find('entities')
     };
 
+    finder = new std.TemplateFinder('text/hh-template');
+    this.templates = {
+      entityRow: finder.find('entity-row'),
+      entityEmpty: finder.find('entity-empty')
+    };
+
     this.timeouts = { };
 
     this.nodes.expander.click(function () {
@@ -514,6 +520,10 @@
       }
     } );
 
+
+    /* Initial empty state. */
+    this.setEmpty_();
+
     console.info('HTML highlighter UI instantiated');
   };
 
@@ -526,26 +536,41 @@
     this.nodes.statsCurrent.html(this.owner.stats.current);
     this.nodes.statsTotal.html(this.owner.stats.total);
 
-    var elu = $('<ul/>');
+    if(this.templates.entityRow === null)
+      return;
+    else if(std.is_obj_empty(this.owner.queries)) {
+      this.setEmpty_();
+      return;
+    }
+
+    /* Template `entity-row´ must supply an LI element skeleton. */
+    var elu = $('<ul/>'),
+        tpl = $(this.templates.entityRow.innerHTML);
+
     for(var k in this.owner.queries) {
-      elu.append(
-        $('<li/>')
-          .append($('<input type="checkbox" disabled/>'))
-          .append($('<span/>').text(k + ':').addClass(Css.name))
-          .append($('<span/>').text(this.owner.queries[k].set.length)
-                  .addClass(Css.count)));
+      var eli = tpl.clone();
+      eli.find('[data-hh-scope="name"]').text(k);
+      eli.find('[data-hh-scope="count"]')
+        .text(this.owner.queries[k].set.length);
+      elu.append(eli);
     }
 
     this.nodes.entities.children().remove();
     this.nodes.entities.append(elu);
   };
 
+  Ui.prototype.setEmpty_ = function ()
+  {
+    this.nodes.entities.children().remove();
+
+    if(this.templates.entityEmpty !== null)
+      this.nodes.entities.append($(this.templates.entityEmpty.innerHTML));
+  };
+
 
   var Css = {
     highlight: 'hh-highlight',
-    enabled: 'hh-enabled',
-    name: 'hh-name',
-    count: 'hh-count'
+    enabled: 'hh-enabled'
   };
 
 
