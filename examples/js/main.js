@@ -54,7 +54,8 @@ var MainModule = function (window, $, hh, undefined) {
 
         highlighter = new hh.HtmlHighlighter( {
           container: elDocument,
-          widget: elWidget
+          widget: elWidget,
+          maxHighlight: 5
         } );
         return;
       }
