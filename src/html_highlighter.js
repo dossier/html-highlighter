@@ -92,7 +92,8 @@
       highlighter.undo(i);
     } );
 
-    return delete this.queries[name];
+    delete this.queries[name];
+    this.ui.update();
   };
 
   Main.prototype.enable = function (name)
@@ -295,7 +296,7 @@
         start = this.getAt_(match.index);
 
     end = ( length === 1
-            ? $.extend({ }, start) /* same as start: duplicate range */
+            ? $.extend({ }, start) /* same as start: duplicate it */
             : this.getAt_(match.index + length - 1) );
 
     /* Ignore invalid ranges. */
