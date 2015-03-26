@@ -12,7 +12,7 @@
 	<link rel="stylesheet" href="css/theme-default.css">
 
 	<script src="lib/requirejs-2.1.16/requirejs.js"></script>
-  <script>
+  <script type="text/javascript">
    require.config( {
      paths: {
        'jquery': 'lib/jquery-2.1.3/jquery',
@@ -22,6 +22,20 @@
 
    /* Now load main. */
    require( [ 'js/main' ] );
+  </script>
+
+  <!-- Template definition -->
+  <script type="text/hh-template" id="entity-row">
+    <li>
+      <input type="checkbox" data-hh-scope="enable">
+      <span class="name" data-hh-scope="name"></span>:
+      <span class="count" data-hh-scope="count"></span>
+      <span class="remove glyphicon glyphicon-remove" data-hh-scope="remove"></span>
+    </li>
+  </script>
+
+  <script type="text/hh-template" id="entity-empty">
+   <p class="empty">No query sets have been created yet</p>
   </script>
 </head>
 
