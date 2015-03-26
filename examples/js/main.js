@@ -1,3 +1,12 @@
+/**
+ * @file HTML Highlighter example.
+ * @copyright 2015 Diffeo
+ *
+ * Comments:
+ *
+ */
+
+
 require( [ 'jquery', 'src/html_highlighter' ], function ($, hh) {
   return MainModule(window, $, hh);
 } );

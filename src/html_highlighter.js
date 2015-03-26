@@ -1,6 +1,6 @@
 /**
  * @file HTML Highlighter module.
- * @copyright 2014 Differ
+ * @copyright 2015 Diffeo
  *
  * Comments:
  *
