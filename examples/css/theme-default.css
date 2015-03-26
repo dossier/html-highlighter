@@ -115,6 +115,24 @@ LABEL {
   margin-right: 5px;
 }
 
+.entities .remove {
+  display: none;
+}
+
+.entities LI:hover .remove {
+  display: initial;
+  cursor: pointer;
+}
+
+.entities > .empty {
+  margin: 15px 0;
+  text-align: center;
+  font-style: italic;
+  font-size: 95%;
+  color: #555;
+  text-shadow: 1px 1px 1px #DDD;
+}
+
 .search-stats {
   margin: 0 5px 0 5px;
 }
