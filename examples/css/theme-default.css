@@ -117,11 +117,19 @@ LABEL {
 
 .entities .remove {
   display: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  padding: 2px;
 }
 
 .entities LI:hover .remove {
   display: initial;
   cursor: pointer;
+}
+
+.entities .remove:hover {
+  border: 1px solid silver;
+  background-color: #DDD;
 }
 
 .entities > .empty {
@@ -141,28 +149,33 @@ LABEL {
   overflow: auto;
 }
 
+.hh-highlight.hh-disabled {
+  color: initial;
+  background-color: initial;
+}
+
 .hh-highlight,
-.hh-highlight-1 {
+.hh-highlight-0 {
   background-color: rgba(255, 255, 0, .7);
   color: #555;
 }
 
-.hh-highlight-2 {
+.hh-highlight-1 {
   background-color: rgba(255, 165, 0, .7);
   color: #555;
 }
 
-.hh-highlight-3 {
+.hh-highlight-2 {
   background-color: rgba(0, 128, 0, .7);
   color: #fff;
 }
 
-.hh-highlight-4 {
+.hh-highlight-3 {
   background-color: rgba(128, 0, 128, .7);
   color: #e0d3e8;
 }
 
-.hh-highlight-5 {
+.hh-highlight-4 {
   background-color: rgba(70, 130, 223, .7);
   color: #cbdcef;
 }
