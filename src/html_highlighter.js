@@ -224,6 +224,19 @@
     return length - 1;
   };
 
+  TextContent.prototype.find = function (element)
+  {
+    if(element.nodeType !== 3)
+      return null;
+
+    for(var i = 0, l = this.markers.length; i < l; ++i) {
+      if(this.markers[i].node === element)
+        return i;
+    }
+
+    return null;
+  };
+
   TextContent.prototype.at = function (index)
   {
     if(index < 0 || index >= this.markers.length)
