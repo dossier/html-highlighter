@@ -58,12 +58,12 @@
         highlighter = new RangeHighlighter(this.stats.highlight),
         q;
 
+    /* Remove query set if it exists. */
     if(name in this.queries)
       this.remove(name);
 
     q = this.queries[name] = {
       enabled: true,
-      current: 0,
       set: [ ]
     };
 
@@ -93,27 +93,63 @@
     if(q === undefined)
       throw 'Query set non-existent';
 
-    this.stats.total -= q.total;
+    this.stats.total -= q.set.length;
 
-    /* TODO: must recalculate current query (`this.stats.current´). */
     q.set.forEach(function (i) {
       highlighter.undo(i);
     } );
 
     delete this.queries[name];
+    this.clearCursor_();
     this.ui.update();
   };
 
   Main.prototype.enable = function (name)
   {
+    var q = this.queries[name];
+
+    if(q === undefined)
+      throw 'Query set non-existent';
+    else if(q.enabled)
+      return;
+
+    q.set.forEach(function (i) {
+      $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
+    } );
+
+    q.enabled = true;
+    this.stats.total += q.set.length;
+    this.clearCursor_();
+    this.ui.update(false);
   };
 
   Main.prototype.disable = function (name)
   {
+    var q = this.queries[name];
+
+    if(q === undefined)
+      throw 'Query set non-existent';
+    else if(!q.enabled)
+      return;
+
+    q.set.forEach(function (i) {
+      $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
+    } );
+
+    q.enabled = false;
+    this.stats.total -= q.set.length;
+    this.clearCursor_();
+    this.ui.update(false);
   };
 
   Main.prototype.clear = function ()
   {
+  };
+
+  Main.prototype.clearCursor = function ()
+  {
+    this.clearCursor_();
+    this.ui.update(false);
   };
 
   Main.prototype.next = function ()
@@ -126,6 +162,29 @@
 
   Main.prototype.getSelectedRange = function ()
   {
+  };
+
+  /* Private interface */
+  Main.prototype.clearCursor_ = function ()
+  {
+    if(this.empty_())
+      this.stats.current = 0;
+    else
+      this.setCursor_(1);
+  };
+
+  Main.prototype.setCursor_ = function (id)
+  {
+  };
+
+  Main.prototype.empty_ = function ()
+  {
+    for(var k in this.queries) {
+      if(this.queries[k].set.length > 0)
+        return false;
+    }
+
+    return true;
   };
 
 
@@ -531,10 +590,8 @@
 
     this.nodes.entities.click(function (ev) {
       var node = $(ev.target);
-      if(node.data('hh-scope') === 'remove') {
-        self.owner.remove(node.parentsUntil('ul').last()
-                          .find('[data-hh-scope="name"]').text());
-      }
+      if(node.data('hh-scope') === 'remove')
+        self.owner.remove(self.getName_(node));
     } );
 
     /* Initial empty state. */
@@ -545,14 +602,14 @@
 
   Ui.prototype = Object.create(std.Owned.prototype);
 
-  Ui.prototype.update = function ()
+  Ui.prototype.update = function (full)
   {
     if(!this.options) return false;
 
     this.nodes.statsCurrent.html(this.owner.stats.current);
     this.nodes.statsTotal.html(this.owner.stats.total);
 
-    if(this.templates.entityRow === null)
+    if(full === false || this.templates.entityRow === null)
       return;
     else if(std.is_obj_empty(this.owner.queries)) {
       this.setEmpty_();
@@ -560,19 +617,41 @@
     }
 
     /* Template `entity-row´ must supply an LI element skeleton. */
-    var elu = $('<ul/>'),
+    var self = this,
+        elu = $('<ul/>'),
         tpl = $(this.templates.entityRow.innerHTML);
 
     for(var k in this.owner.queries) {
-      var eli = tpl.clone();
+      var q = this.owner.queries[k],
+          eli = tpl.clone();
+
+      if(q.enabled)
+        eli.find('[data-hh-scope="enable"]').prop('checked', true);
+
       eli.find('[data-hh-scope="name"]').text(k);
       eli.find('[data-hh-scope="count"]')
-        .text(this.owner.queries[k].set.length);
+        .text(q.set.length);
       elu.append(eli);
     }
 
+    elu.click(function (ev) {
+      var node = $(ev.target);
+      if(node.data('hh-scope') === 'enable') {
+        if(node.prop('checked'))
+          self.owner.enable(self.getName_(node));
+        else
+          self.owner.disable(self.getName_(node));
+      }
+    } );
+
     this.nodes.entities.children().remove();
     this.nodes.entities.append(elu);
+  };
+
+  Ui.prototype.getName_ = function (node)
+  {
+    return node.parentsUntil('ul').last()
+      .find('[data-hh-scope="name"]').text();
   };
 
   Ui.prototype.setEmpty_ = function ()
@@ -586,7 +665,9 @@
 
   var Css = {
     highlight: 'hh-highlight',
-    enabled: 'hh-enabled'
+    enabled: 'hh-enabled',
+    disabled: 'hh-disabled'
+  };
 
   var defaults = {
     maxHighlight: 1
