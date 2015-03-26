@@ -42,11 +42,16 @@
       highlight: 0
     };
 
+    this.refresh();
+    console.info('HTML highlighter instantiated');
+  };
+
+  Main.prototype.refresh = function ()
+  {
     this.content = new TextContent(this.options.container.get(0));
+
     /* TODO: remove */
     this.content.assert();
-
-    console.info('HTML highlighter instantiated');
   };
 
   Main.prototype.add = function (name, queries)
