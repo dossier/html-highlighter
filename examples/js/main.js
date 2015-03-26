@@ -15,12 +15,12 @@ require( [ 'jquery', 'src/html_highlighter' ], function ($, hh) {
 var MainModule = function (window, $, hh, undefined) {
 
   var dataBaseUrl = 'data/',
-      dataSources = [ /* { */
-/*         name: 'One paragraph', */
-/*         url: 'one-para.json' */
-/*       }, */{
+      dataSources = [ {
         name: 'Viber hacked',
         url: 'viber-attacked-by-syrian-electronic-army.json'
+      }, {
+        name: 'One paragraph',
+        url: 'one-para.json'
       } ];
 
   var elSelector = $('#filter-data'),
@@ -35,6 +35,14 @@ var MainModule = function (window, $, hh, undefined) {
 
   function init()
   {
+    elSelector.change(function () {
+      highlighter.clear();
+      elDocument.html(dataSources[parseInt($(this).val())]
+                      .content.body.clean_html);
+      highlighter.refresh();
+      elSearch.focus();
+    } );
+
     elSearch.keyup(function () {
       elAdd.attr('disabled', elSearch.val().trim().length === 0);
     } );
