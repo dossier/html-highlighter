@@ -520,6 +520,13 @@
       }
     } );
 
+    this.nodes.entities.click(function (ev) {
+      var node = $(ev.target);
+      if(node.data('hh-scope') === 'remove') {
+        self.owner.remove(node.parentsUntil('ul').last()
+                          .find('[data-hh-scope="name"]').text());
+      }
+    } );
 
     /* Initial empty state. */
     this.setEmpty_();
