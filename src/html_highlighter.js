@@ -25,9 +25,6 @@
    * */
   var Main = function (options)
   {
-    if(std === undefined)
-      throw "Sorting Common not defined";
-
     /* Assign defaults. */
     options = $.extend(true, $.extend(true, {}, defaults), options);
 
