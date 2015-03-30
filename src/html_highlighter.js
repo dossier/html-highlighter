@@ -775,7 +775,8 @@
   /* API export */
   return {
     HtmlHighlighter: Main,
-    HtmlHighlighterUi: Ui
+    HtmlHighlighterUi: Ui,
+    HtmlRangeHighlighter: RangeHighlighter
   };
 
 }, this);
