@@ -383,17 +383,19 @@
     return length - 1;
   };
 
-  TextContent.prototype.find = function (element)
+  TextContent.prototype.find = function (element, start)
   {
     if(element.nodeType !== 3)
-      return null;
+      return -1;
 
-    for(var i = 0, l = this.markers.length; i < l; ++i) {
+    for(var i = start === undefined ? 0 : start,
+            l = this.markers.length; i < l; ++i)
+    {
       if(this.markers[i].node === element)
         return i;
     }
 
-    return null;
+    return -1;
   };
 
   TextContent.prototype.at = function (index)
