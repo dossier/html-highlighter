@@ -424,7 +424,7 @@
 
   TextContent.prototype.indexOf = function (offset)
   {
-    var c, mid,
+    var mid,
         markers = this.markers,
         min = 0,
         max = markers.length - 1;
@@ -520,12 +520,7 @@
             ? $.extend({ }, start) /* same as start: duplicate it */
             : this.getAt_(match.index + length - 1) );
 
-    /* Ignore invalid ranges. */
-    try {
-      range = new Range(this.content, start, end);
-    } catch(x) {
-      range = null;
-    }
+    range = new Range(this.content, start, end);
 
     /* Move onto next search item. */
     ++ this.current;
