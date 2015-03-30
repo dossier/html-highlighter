@@ -695,6 +695,9 @@
         self.owner.remove(self.getName_(node));
     } );
 
+    this.nodes.next.click(function () { self.owner.next(); } );
+    this.nodes.prev.click(function () { self.owner.prev(); } );
+
     /* Initial empty state. */
     this.setEmpty_();
 
