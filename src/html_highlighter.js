@@ -422,22 +422,26 @@
     return index;
   };
 
-  /* TODO: employ binary search algorithm. */
   TextContent.prototype.indexOf = function (offset)
   {
-    var length = this.markers.length;
+    var c, mid,
+        markers = this.markers,
+        min = 0,
+        max = markers.length - 1;
 
-    if(length <= 0)
-      return -1;
+    while(min < max) {
+      mid = Math.floor((min + max) / 2);
 
-    for(var i = 0; i < length; ++i) {
-      if(this.markers[i].offset > offset) {
-        if(i === 0) throw "Invalid state: wrong offset";
-        return i - 1;
-      }
+      if(markers[mid].offset < offset)
+        min = mid + 1;
+      else
+        max = mid;
     }
 
-    return length - 1;
+    if(markers[min].offset == offset)
+      return min;
+
+    return min > 0 ? min - 1 : 0;
   };
 
   TextContent.prototype.find = function (element, start)
