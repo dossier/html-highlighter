@@ -502,7 +502,8 @@
 
     /* TODO: allow regex searches. */
     var match,
-        re = new RegExp(subject, 'gi');
+        re = new RegExp(subject.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"),
+                        'gi');
 
     while((match = re.exec(this.content.text)) !== null)
       this.results.push( { length: match[0].length, index: match.index } );
