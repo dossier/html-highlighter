@@ -574,10 +574,13 @@
    * */
   var Range = function (content, start, end)
   {
-    /* TODO: ensure range is valid: end is child of start or conversely. */
     this.content = content;
-    this.start = start;
-    this.end = end;
+
+    /* Attributes */
+    Object.defineProperties(this, {
+      start: { value: start },
+      end:   { value: end   }
+    } );
   };
 
   Range.descriptorAbs = function (marker, offset)
@@ -617,6 +620,11 @@
     this.surround_(this.start, this.start.offset, null, className);
     coll.forEach(function (n) { self.surround_whole_(n, className); } );
     this.surround_(this.end, 0, this.end.offset, className);
+  };
+
+  Range.prototype.computeXpath = function ()
+  {
+    return std.Html.xpathOf(this.start.marker.node);
   };
 
   /* Private interface */
