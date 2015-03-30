@@ -164,6 +164,61 @@
 
   Main.prototype.getSelectedRange = function ()
   {
+    var sel = window.getSelection(), len;
+
+    /* Note: assigning `len´ in conditional below so as to simplify code;
+     * would require additional lines of code otherwise. */
+    if(!(sel && sel.anchorNode && (len = sel.toString().length) > 0))
+      return null;
+    else if(sel.anchorNode.nodeType !== 3 || sel.focusNode.nodeType !== 3) {
+      console.info('Selection anchor or focus node(s) not text: ignoring');
+      return null;
+    }
+
+    var start = this.content.find(sel.anchorNode),
+        end = this.content.find(sel.focusNode);
+
+    if(start < 0 || end < 0) {
+      console.error('Unable to retrieve offset of selection anchor or focus'
+                    + 'node(s)', sel.anchorNode, sel.focusNode);
+      return null;
+    }
+
+    /* Account for inverse selection where the user selects text in a right to
+     * left orientation. */
+    if(start < end || (start === end && sel.anchorOffset < sel.focusOffset)) {
+      start = Range.descriptorRel(this.content.at(start), sel.anchorOffset);
+
+      if(sel.focusNode === sel.anchorNode) {
+        end = $.extend(true, { }, start);
+        end.offset = start.offset + len - 1;
+      } else
+        end = Range.descriptorRel(this.content.at(end), sel.focusOffset - 1);
+    } else {
+      console.info('Inverse selection: %d(%d):%d(%d)',
+                  start, sel.anchorOffset, end, sel.focusOffset);
+
+      var mi = start;
+      start = Range.descriptorRel(this.content.at(end), sel.focusOffset);
+
+      if(sel.focusNode === sel.anchorNode) {
+        end = $.extend(true, { }, start);
+        end.offset = end.offset + len - 1;
+      } else
+        end = Range.descriptorRel(this.content.at(mi), sel.anchorOffset - 1);
+    }
+
+    return new Range(this.content, start, end);
+  };
+
+  Main.prototype.empty = function ()
+  {
+    for(var k in this.queries) {
+      if(this.queries[k].set.length > 0)
+        return false;
+    }
+
+    return true;
   };
 
   /* Private interface */
