@@ -78,7 +78,17 @@ var MainModule = function (window, $, hh, undefined) {
 
           var range = highlighter.getSelectedRange();
           if(range !== null) {
-            new hh.HtmlRangeHighlighter(4).do(range);
+            elWidgetSelection.find('.offset').text(
+              range.start.marker.offset
+                + '(' + range.start.offset + ')'
+                + ':' + range.end.marker.offset
+                + '(' + range.end.offset + ')');
+
+            var xpath = range.computeXpath();
+            elWidgetSelection.find('.xpath')
+              .text(xpath)
+              .attr('title', xpath);
+            new hh.HtmlRangeHighlighter(5).do(range);
             elWidgetSelection.addClass('enabled');
           } else
             elWidgetSelection.removeClass('enabled');
