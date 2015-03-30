@@ -710,7 +710,11 @@
   {
     if(!this.options) return false;
 
-    this.nodes.statsCurrent.html(this.owner.stats.current);
+    this.nodes.statsCurrent.html(
+      this.owner.cursor.index >= 0
+        ? this.owner.cursor.index + 1
+        : '-');
+
     this.nodes.statsTotal.html(this.owner.stats.total);
 
     if(full === false || this.templates.entityRow === null)
