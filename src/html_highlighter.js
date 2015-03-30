@@ -30,11 +30,11 @@
 
     Object.defineProperty(this, 'ui', { value: new Ui(this, options) } );
     Object.defineProperty(this, 'options', { value: options } );
+    Object.defineProperty(this, 'cursor', { value: new Cursor(this) } );
 
     this.queries = { };
     this.stats = {
       queries: 0,
-      current: 0,
       total: 0,
       highlight: 0
     };
@@ -85,13 +85,14 @@
 
     this.stats.total += q.set.length;
     this.ui.update();
+    this.cursor.check();
   };
 
   Main.prototype.remove = function (name)
   {
     this.remove_(name);
 
-    this.clearCursor_();
+    this.cursor.clear(false);
     this.ui.update();
   };
 
@@ -110,8 +111,7 @@
 
     q.enabled = true;
     this.stats.total += q.set.length;
-    this.clearCursor_();
-    this.ui.update(false);
+    this.cursor.clear();
   };
 
   Main.prototype.disable = function (name)
@@ -129,8 +129,7 @@
 
     q.enabled = false;
     this.stats.total -= q.set.length;
-    this.clearCursor_();
-    this.ui.update(false);
+    this.cursor.clear();
   };
 
   Main.prototype.clear = function ()
@@ -141,22 +140,26 @@
     if(!std.is_obj_empty(this.queries))
       throw "Query set object not empty";
 
-    this.clearCursor_();
+    this.cursor.clear(false);
     this.ui.update();
   };
 
   Main.prototype.clearCursor = function ()
   {
-    this.clearCursor_();
-    this.ui.update(false);
+    this.cursor.clear();
   };
 
   Main.prototype.next = function ()
   {
+    /* Do not worry about overflow; just increment it. */
+    this.cursor.set(this.cursor.index + 1);
   };
 
   Main.prototype.prev = function ()
   {
+    this.cursor.set((this.cursor.index === 0
+                     ? this.stats.total
+                     : this.cursor.index) - 1);
   };
 
   Main.prototype.getSelectedRange = function ()
@@ -182,26 +185,97 @@
     delete this.queries[name];
   };
 
-  Main.prototype.clearCursor_ = function ()
+
+  /**
+   * @class
+   * */
+  var Cursor = function (owner)
   {
-    if(this.empty_())
-      this.stats.current = 0;
-    else
-      this.setCursor_(1);
+    std.Owned.call(this, owner);
+
+    this.query = null;
+    this.index = -1;
   };
 
-  Main.prototype.setCursor_ = function (id)
+  Cursor.prototype.clear = function (update)
   {
+    this.clear_();
+
+    if(update !== false)
+      this.owner.ui.update(false);
   };
 
-  Main.prototype.empty_ = function ()
+  Cursor.prototype.check = function ()
   {
-    for(var k in this.queries) {
-      if(this.queries[k].set.length > 0)
-        return false;
+    if(this.query === null && !this.owner.empty())
+      this.set(0);
+  };
+
+  Cursor.prototype.set = function (index)
+  {
+    var query = null,
+        offset = 0,
+        queries = this.owner.queries;
+
+    if(index < 0)
+      throw 'Invalid cursor index specified';
+    else if(this.owner.empty())
+      return;
+
+    for(var k in queries) {
+      var l, q = queries[k];
+
+      if(!q.enabled)
+        continue;
+
+      l = q.set.length;
+
+      if(index >= offset && index < offset + l) {
+        query = q;
+        break;
+      }
+
+      offset += l;
     }
 
-    return true;
+    /* `index´ past maximum offset? Back to top, if so. */
+    if(query === null) {
+      /* Re-compute to account for disabled query sets. */
+      this.set(0);
+      return;
+    }
+
+    this.clearActive_();
+    var el = $('.' + Css.highlight + '-id-' + query.set[index - offset])
+      .addClass(Css.enabled)
+      .eq(0);
+
+    /* Scroll viewport if element not visible. */
+    if(!std.$.inview(el))
+      std.$.scrollIntoView(el);
+
+    this.query = query;
+    this.index = index;
+
+    this.owner.ui.update(false);
+  };
+
+
+  Cursor.prototype.clear_ = function ()
+  {
+    this.clearActive_();
+
+    if(this.owner.empty()) {
+      this.query = null;
+      this.index = -1;
+    } else
+      this.set(0);
+  };
+
+  Cursor.prototype.clearActive_ = function ()
+  {
+    $('.' + Css.highlight + '.' + Css.enabled)
+      .removeClass(Css.enabled);
   };
 
 
