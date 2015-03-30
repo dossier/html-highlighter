@@ -438,10 +438,12 @@
         max = mid;
     }
 
-    if(markers[min].offset == offset)
+    if(markers[min].offset <= offset)
       return min;
+    else if(min === 0)
+      throw 'Invalid offset of text content state';
 
-    return min > 0 ? min - 1 : 0;
+    return min - 1;
   };
 
   TextContent.prototype.find = function (element, start)
