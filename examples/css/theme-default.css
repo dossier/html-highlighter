@@ -76,6 +76,8 @@ LABEL {
 }
 
 .widget {
+  position: absolute;
+  bottom: 0;
   background-color: #f0f0f0;
   border: 1px solid #e0e0e0;
   border-bottom: none;
@@ -85,7 +87,7 @@ LABEL {
 }
 
 .widget-selection {
-  float: left;
+  left: 0;
   opacity: 0;
   transition: opacity .25s;
   overflow: hidden;
@@ -98,14 +100,13 @@ LABEL {
   opacity: 1;
 }
 
-.widget-selection > DIV {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.widget-selection > DIV > SPAN:last-child {
+  word-break: break-all;
+  white-space: normal;
 }
 
 .widget-main {
-  float: right;
+  right: 0;
   max-width: 500px;
 }
 
