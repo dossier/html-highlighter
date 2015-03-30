@@ -624,9 +624,9 @@
     this.surround_(this.end, 0, this.end.offset, className);
   };
 
-  Range.prototype.computeXpath = function ()
+  Range.prototype.computeXpath = function (root)
   {
-    return std.Html.xpathOf(this.start.marker.node);
+    return (new TextNodeXpath(root)).xpathOf(this.start.marker.node);
   };
 
   /* Private interface */
@@ -648,6 +648,61 @@
       .addClass(className)
       .insertBefore(node)
       .append(node);
+  };
+
+
+  var TextNodeXpath = function (root)
+  {
+    this.root = root || null;
+    if(std.$.is(this.root)) this.root = this.root.get(0);
+  };
+
+  TextNodeXpath.prototype.xpathOf = function (node)
+  {
+    var id, name,
+        xpath = '';
+
+    for(; node !== this.root && node.nodeType === 1 || node.nodeType === 3;
+        node = node.parentNode)
+    {
+      /* Ignore current node if it is a SPAN element and the string given by
+       * `Css.highlight´ is found in its `className´ attribute.  In other
+       * words, ignore current node if it is the container of a highlight. */
+      if(this.isContainer_(node)) continue;
+
+      id = this.indexOf_(node);
+      xpath = '/' + node.nodeName.toLowerCase()
+        + (id === 1 ? '' : '[' + id + ']')
+        + xpath;
+    }
+
+    return xpath;
+  };
+
+  TextNodeXpath.prototype.isContainer_ = function (node)
+  {
+    /* NOTE: this is potentially problematic if the document uses class names
+     * that contain or are equal to `Css.highlight´. */
+    return node.nodeName.toLowerCase() === 'span'
+      && node.className.indexOf(Css.highlight) !== -1;
+  };
+
+  TextNodeXpath.prototype.indexOf_ = function (node)
+  {
+    var index = 1,
+        wasText = false;
+
+    while( (node = node.previousSibling) !== null) {
+      if(this.isContainer_(node) || node.nodeType === 3) {
+        if(wasText) continue;
+        wasText = true;
+      } else
+        wasText = false;
+
+      ++ index;
+    }
+
+    return index;
   };
 
 
