@@ -473,19 +473,11 @@
   /* Private interface */
   TextFinder.prototype.getAt_ = function (offset)
   {
-    var index = this.content.indexOf(offset),
-        descriptor;
-
-    if(index < 0)
+    var index = this.content.indexOf(offset);
+    if(index === -1)
       throw "Failed to retrieve marker for offset: " + offset;
 
-    descriptor = {
-      marker: this.content.at(index),
-      offset: offset
-    };
-
-    descriptor.offset = offset - descriptor.marker.offset;
-    return descriptor;
+    return Range.descriptorAbs(this.content.at(index), offset);
   };
 
 
@@ -527,6 +519,20 @@
     this.content = content;
     this.start = start;
     this.end = end;
+  };
+
+  Range.descriptorAbs = function (marker, offset)
+  {
+    var descriptor = { marker: marker };
+    descriptor.offset = offset - marker.offset;
+    return descriptor;
+  };
+
+  Range.descriptorRel = function (marker, offset)
+  {
+    var descriptor = { marker: marker };
+    descriptor.offset = offset;
+    return descriptor;
   };
 
   Range.prototype.surround = function (className)
