@@ -31,11 +31,15 @@ var MainModule = function (window, $, hh, undefined) {
       elAdd = $('#add');
 
   var count = 0,
+      mouseDown = 0,
       highlighter;
 
 
   function init()
   {
+    /* Set-up sequence
+     * --
+     * UI */
     elSelector.change(function () {
       highlighter.clear();
       elDocument.html(dataSources[parseInt($(this).val())]
@@ -51,10 +55,7 @@ var MainModule = function (window, $, hh, undefined) {
 
     elAdd.click(function () {
       var name = elSearch.val();
-      console.log('Creating search query: name=%s | query=%s',
-                  name, name);
-
-      highlighter.add(name, [ elSearch.val() ]);
+      highlighter.add(name, [ name ]);
       elSearch.select().focus();
     } );
 
@@ -78,13 +79,12 @@ var MainModule = function (window, $, hh, undefined) {
       }
 
       var d = dataSources[i];
-      elSelector.append($('<option/>').attr('value', i).html(d.name));
-
       require( [ dataBaseUrl + d.url + '?' ], function (result) {
         /* Note: due to obvious constraints imposed on loading of local system
          * resources (via file://), data source files are required to export the
          * global variable `g_descriptor´. */
         if(g_descriptor !== undefined) {
+          elSelector.append($('<option/>').attr('value', i).html(d.name));
           d.content = g_descriptor;
           g_descriptor = null;
           ++i;
