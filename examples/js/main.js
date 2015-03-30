@@ -65,7 +65,31 @@ var MainModule = function (window, $, hh, undefined) {
         load(parseInt(elSelector.val()));
       } );
 
-    /* Now actually load mock data. */
+    var timeout = null;
+    $('html').on( {
+      mouseup: function () {
+        -- mouseDown;
+
+        /* Process text selection with a delay to ensure accurate results. */
+        if(timeout !== null) window.clearTimeout(timeout);
+        timeout = window.setTimeout(function () {
+          timeout = null;
+          if(mouseDown !== 0) return;
+
+          var range = highlighter.getSelectedRange();
+          if(range !== null) {
+            new hh.HtmlRangeHighlighter(4).do(range);
+            elWidgetSelection.addClass('enabled');
+          } else
+            elWidgetSelection.removeClass('enabled');
+        }, 150);
+      },
+      mousedown: function () {
+        ++ mouseDown;
+      }
+    } );
+
+    /* Done setting up.  Now load mock data. */
     var next = function (i) {
       if(i >= dataSources.length) {
         load(0);
