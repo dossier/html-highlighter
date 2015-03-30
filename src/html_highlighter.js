@@ -648,7 +648,7 @@
       entities: finder.find('entities')
     };
 
-    finder = new std.TemplateFinder('text/hh-template');
+    finder = new std.TemplateFinder('text/hh-template', 'data-hh-scope');
     this.templates = {
       entityRow: finder.find('entity-row'),
       entityEmpty: finder.find('entity-empty')
@@ -709,20 +709,18 @@
 
     /* Template `entity-row´ must supply an LI element skeleton. */
     var self = this,
-        elu = $('<ul/>'),
-        tpl = $(this.templates.entityRow.innerHTML);
+        elu = $('<ul/>');
 
     for(var k in this.owner.queries) {
       var q = this.owner.queries[k],
-          eli = tpl.clone();
+          eli = this.templates.entityRow.clone();
 
       if(q.enabled)
-        eli.find('[data-hh-scope="enable"]').prop('checked', true);
+        eli.find('enable').prop('checked', true);
 
-      eli.find('[data-hh-scope="name"]').text(k);
-      eli.find('[data-hh-scope="count"]')
-        .text(q.set.length);
-      elu.append(eli);
+      eli.find('name').text(k);
+      eli.find('count').text(q.set.length);
+      elu.append(eli.get());
     }
 
     elu.click(function (ev) {
