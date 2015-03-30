@@ -76,12 +76,28 @@ LABEL {
 }
 
 .widget {
-  float: right;
   background-color: #f0f0f0;
   border: 1px solid #e0e0e0;
   border-bottom: none;
   padding: 5px;
   border-radius: 4px 4px 0 0;
+}
+
+.widget-selection {
+  float: left;
+  opacity: 0;
+  transition: opacity .25s;
+  overflow: hidden;
+  padding: 10px;
+}
+
+.widget-selection.enabled {
+  border: 1px solid #e0e0e0;
+  opacity: 1;
+}
+
+.widget-search {
+  float: right;
 }
 
 .expander {
@@ -152,6 +168,13 @@ LABEL {
 .hh-highlight.hh-disabled {
   color: initial;
   background-color: initial;
+}
+
+.hh-highlight.hh-enabled {
+  border-bottom: 2px dashed #dbcce8;
+  background-color: #5151a0;
+  color: #fff;
+  padding: 2px 0;
 }
 
 .hh-highlight,
