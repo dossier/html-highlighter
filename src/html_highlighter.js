@@ -177,7 +177,9 @@
 
     var highlighter = new RangeHighlighter(0);
 
+    --this.stats.queries;
     this.stats.total -= q.set.length;
+
     q.set.forEach(function (i) {
       highlighter.undo(i);
     } );
