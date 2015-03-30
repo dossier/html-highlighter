@@ -1,7 +1,14 @@
 * To-do items
-** TODO Employ binary search algorithm
+** TODO =Range.computeXpath=: looking for index of =Css.highlight=
+This is potentially problematic if the document uses class names that contain or are equal to =Css.highlight=.
+
+** DONE Employ binary search algorithm
+- State "DONE"       from "TODO"       [2015-03-30 Mon 14:20]
 Employ binary search algorithm to look up offset.
 
-** TODO =remove=: must update the `highlight-*´ class of all items
+** CANCELED =remove=: must update the `highlight-*´ class of all items
+- State "CANCELED"   from "TODO"       [2015-03-30 Mon 14:20] \\
+  Not necessary anymore.
 
-** TODO =remove=: not recalculating the current query status
+** DONE =remove=: not recalculating the current query status
+- State "DONE"       from "TODO"       [2015-03-30 Mon 14:20]
