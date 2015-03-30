@@ -25,7 +25,8 @@ var MainModule = function (window, $, hh, undefined) {
 
   var elSelector = $('#filter-data'),
       elDocument = $('#document'),
-      elWidget = $('#widget'),
+      elWidgetSelection = $('#widget-selection'),
+      elWidgetMain = $('#widget-main'),
       elSearch = $('#search'),
       elAdd = $('#add');
 
@@ -70,7 +71,7 @@ var MainModule = function (window, $, hh, undefined) {
 
         highlighter = new hh.HtmlHighlighter( {
           container: elDocument,
-          widget: elWidget,
+          widget: elWidgetMain,
           maxHighlight: 5
         } );
         return;
