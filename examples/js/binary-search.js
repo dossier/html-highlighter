@@ -27,40 +27,35 @@ function search(val)
 {
   out('> searching for ' + val);
 
-  var c,
+  var c, mid,
       count = 0,
-      i = Math.ceil(coll.length / 2),
-      ndx = i;
+      min = 0,
+      max = coll.length - 1;
 
-  out('0: (' + coll[ndx] + ') $' + i + ' = ' + ndx);
-
-  while(true) {
-    ++count;
-
-    c = coll[ndx];
-    i = Math.max(1, Math.floor(i / 2));
-
-    if(i === 0) {
-      ndx = null;
-      break;
+  while(min < max) {
+    if(++ count > Math.ceil(coll.length / 2)) {
+      out('!aborting');
+      return -1;
     }
 
-    if(c < val) {
-      ndx += i;
-      out(count + ': (' + coll[ndx] + ') +' + i + ' = ' + ndx);
-    } else if(c > val) {
-      ndx -= i;
-      out(count + ': (' + coll[ndx] + ') -' + i + ' = ' + ndx);
-    } else
-      break;
+    mid = Math.floor((min + max) / 2);
+    c = coll[mid];
+
+    out('$' + count + ': ' + c + ' ' + min + ' < ' + mid + ' < ' + max);
+
+    if(c < val)
+      min = mid + 1;
+    else
+      max = mid;
   }
 
-  if(ndx === null)
-    out('!not found');
+  out('?' + count + ': ' + coll[min] + ' ' + min + ' < ' + mid + ' < ' + max);
+  if(max == min && coll[min] == val)
+    out('@' + min);
   else
-    out('@' + ndx);
+    out('!not found');
 
-  return ndx;
+  return min;
 }
 
 $(function () {
