@@ -670,7 +670,7 @@
         self.timeouts.entities = window.setTimeout(function () {
           el.css('overflow-y', 'auto');
           self.timeouts.entities = null;
-        }, 250);
+        }, self.options.delays.toggleEntities);
 
         self.nodes.expander.addClass(Css.enabled);
       } else {
@@ -759,7 +759,10 @@
   };
 
   var defaults = {
-    maxHighlight: 1
+    maxHighlight: 1,
+    delays: {
+      toggleEntities: 250
+    }
   };
 
 
