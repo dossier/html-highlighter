@@ -66,7 +66,7 @@ var MainModule = function (window, $, hh, undefined) {
       } );
 
     var timeout = null;
-    $('html').on( {
+    $(window).on( {
       mouseup: function () {
         -- mouseDown;
 
@@ -84,7 +84,7 @@ var MainModule = function (window, $, hh, undefined) {
                 + ':' + range.end.marker.offset
                 + '(' + range.end.offset + ')');
 
-            var xpath = range.computeXpath();
+            var xpath = range.computeXpath(elDocument);
             elWidgetSelection.find('.xpath')
               .text(xpath)
               .attr('title', xpath);
