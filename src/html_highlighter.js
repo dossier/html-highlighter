@@ -732,7 +732,9 @@
     /* Private interface */
     function nextNode_ (node)
     {
-      if(node.nextSibling !== null)
+      if(node === null)
+        return null;
+      else if(node.nextSibling !== null)
         return node.nextSibling;
 
       return nextNode_(node.parentNode);
@@ -740,7 +742,7 @@
 
     function nextText_(node)
     {
-      if(node.nodeType === 3)
+      if(node === null || node.nodeType === 3)
         return node;
 
       var ch = node.childNodes;
