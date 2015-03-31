@@ -58,9 +58,8 @@
     if(!std.is_arr(queries))
       throw 'Invalid or no queries array specified';
 
-    var self = this,
-        highlighter = new RangeHighlighter(this.stats.highlight),
-        q;
+    var q, self = this,
+        highlighter = new RangeHighlighter(this.stats.highlight);
 
     /* Remove query set if it exists. */
     if(name in this.queries)
@@ -71,12 +70,9 @@
       set: [ ]
     };
 
-    ++this.stats.highlight;
-    ++this.stats.queries;
-
-    if(this.stats.highlight >= this.options.maxHighlight)
-      this.stats.highlight = 0;
-
+    /* For each query, perform a lookup, in the internal text representation
+     * and highlight each hit.  The global id of each highlight is recorded in
+     * `this.queries[name]´. */
     queries.forEach(function (i) {
       var hit,
           finder = new TextFinder(self.content, i);
@@ -85,9 +81,20 @@
         q.set.push(highlighter.do(hit));
     } );
 
+
+    /* Update global statistics. */
+    ++this.stats.queries;
     this.stats.total += q.set.length;
+
+    /* Ensure CSS highlight class rolls over on overflow. */
+    ++this.stats.highlight;
+    if(this.stats.highlight >= this.options.maxHighlight)
+      this.stats.highlight = 0;
+
+    /* Set cursor on the first query of the first query set and update the UI
+     * state. */
+    this.cursor.clear(false);
     this.ui.update();
-    this.cursor.check();
   };
 
   Main.prototype.remove = function (name)
@@ -262,12 +269,6 @@
 
     if(update !== false)
       this.owner.ui.update(false);
-  };
-
-  Cursor.prototype.check = function ()
-  {
-    if(this.query === null && !this.owner.empty())
-      this.set(0);
   };
 
   Cursor.prototype.set = function (index)
