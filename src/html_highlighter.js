@@ -28,9 +28,11 @@
     /* Assign defaults. */
     options = $.extend(true, $.extend(true, {}, defaults), options);
 
-    Object.defineProperty(this, 'ui', { value: new Ui(this, options) } );
-    Object.defineProperty(this, 'options', { value: options } );
-    Object.defineProperty(this, 'cursor', { value: new Cursor(this) } );
+    Object.defineProperties(this, {
+      ui:      { value: new Ui(this, options) },
+      options: { value: options               },
+      cursor:  { value: new Cursor(this)      }
+    } );
 
     this.queries = { };
     this.stats = {
