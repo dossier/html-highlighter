@@ -616,12 +616,11 @@
         end = this.end.marker.node,
         coll = [ ];
 
-    visitor.next();
-    while(visitor.current != end) {
+    while(visitor.next() != end)
       coll.push(visitor.current);
-      visitor.next();
-    }
 
+    /* Apply highlighting to start and end nodes, and to any nodes in between,
+     * if applicable. */
     this.surround_(this.start, this.start.offset, null, className);
     coll.forEach(function (n) { self.surround_whole_(n, className); } );
     this.surround_(this.end, 0, this.end.offset, className);
@@ -727,7 +726,7 @@
       if(current.nodeType !== 3)
         throw "Invalid node type: not text";
 
-      current = nextText_(nextNode_(current));
+      return (current = nextText_(nextNode_(current)));
     };
 
     /* Private interface */
