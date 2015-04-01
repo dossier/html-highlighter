@@ -257,7 +257,6 @@
 
     /* Determine start and end indices in text offset markers array. */
     var start = this.content.find(sel.anchorNode),
-        end = this.content.find(sel.focusNode);
         end = (sel.focusNode === sel.anchorNode
                ? start : this.content.find(sel.focusNode));
 
@@ -278,9 +277,6 @@
       } else
         end = Range.descriptorRel(this.content.at(end), sel.focusOffset - 1);
     } else {
-      console.info('Inverse selection: %d(%d):%d(%d)',
-                  start, sel.anchorOffset, end, sel.focusOffset);
-
       var mi = start;
       start = Range.descriptorRel(this.content.at(end), sel.focusOffset);
 
@@ -562,15 +558,16 @@
 
     /* Chars end + 1..length */
     if(end !== text.length - 1) {
-      var descr = { offset: marker.offset + end - start + 1,
-                    node: $(document.createTextNode(text.substr(end + 1)))
-                    .insertAfter(marker.node).get(0)
-                  };
-
       if(index >= this.markers.length)
         throw "Detected invalid index";
 
-      this.markers.splice(index + 1, 0, descr);
+      /* We're again creating a new text node out of the old text node and thus
+       * need to add a new entry to the markers array. */
+      this.markers.splice(index + 1, 0, {
+        offset: marker.offset + end - start + 1,
+        node: $(document.createTextNode(text.substr(end + 1)))
+          .insertAfter(marker.node).get(0)
+      } );
     }
 
     /* TODO: remove me. */
