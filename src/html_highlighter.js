@@ -1496,7 +1496,9 @@
   return {
     HtmlHighlighter: Main,
     HtmlHighlighterUi: Ui,
-    HtmlRangeHighlighter: RangeHighlighter
+    HtmlRangeHighlighter: RangeHighlighter,
+    HtmlTextFinder: TextFinder,
+    HtmlXpathFinder: XpathFinder
   };
 
 }, this);
