@@ -862,8 +862,7 @@
 
     /* Compute text node element that the XPath representation refers to. */
     var index,
-        node = (new TextNodeXpath(this.content.root))
-          .elementAt(subject.xpath);
+        node = (new TextNodeXpath(this.content.root)).elementAt(subject.xpath);
 
     /* If an element could not be obtained from the XPath representation, abort
      * now. */
@@ -1037,13 +1036,11 @@
 
   /**
    * Compute the XPath representation of the active range.
-   *
-   * @param {DOMElement} root - The root element.
    * @returns {string} XPath representation of active range. */
-  Range.prototype.computeXpath = function (root)
+  Range.prototype.computeXpath = function ()
   {
     var node = this.start.marker.node,
-        computor = new TextNodeXpath(root),
+        computor = new TextNodeXpath(this.content.root),
         descr = {
           xpath: computor.xpathOf(node),
           start: this.start.offset + computor.offset(node)
@@ -1198,10 +1195,10 @@
           part = part.match(/([^[]+)\[(\d+)\]/);
           index = parseInt(part[2]);
           part = part[1];
-          if(-- index < 0) throw 'xcpt';
+          if(-- index < 0) throw 'Invalid index: ' + index;
         } catch(x) {
           console.error('Failed to extract child index: %s', part);
-          return null;
+          throw x;              /* Shouldn't have happened. */
         }
       }
 
@@ -1639,9 +1636,8 @@
   Ui.prototype.setEmpty_ = function ()
   {
     this.nodes.entities.children().remove();
-
     if(this.templates.entityEmpty !== null)
-      this.nodes.entities.append($(this.templates.entityEmpty.innerHTML));
+      this.nodes.entities.append(this.templates.entityEmpty.clone().get());
   };
 
 
