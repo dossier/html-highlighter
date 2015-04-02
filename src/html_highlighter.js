@@ -786,8 +786,57 @@
 
 
   /**
+   * @class
+   * */
+  var XpathFinder = function (content, subject)
   {
+    /* Construct base class. */
+    Finder.call(this, content);
 
+    if(!std.is_obj(subject))
+      throw 'Invalid or no XPath object specified';
+
+    /* Compute text node element that the XPath representation refers to. */
+    var index,
+        node = (new TextNodeXpath(this.content.root))
+          .elementAt(subject.xpath);
+
+    /* If an element could not be obtained from the XPath representation, abort
+     * now. */
+    if(node === null)
+      return;
+
+    /* Retrieve global character offset of the text node. */
+    index = content.find(node);
+    if(index < 0) {
+      console.error('Unable to derive global offset from element', node);
+      return;
+    }
+
+    /* Save global character offset and relative start and end offsets in
+     * descriptor. */
+    this.results.push( { offset: content.at(index).offset,
+                         start: subject.start,
+                         end: subject.end } );
+  };
+
+  XpathFinder.prototype = Object.create(Finder.prototype);
+
+  XpathFinder.prototype.next = function ()
+  {
+    if(this.current >= this.results.length)
+      return false;
+
+    var subject = this.results[this.current];
+
+    ++ this.current;
+
+    /* TODO: we don't necessarily need to invoke getAt_ for the end offset.  A
+     * check has to be made to ascertain if the end offset falls within the
+     * start node. */
+    return new Range(this.content,
+                     this.getAt_(subject.offset + subject.start),
+                     this.getAt_(subject.offset + subject.end));
   };
 
 
@@ -923,7 +972,37 @@
    * @returns {string} XPath representation of active range. */
   Range.prototype.computeXpath = function (root)
   {
-    return (new TextNodeXpath(root)).xpathOf(this.start.marker.node);
+    var node = this.start.marker.node,
+        computor = new TextNodeXpath(root),
+        descr = {
+          xpath: computor.xpathOf(node),
+          start: this.start.offset + computor.offset(node)
+        };
+
+    descr.end = descr.start + this.length() - 1;
+    return descr;
+  };
+
+  /**
+   * Compute the length of the active range.
+   * @returns {number} Number of characters. */
+  Range.prototype.length = function ()
+  {
+    /* Optimised case: range does not span multiple nodes. */
+    if(this.start.marker.node === this.end.marker.node)
+      return this.end.offset - this.start.offset + 1;
+
+    /* Range spans 2 or more nodes. */
+    var visitor = new TextNodeVisitor(this.start.marker.node),
+        end = this.end.marker.node,
+        length = (this.start.marker.node.nodeValue.length
+          - this.start.offset)
+          + this.end.offset + 1;
+
+    while(visitor.next() != end)
+      length += visitor.current.nodeValue.length;
+
+    return length;
   };
 
   /* Private interface
@@ -980,31 +1059,114 @@
   };
 
   /**
-   * Compute the XPath representation of an arbitrary node, not necessarily a
-   * text node.
+   * <p>Compute the XPath representation of a text node.</p>
    *
-   * @param {DOMElement} node - Node to compute XPath representation of.
+   * <p>Throws an exception if <code>node</code> is <strong>not</strong> a text
+   * node.</p>
+   *
+   * @param {DOMElement} node - Text node to compute XPath representation of.
    * @returns {string} XPath representation. */
   TextNodeXpath.prototype.xpathOf = function (node)
   {
-    var id, name,
-        xpath = '';
+    var xpath = '';
+
+    if(!node || node.nodeType !== 3)
+      throw 'Invalid or no text node specified';
 
     for(; node !== this.root && node.nodeType === 1 || node.nodeType === 3;
         node = node.parentNode)
     {
-      /* Ignore current node if it is a SPAN element and the string given by
-       * `Css.highlight´ is found in its `className´ attribute.  In other
-       * words, ignore current node if it is the container of a highlight. */
-      if(this.isContainer_(node)) continue;
+      var id,
+          name = node.nodeName.toLowerCase(),
+          wasText = this.isContainer_(node) || node.nodeType === 3;
 
-      id = this.indexOf_(node);
-      xpath = '/' + node.nodeName.toLowerCase()
-        + (id === 1 ? '' : '[' + id + ']')
-        + xpath;
+      node = this.skip_(node);
+      id = this.indexOf_(node, wasText);
+      xpath = '/' + name + (id === 1 ? '' : '[' + id + ']') + xpath;
     }
 
     return xpath;
+  };
+
+  TextNodeXpath.prototype.elementAt = function (xpath)
+  {
+    var part, index,
+        cur = this.root,
+        parts = xpath.split('/');
+
+    for(var i = 1, l = parts.length; i < l; ++i) {
+      part = parts[i];
+      if(part.indexOf('[') === -1)
+        index = 0;
+      else {
+        try {
+          part = part.match(/([^[]+)\[(\d+)\]/);
+          index = parseInt(part[2]);
+          part = part[1];
+          if(-- index < 0) throw 'xcpt';
+        } catch(x) {
+          console.error('Failed to extract child index: %s', part);
+          return null;
+        }
+      }
+
+      cur = this.nthOf_(cur, part, index);
+      if(cur === null) {
+        console.error('Failed to find nth child: %d', index, cur);
+        return null;
+      }
+    }
+
+    if(cur.nodeType !== 3) {
+      console.error('Element at specified XPath NOT a text node', cur);
+      return null;
+    }
+
+    return cur;
+  };
+
+  TextNodeXpath.prototype.offset = function (node)
+  {
+    var offset = 0,
+        wasText = false;
+
+    if(!node || node.nodeType !== 3)
+      throw 'Invalid or no text node specified';
+
+    node = this.skip_(node);
+    while( (node = node.previousSibling) !== null
+           && (node.nodeType === 3 || this.isContainer_(node))) {
+      offset += this.length_(node);
+    }
+
+    return offset;
+  };
+
+  TextNodeXpath.prototype.length_ = function (node)
+  {
+    if(node.nodeType === 3)
+      return node.nodeValue.length;
+
+    var length = 0,
+        ch = node.childNodes;
+
+    for(var i = 0, l = ch.length; i < l; ++i)
+      length += this.length_(ch[i]);
+
+    return length;
+  };
+
+  TextNodeXpath.prototype.skip_ = function (node)
+  {
+    if(node.nodeType === 3) {
+      while(true) {
+        var parent = node.parentNode;
+        if(parent === this.root || !this.isContainer_(parent)) break;
+        node = parent;
+      }
+    }
+
+    return node;
   };
 
   /**
@@ -1045,10 +1207,9 @@
    *
    * @param {DOMElement} node - DOM element to calculate index of.
    * @returns {number} Index of node plus one. */
-  TextNodeXpath.prototype.indexOf_ = function (node)
+  TextNodeXpath.prototype.indexOf_ = function (node, wasText)
   {
-    var index = 1,
-        wasText = false;
+    var index = 1;
 
     while( (node = node.previousSibling) !== null) {
       /* Don't count contiguous text nodes or highlight containers as being
@@ -1064,6 +1225,44 @@
     }
 
     return index;
+  };
+
+  TextNodeXpath.prototype.nthOf_ = function (parent, tag, index)
+  {
+    var node,
+        ch = parent.childNodes,
+        wasText = false;
+
+    for(var i = 0, l = ch.length; i < l; ++i) {
+      node = ch[i];
+      if(this.isContainer_(node) || node.nodeType === 3) {
+        if(wasText) continue;
+        wasText = true;
+      } else
+        wasText = false;
+
+      if(index === 0) {
+        while(this.isContainer_(node)) {
+          ch = node.childNodes;
+          if(ch.length === 0 && ch[0].nodeType !== 3)
+            throw 'Invalid state: expected text node inside container';
+
+          node = ch[0];
+        }
+
+        if(node.nodeName.toLowerCase() !== tag) {
+          console.error('Failed to locate tag "%s" at index %d',
+                        tag, index);
+          return null;
+        }
+
+        return node;
+      }
+
+      --index;
+    }
+
+    return null;
   };
 
 
