@@ -957,7 +957,8 @@
      * representation of all the text nodes contained in the start to end
      * range, but excluding the start and end nodes. */
     var self = this,
-        visitor = new TextNodeVisitor(this.start.marker.node),
+        visitor = new TextNodeVisitor(this.start.marker.node,
+                                      this.content.root),
         end = this.end.marker.node,
         coll = [ ];
 
@@ -999,7 +1000,8 @@
       return this.end.offset - this.start.offset + 1;
 
     /* Range spans 2 or more nodes. */
-    var visitor = new TextNodeVisitor(this.start.marker.node),
+    var visitor = new TextNodeVisitor(this.start.marker.node,
+                                      this.content.root),
         end = this.end.marker.node,
         length = (this.start.marker.node.nodeValue.length
           - this.start.offset)
@@ -1272,19 +1274,17 @@
 
 
   /**
+   * <p>Convenient class for visiting all text nodes that are siblings and
+   * descendants of a given root node.</p>
    * @class
-   * Convenient class for visiting all text nodes that are siblings and
-   * descendants of a given root node.
-   *
-   * Note: this class has some issues.  In particular, no bounds checks are
-   * made to ensure that
-   *
-   * @param {DOMElement} root - The root node.
+   * @param {DOMElement} node - The node where to start visiting the DOM.
+   * @param {DOMElement} [root=null] - The root node where to stop visiting the
+   * DOM.
    * */
-  var TextNodeVisitor = function (root)
+  var TextNodeVisitor = function (node, root)
   {
     /* Attributes */
-    var current = root;
+    var current = node;
 
     /* Getters */
     Object.defineProperty(
@@ -1312,24 +1312,27 @@
      *
      * @param {DOMElement} node current node.
      * @returns {DOMElement} next node or <code>null</code> if none
-     * available. */
+     * available or the root node was reached. */
     function nextNode_ (node)
     {
-      if(node === null)
+      /* Abort if invalid or root node; otherwise attempt to advance to sibling
+       * node. */
+      if(node === null || node === root)
         return null;
       else if(node.nextSibling !== null)
         return node.nextSibling;
 
+      /* Move up to sibling of parent node. */
       return nextNode_(node.parentNode);
     }
 
     /**
-     * Get the next available text node, that is either a descendant, sibling
-     * or otherwise, of a given node.
+     * Get the next available text node that is either a descendant, sibling or
+     * otherwise, of a given node.
      *
      * @param {DOMElement} node current node.
      * @returns {DOMElement} next node or <code>null</code> if none
-     * available. */
+     * available or the root node was reached. */
     function nextText_(node)
     {
       if(node === null || node.nodeType === 3)
