@@ -1080,7 +1080,7 @@
     if(!node || node.nodeType !== 3)
       throw 'Invalid or no text node specified';
 
-    for(; node !== this.root && node.nodeType === 1 || node.nodeType === 3;
+    for(; node !== this.root && (node.nodeType === 1 || node.nodeType === 3);
         node = node.parentNode)
     {
       var id,
