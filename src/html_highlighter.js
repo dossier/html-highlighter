@@ -1101,6 +1101,8 @@
         cur = this.root,
         parts = xpath.split('/');
 
+    if(parts[0].length !== 0) throw 'Invalid XPath representation';
+
     for(var i = 1, l = parts.length; i < l; ++i) {
       part = parts[i];
       if(part.indexOf('[') === -1)
