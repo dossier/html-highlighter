@@ -292,6 +292,18 @@
     return new Range(this.content, start, end);
   };
 
+  Main.prototype.clearSelectedRange = function ()
+  {
+    /* From: http://stackoverflow.com/a/3169849/3001914
+     * Note that we don't support IE at all. */
+    if (window.getSelection) {
+      if (window.getSelection().empty)                    /* Chrome */
+        window.getSelection().empty();
+      else if (window.getSelection().removeAllRanges)     /* Firefox */
+        window.getSelection().removeAllRanges();
+    }
+  };
+
   /**
    * Return boolean indicative of whether one or more query sets are currently
    * contained.
