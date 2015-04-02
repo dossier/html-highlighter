@@ -99,9 +99,7 @@
      * and highlight each hit.  The global id of each highlight is recorded in
      * the `this.queries[name].set´ array. */
     queries.forEach(function (i) {
-      var hit,
-          finder = new TextFinder(self.content, i);
-
+      var hit, finder = Finder.construct(self.content, i);
       while((hit = finder.next(i)) !== false)
         q.set.push(highlighter.do(hit));
     } );
