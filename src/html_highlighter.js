@@ -1246,18 +1246,29 @@
    * <pre><code>#text + STRONG</code></pre> */
   TextNodeXpath.prototype.offset = function (node)
   {
-    var offset = 0,
-        wasText = false;
+    var offset = 0;
 
     if(!node || node.nodeType !== 3)
       throw 'Invalid or no text node specified';
 
-    /* Skip all contiguous text nodes, including highlight containers, and add
-     * the lengths of all the contiguous text nodes (including descendants) to
-     * the left of `node´. */
-    node = this.skip_(node);
-    while( (node = node.previousSibling) !== null
-           && (node.nodeType === 3 || this.isContainer_(node))) {
+    /* Climb the tree of nested highlight containers in a left to right
+     * order, if any, calculating their respective lengths and adding to the
+     * overall offset. */
+    while(true) {
+      while(node.previousSibling === null) {
+        node = node.parentNode;
+        if(node === this.root || node === null)
+          throw 'Invalid state: expected highlight container or text node';
+        else if(!this.isContainer_(node))
+          return offset;
+        else if(node.previousSibling !== null)
+          break;
+      }
+
+      node = node.previousSibling;
+      if(node.nodeType !== 3 && !this.isContainer_(node))
+        break;
+
       offset += this.length_(node);
     }
 
