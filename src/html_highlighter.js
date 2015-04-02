@@ -482,7 +482,9 @@
    * */
   var TextContent = function (root)
   {
-    this.root = std.$.is(root) ? root.get(0) : root;
+    Object.defineProperty(this,
+      'root', { value:  std.$.is(root) ? root.get(0) : root } );
+
     this.offset = 0;
     this.markers = [ ];
 
