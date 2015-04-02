@@ -19,6 +19,9 @@ var MainModule = function (window, $, hh, undefined) {
         name: 'Viber hacked',
         url: 'viber-attacked-by-syrian-electronic-army.json'
       }, {
+        name: 'Simple',
+        url: 'simple.json'
+      }, {
         name: 'One paragraph',
         url: 'one-para.json'
       } ];
