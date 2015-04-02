@@ -50,8 +50,9 @@
   };
 
   /**
-   * Refreshes the internal representation of the text.  Should only be invoked
-   * when the HTML structure mutates.
+   * <p>Refreshes the internal representation of the text.</p>
+   *
+   * <p>Should only be invoked when the HTML structure mutates.</p>
    */
   Main.prototype.refresh = function ()
   {
@@ -487,8 +488,24 @@
   };
 
   /**
-   * Refreshes the internal representation of the text.  Should only be invoked
-   * when the HTML structure mutates. */
+   * <p>Refreshes the internal representation of the text.</p>
+   *
+   * <p>The internal representation of the text present in the DOM sub-tree of
+   * the <code>root</code> consists of an array of global offsets for every
+   * text node in the document, and a reference to the corresponding text node,
+   * stored in <i>marker</i> descriptors. In addition, a regular string
+   * (<code>text</code>) holds the text contents of the document to enable
+   * text-based searches.</p>
+   *
+   * <p>A marker descriptor is of the form:</p>
+   * <pre>{
+   *   node:   DOMElement  // reference to DOMElement of text node
+   *   offset: integer     // global offset
+   * }</pre>
+   *
+   * <p>Should only be invoked when the HTML structure mutates, e.g. a new
+   * document is loaded.</p>
+   * */
   TextContent.prototype.refresh = function ()
   {
     this.text = '';
@@ -530,13 +547,20 @@
    * <p>Truncate a text node given by <code>marker</code> by turning it into 2
    * or 3 text nodes, with one of them used for highlighting purposes.</p>
    *
-   * <p>If <code>start == end</code>, no truncation takes place
-   * <strong>but</strong> the old text node is replaced by a new one.  If
-   * <code>start == 0</code>, two text nodes are created.  If <code>start >
-   * 0</code>, three text nodes are produced.</p>
+   * <p>If <code>start == 0</code> and <code>end == text.length - 1</code>, no
+   * truncation takes place <strong>but</strong> the old text node is replaced
+   * by a new one.  This method therefore assumes that the caller has checked
+   * to ensure text truncation is required.</p>
    *
-   * <p>The text node used for highlighting purposes is always the one
-   * referenced by the offsets <code>[start .. end]</code>.
+   * <p>Truncation takes place in the following manner:</p>
+   *
+   * <ul><li>if <code>start > 0</code>: truncate <code>[ 0 .. start - 1
+   * ]</code></li>
+   *
+   * <li>create new text node at <code>[ start .. end ]</code></li>
+   *
+   * <li>if <code>end != text.length - 1</code>: truncate <code>[ end
+   * .. text.length - 1 ]</code></li></ul>
    *
    * @param {Object} marker - Reference to descriptor of text node to
    * truncate.
@@ -601,7 +625,9 @@
   };
 
   /**
-   * Return the index of the marker descriptor of a given text offset.
+   * <p>Return the index of the marker descriptor of a given text offset.</p>
+   *
+   * <p>Throws an exception if the offset is invalid.</p>
    *
    * Note: employs the binary search algorithm.
    *
@@ -635,7 +661,8 @@
    * Find the index of the marker descriptor of a given text node element.
    *
    * @param {DOMElement} element - Reference to the text node to look up.
-   * @param {number} [start=0] - Start index.
+   * @param {number} [start=0] - Start marker index if known for a fact that
+   * the text node is to be found <strong>after</strong> a certain offset.
    *
    * @returns {number} The marker index of <code>element</code> or
    * <code>-1</code> if not found. */
@@ -655,8 +682,10 @@
   };
 
   /**
-   * Return the offset marker descriptor at a given index.  Throws an exception
-   * if the given <code>index</code> is out of bounds.
+   * <p>Return the offset marker descriptor at a given index.</p>
+   *
+   * <p>Throws an exception if the given <code>index</code> is out of
+   * bounds.</p>
    *
    * @param {number} index - Marker index.
    * @returns {Object} The offset marker descriptor. */
@@ -669,13 +698,15 @@
   };
 
   /**
-   * Build representation of the text contained in a HTML DOM sub-tree and the
-   * offsets of each text node.
+   * <p>Recursively build a representation of the text contained in the HTML
+   * DOM sub-tree in the form of a string containing the text and global
+   * offsets of each text node.</p>
    * @access private
    *
    * @param {DOMElement} node - The node to visit. */
   TextContent.prototype.visit_ = function (node, offset)
   {
+    /* Only interested in text nodes. */
     if(node.nodeType === 3) {
       var content = node.nodeValue,
           length = content.length;
@@ -687,6 +718,8 @@
       return offset + length;
     }
 
+    /* If current node is not of type text, process its children nodes, if
+     * any. */
     var ch = node.childNodes;
     if(ch.length > 0) {
       for(var i = 0, l = ch.length; i < l; ++i)
@@ -697,6 +730,14 @@
   };
 
 
+  /**
+   * Abstract base class of all finder classes.
+   * @class
+   * @abstract
+   * @param {TextContent} content - reference to <code>TextContent</code>
+   * holding a text representation of the document.
+   * @param {*} subject - subject to find; can be of any type.
+   * */
   var Finder = function (content, subject)
   {
     Object.defineProperty(this, 'content', { value: content } );
@@ -705,6 +746,15 @@
     this.current = 0;
   };
 
+  /**
+   * Construct appropriate <code>Finder</code>-derived class for a given
+   * subject.
+   * @static
+   *
+   * @param {TextContent} content - reference to <code>TextContent</code>
+   * holding a text representation of the document.
+   * @param {*} subject - subject to find; can be of any type.
+   * */
   Finder.construct = function (content, subject)
   {
     return std.is_obj(subject)
@@ -794,8 +844,14 @@
 
 
   /**
+   * Class responsible for locating text in a <code>TextContent</code>
+   * instance from an XPath representation and start and end offsets.
    * @class
-   * */
+   *
+   * @param {TextContent} content - Reference to <code>TextContent</code>
+   * instance.
+   * @param {string} subject - Descriptor containing an XPath representation
+   * and start and end offsets. */
   var XpathFinder = function (content, subject)
   {
     /* Construct base class. */
@@ -830,6 +886,11 @@
 
   XpathFinder.prototype = Object.create(Finder.prototype);
 
+  /**
+   * Return next available match.
+   *
+   * @returns {Range|false} Returns a <code>Range</code> if a match is
+   * available, or <code>false</code> if no more matches are available. */
   XpathFinder.prototype.next = function ()
   {
     if(this.current >= this.results.length)
@@ -910,8 +971,7 @@
   };
 
   /**
-   * Create a range descriptor from a global offset relative to the start of
-   * the text content.
+   * Create a range descriptor from a global offset.
    *
    * @param {Object} marker - Text offset marker object.
    * @param {number} offset - Global offset.
@@ -926,10 +986,10 @@
 
   /**
    * Create a range descriptor from an offset relative to the start of the text
-   * node string.
+   * node.
    *
    * @param {Object} marker - Text offset marker object.
-   * @param {number} offset - Relative offset from start of text node string.
+   * @param {number} offset - Relative offset from start of text node.
    *
    * @returns {Object} Range descriptor. */
   Range.descriptorRel = function (marker, offset)
@@ -940,10 +1000,10 @@
   };
 
   /**
-   * Highlight a range by wrapping a text node or a portion of it with a
+   * Highlight a range by wrapping one or more text nodes with a
    * <code>span</code> tag and applying a particular CSS class.
    *
-   * @param {string} className - The CSS class name to apply.*/
+   * @param {string} className - The CSS class name to apply. */
   Range.prototype.surround = function (className)
   {
     /* Optimised case: highlighting does not span multiple nodes. */
@@ -962,11 +1022,14 @@
         end = this.end.marker.node,
         coll = [ ];
 
+    /* TODO: we assume `visitor.next()' will never return null because `end´ is
+     * within bounds. */
     while(visitor.next() != end)
       coll.push(visitor.current);
 
     /* Apply highlighting to start and end nodes, and to any nodes in between,
-     * if applicable. */
+     * if applicable.  Highlighting for the start and end nodes may require
+     * text node truncation but not for the nodes in between. */
     this.surround_(this.start, this.start.offset, null, className);
     coll.forEach(function (n) { self.surround_whole_(n, className); } );
     this.surround_(this.end, 0, this.end.offset, className);
@@ -1007,6 +1070,7 @@
           - this.start.offset)
           + this.end.offset + 1;
 
+    /* Add (whole) lengths of text nodes in between. */
     while(visitor.next() != end)
       length += visitor.current.nodeValue.length;
 
@@ -1068,6 +1132,10 @@
   /**
    * <p>Compute the XPath representation of a text node.</p>
    *
+   * <p>The XPath produced of the text node is fully normalised and unaffected
+   * by the current state of text node fragmentation caused by the presence of
+   * highlight containers.</p>
+   *
    * <p>Throws an exception if <code>node</code> is <strong>not</strong> a text
    * node.</p>
    *
@@ -1080,6 +1148,7 @@
     if(!node || node.nodeType !== 3)
       throw 'Invalid or no text node specified';
 
+    /* Start traversing from `node´ upwards until `root´ or null is hit. */
     for(; node !== this.root && (node.nodeType === 1 || node.nodeType === 3);
         node = node.parentNode)
     {
@@ -1087,6 +1156,8 @@
           name = node.nodeName.toLowerCase(),
           wasText = this.isContainer_(node) || node.nodeType === 3;
 
+      /* Skip all contiguous text nodes, including highlight containers, and
+       * calculate the index of element relative to the first sibling. */
       node = this.skip_(node);
       id = this.indexOf_(node, wasText);
       xpath = '/' + name + (id === 1 ? '' : '[' + id + ']') + xpath;
@@ -1095,19 +1166,34 @@
     return xpath;
   };
 
+  /**
+   * <p>Compute and return element referenced by an XPath string.</p>
+   *
+   * <p>The element computed is the same that would result from traversing a
+   * DOM sub-tree fully normalised and thus unaffected by text node
+   * fragmentation caused by the presence of highlight containers.</p>
+   *
+   * @param {string} xpath - String containing XPath representation.
+   * @returns {DOMElement} The element referenced by the XPath string.
+   * */
   TextNodeXpath.prototype.elementAt = function (xpath)
   {
     var part, index,
-        cur = this.root,
+        cur = this.root,          /* start from the root node */
         parts = xpath.split('/');
 
     if(parts[0].length !== 0) throw 'Invalid XPath representation';
 
+    /* Break up the constituent parts of the XPath representation but discard
+     * the first element since it'll be '/'. */
     for(var i = 1, l = parts.length; i < l; ++i) {
       part = parts[i];
       if(part.indexOf('[') === -1)
-        index = 0;
+        index = 0;              /* No index specified: assume first. */
       else {
+        /* *Attempt* to retrieve element's index.  If an exception is thrown,
+         * produce a meaningful error but re-throw since the XPath
+         * representation is clearly invalid. */
         try {
           part = part.match(/([^[]+)\[(\d+)\]/);
           index = parseInt(part[2]);
@@ -1119,21 +1205,48 @@
         }
       }
 
+      /* Actually get the element given by the XPath index. */
       cur = this.nthOf_(cur, part, index);
       if(cur === null) {
+        /* This, we would hope, would be indicative that the tree mutated.
+         * Otherwise, boog in the valves changing the electrostatic
+         * potential of the system.  It can only be a boog. */
         console.error('Failed to find nth child: %d', index, cur);
-        return null;
+        /* It's an actual _physical_ boog. Nothing wrong with the logic! */
+        return null;            /* Go and check the valves. */
       }
     }
 
+    /* The *last* element *must* be a text node.  Otherwise, the XPath
+     * representation is invalid; or see boog comments above.  Seeing as we
+     * can't prove the XPath representation is invalid, an exception isn't
+     * thrown. */
     if(cur.nodeType !== 3) {
-      console.error('Element at specified XPath NOT a text node', cur);
+      console.error('Element at specified XPath NOT a text node: %s',
+                    xpath, cur);
       return null;
     }
 
     return cur;
   };
 
+  /**
+   * <p>Calculate the relative offset from a specified text node
+   * (<code>node</code>) to the start of the first <strong>sibling</strong>
+   * text node in a set of contiguous text or highlight container nodes.</p>
+   *
+   * <p>For example, given the post-highlight, non-normalised, child contents
+   * of an arbitrary element:</p>
+   *
+   * <pre><code>#text + SPAN.hh-highlight + #text + STRONG</code></pre>
+   *
+   * <p>If this method were invoked with <code>node<code> containing a
+   * reference to the third <code>#text</code> element, the computed offset
+   * would be the length of the <code>SPAN</code> to its left plus the length
+   * of the first <code>#text</code>.  This because the normalised version --
+   * pre-highlight, that is -- of the above would be:</p>
+   *
+   * <pre><code>#text + STRONG</code></pre> */
   TextNodeXpath.prototype.offset = function (node)
   {
     var offset = 0,
@@ -1142,6 +1255,9 @@
     if(!node || node.nodeType !== 3)
       throw 'Invalid or no text node specified';
 
+    /* Skip all contiguous text nodes, including highlight containers, and add
+     * the lengths of all the contiguous text nodes (including descendants) to
+     * the left of `node´. */
     node = this.skip_(node);
     while( (node = node.previousSibling) !== null
            && (node.nodeType === 3 || this.isContainer_(node))) {
@@ -1151,24 +1267,50 @@
     return offset;
   };
 
+  /**
+   * <p>Calculate the length of all text nodes in a specified sub-tree.</p>
+   *
+   * <p>Note that no checks are made to ensure that the node is either a
+   * highlight container or text node.  Caller is responsible for invoking this
+   * method in the right context.</p>
+   *
+   * @access private
+   * @param {DOMElement} node - text node or <strong>highlight</strong>
+   * container
+   * @returns {integer} Combined length of text nodes.
+   * */
   TextNodeXpath.prototype.length_ = function (node)
   {
     if(node.nodeType === 3)
       return node.nodeValue.length;
 
+    /* If `node´ isn't of text type, it is *assumed* to be a highlight
+     * container.  No checks are made to ensure this is the case.  Caller is
+     * responsible! */
     var length = 0,
         ch = node.childNodes;
 
+    /* We loop recursively through all child nodes because a single highlight
+     * container may be parent to multiple highlight containers. */
     for(var i = 0, l = ch.length; i < l; ++i)
       length += this.length_(ch[i]);
 
     return length;
   };
 
+  /**
+   * <p>Skip to first highlight container parent of a specified node, if it is
+   * of text type.</p>
+   *
+   * @param {DOMElement} node - text node.
+   * @returns {DOMElement} First highlight container of text node, if
+   * applicable. */
   TextNodeXpath.prototype.skip_ = function (node)
   {
+    /* Don't do anything if node isn't of text type. */
     if(node.nodeType === 3) {
       while(true) {
+        /* Skip to first highlight container element. */
         var parent = node.parentNode;
         if(parent === this.root || !this.isContainer_(parent)) break;
         node = parent;
@@ -1213,7 +1355,6 @@
    * <p>Note that XPath indices are <strong>not</strong> zero-based.</p>
    *
    * @access private
-   *
    * @param {DOMElement} node - DOM element to calculate index of.
    * @returns {number} Index of node plus one. */
   TextNodeXpath.prototype.indexOf_ = function (node, wasText)
@@ -1236,6 +1377,12 @@
     return index;
   };
 
+  /**
+   * <p>Find the nth normalised child element within a specified node.</p>
+   *
+   * @param {DOMElement} parent - node whose children to search
+   * @param {string} tag - the tag name of the node sought
+   * @param {integer} index - child index of the node sought */
   TextNodeXpath.prototype.nthOf_ = function (parent, tag, index)
   {
     var node,
@@ -1244,13 +1391,17 @@
 
     for(var i = 0, l = ch.length; i < l; ++i) {
       node = ch[i];
+
+      /* Don't count contiguous text or highlight container nodes. */
       if(this.isContainer_(node) || node.nodeType === 3) {
         if(wasText) continue;
         wasText = true;
       } else
         wasText = false;
 
+      /* We have got a potential match when `index´ === 0 . */
       if(index === 0) {
+        /* Skip to first text node if currently on a highlight container. */
         while(this.isContainer_(node)) {
           ch = node.childNodes;
           if(ch.length === 0 && ch[0].nodeType !== 3)
@@ -1259,6 +1410,7 @@
           node = ch[0];
         }
 
+        /* Ensure tag sought after is the right one. */
         if(node.nodeName.toLowerCase() !== tag) {
           console.error('Failed to locate tag "%s" at index %d',
                         tag, index);
@@ -1271,6 +1423,7 @@
       --index;
     }
 
+    /* No match! */
     return null;
   };
 
@@ -1350,7 +1503,11 @@
 
 
   /**
+   * Class responsible for updating the user interface widget, if one is
+   * supplied.
    * @class
+   * @param {Main} owner - reference to owning <code>Main</code> instance
+   * @param {Object} options - map containing options
    * */
   var Ui = function (owner, options)
   {
