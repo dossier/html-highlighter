@@ -14,6 +14,8 @@ require( [ 'jquery', 'src/html_highlighter' ], function ($, hh) {
 
 var MainModule = function (window, $, hh, undefined) {
 
+  var MAX_HIGHLIGHT = 5;
+
   var dataBaseUrl = 'data/',
       dataSources = [ {
         name: 'Viber hacked',
@@ -91,16 +93,10 @@ var MainModule = function (window, $, hh, undefined) {
               + ':' + range.end.marker.offset
               + '(' + range.end.offset + ')');
 
-          var hit,
-              xpath = range.computeXpath(elDocument),
-              finder = new hh.HtmlXpathFinder(highlighter.content, xpath);
-
+          var xpath = range.computeXpath();
           elWidgetSelection.find('.xpath')
             .text(xpath.xpath + ':' + xpath.start + ':' + xpath.end);
-
-          if((hit = finder.next()) !== false)
-            new hh.HtmlRangeHighlighter(5).do(hit);
-
+          highlight_(xpath.xpath, xpath.start, xpath.end);
           highlighter.clearSelectedRange();
           elWidgetSelection.addClass('enabled');
         }, 150);
@@ -118,7 +114,7 @@ var MainModule = function (window, $, hh, undefined) {
         highlighter = new hh.HtmlHighlighter( {
           container: elDocument,
           widget: elWidgetMain,
-          maxHighlight: 5
+          maxHighlight: MAX_HIGHLIGHT
         } );
         return;
       }
@@ -146,6 +142,20 @@ var MainModule = function (window, $, hh, undefined) {
   function load(index)
   {
     elDocument.html(dataSources[index].content.body.clean_html);
+  }
+
+  function highlight_(xpath, start, end)
+  {
+    var hit,
+        finder = new hh.HtmlXpathFinder(
+          highlighter.content,
+          { xpath: xpath, start: start, end: end });
+
+    if((hit = finder.next()) !== false)
+      new hh.HtmlRangeHighlighter(count).do(hit);
+
+    if(++ count >= MAX_HIGHLIGHT)
+      count = 0;
   }
 
 
