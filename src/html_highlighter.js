@@ -18,24 +18,25 @@
 } )(/** @lends <global> */ function (window, $, std, undefined) {
 
   /**
-   * @class
    * Main class of the HTML Highlighter module, which exposes an API enabling
    * clients to control all the features supported related to highlighting and
    * text selection.
-   *
+   * @class
    * @param {Object} options - Map containing options
    * */
   var Main = function (options)
   {
-    /* Assign defaults. */
+    /* Merge default options. */
     options = $.extend(true, $.extend(true, {}, defaults), options);
 
+    /* Define instance immutable properties. */
     Object.defineProperties(this, {
       ui:      { value: new Ui(this, options) },
       options: { value: options               },
       cursor:  { value: new Cursor(this)      }
     } );
 
+    /* Mutable properties. */
     this.queries = { };
     this.stats = {
       queries: 0,
@@ -348,9 +349,8 @@
 
 
   /**
-   * @class
    * Class responsible for managing the state of the highlight cursor.
-   *
+   * @class
    * @param {Object} owner - Reference to the owning instance.
    * */
   var Cursor = function (owner)
@@ -471,10 +471,9 @@
 
 
   /**
-   * @class
    * Class responsible for building and keeping a convenient representation of
    * the text present in an HTML DOM sub-tree.
-   *
+   * @class
    * @param {DOMElement|jQuery} root - Reference to a DOM element or jQuery
    * instance.  If a jQuery instance is given, its first element is used.
    * */
@@ -741,9 +740,9 @@
 
 
   /**
-   * @class
    * Class responsible for finding text in a <code>TextContent</code>
    * instance.
+   * @class
    *
    * @param {TextContent} content - Reference to <code>TextContent</code>
    * instance.
@@ -765,8 +764,7 @@
   TextFinder.prototype = Object.create(Finder.prototype);
 
   /**
-   * Return next available match.  If no more matches available, returns
-   * <code>false</code>.
+   * Return next available match.
    *
    * @returns {Range|false} Returns a <code>Range</code> if a match is
    * available, or <code>false</code> if no more matches are available. */
@@ -780,6 +778,8 @@
         length = match.length,
         start = this.getAt_(match.index);
 
+    /* Re-use start marker descriptor if end offset within bounds of start text
+     * node. */
     if(start.offset + length <= start.marker.node.nodeValue.length) {
       end = $.extend({ }, start);
       end.offset = start.offset + length - 1;
@@ -787,8 +787,6 @@
       end = this.getAt_(match.index + length - 1);
 
     range = new Range(this.content, start, end);
-
-    /* Move onto next search item. */
     ++ this.current;
 
     return range;
@@ -851,10 +849,9 @@
 
 
   /**
-   * @class
    * Convenience class for applying or removing highlighting on
    * <code>Range</code> instances.
-   *
+   * @class
    * @param {number} count - The CSS highlight class index to use.
    * */
   var RangeHighlighter = function (count)
@@ -895,9 +892,8 @@
 
 
   /**
-   * @class
    * Holds a representation of a range between two text nodes.
-   *
+   * @class
    * @param {TextContent} content - text representation instance.
    * @param {Object} start - descriptor of start of range.
    * @param {Object} end - descriptor of end of range.
@@ -950,7 +946,7 @@
    * @param {string} className - The CSS class name to apply.*/
   Range.prototype.surround = function (className)
   {
-    /* Optimised case: highlight does not span multiple nodes. */
+    /* Optimised case: highlighting does not span multiple nodes. */
     if(this.start.marker.node === this.end.marker.node) {
       this.surround_(this.start, this.start.offset,
                      this.end.offset, className);
@@ -1055,12 +1051,11 @@
 
 
   /**
-   * @class
    * This class builds XPath representations of text nodes, optionally within a
    * DOM sub-tree.  If a root node is specified, the XPath produced will
    * include the elements up to but <strong>not</strong> including said root
    * node.
-   *
+   * @class
    * @param {DOMElement} [root=null] - Root DOM node. */
   var TextNodeXpath = function (root)
   {
