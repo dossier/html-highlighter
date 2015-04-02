@@ -770,9 +770,11 @@
         length = match.length,
         start = this.getAt_(match.index);
 
-    end = ( length === 1
-            ? $.extend({ }, start) /* same as start: duplicate it */
-            : this.getAt_(match.index + length - 1) );
+    if(start.offset + length <= start.marker.node.nodeValue.length) {
+      end = $.extend({ }, start);
+      end.offset = start.offset + length - 1;
+    } else
+      end = this.getAt_(match.index + length - 1);
 
     range = new Range(this.content, start, end);
 
