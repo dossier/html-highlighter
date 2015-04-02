@@ -95,8 +95,10 @@ var MainModule = function (window, $, hh, undefined) {
 
           var xpath = range.computeXpath();
           elWidgetSelection.find('.xpath')
-            .text(xpath.xpath + ':' + xpath.start + ':' + xpath.end);
-          highlight_(xpath.xpath, xpath.start, xpath.end);
+            .text(xpath.start.xpath + ':' + xpath.start.offset
+                  + ' - ' + xpath.end.xpath + ':' + xpath.end.offset);
+
+          highlight_(xpath.start, xpath.end);
           highlighter.clearSelectedRange();
           elWidgetSelection.addClass('enabled');
         }, 150);
@@ -144,12 +146,12 @@ var MainModule = function (window, $, hh, undefined) {
     elDocument.html(dataSources[index].content.body.clean_html);
   }
 
-  function highlight_(xpath, start, end)
+  function highlight_(start, end)
   {
     var hit,
         finder = new hh.HtmlXpathFinder(
           highlighter.content,
-          { xpath: xpath, start: start, end: end });
+          { start: start, end: end });
 
     if((hit = finder.next()) !== false)
       new hh.HtmlRangeHighlighter(count).do(hit);
