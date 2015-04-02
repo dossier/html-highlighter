@@ -860,27 +860,32 @@
     if(!std.is_obj(subject))
       throw 'Invalid or no XPath object specified';
 
-    /* Compute text node element that the XPath representation refers to. */
-    var index,
-        node = (new TextNodeXpath(this.content.root)).elementAt(subject.xpath);
+    /* Compute text node start and end elements that the XPath representation
+     * refers to. */
+    var xpath = new TextNodeXpath(this.content.root),
+        start = xpath.elementAt(subject.start.xpath),
+        end = xpath.elementAt(subject.end.xpath);
 
     /* If an element could not be obtained from the XPath representation, abort
-     * now. */
-    if(node === null)
-      return;
+     * now (messages will have been output).*/
+    if(start === null || end === null) return;
 
     /* Retrieve global character offset of the text node. */
-    index = content.find(node);
-    if(index < 0) {
-      console.error('Unable to derive global offset from element', node);
+    start = content.find(start); end = content.find(end);
+    if(start < 0 || end < 0) {
+      console.error('Unable to derive global offsets: %d:%d',
+                    start, end);
       return;
-    }
+    } else if(start > end)
+      throw 'Invalid XPath representation: start > end';
+
+    /* Retrieve offset markers. */
+    start = content.at(start); end = content.at(end);
 
     /* Save global character offset and relative start and end offsets in
      * descriptor. */
-    this.results.push( { offset: content.at(index).offset,
-                         start: subject.start,
-                         end: subject.end } );
+    this.results.push( { start: start.offset + subject.start.offset,
+                         end: end.offset + subject.end.offset } );
   };
 
   XpathFinder.prototype = Object.create(Finder.prototype);
@@ -903,8 +908,8 @@
      * check has to be made to ascertain if the end offset falls within the
      * start node. */
     return new Range(this.content,
-                     this.getAt_(subject.offset + subject.start),
-                     this.getAt_(subject.offset + subject.end));
+                     this.getAt_(subject.start),
+                     this.getAt_(subject.end));
   };
 
 
@@ -1043,14 +1048,20 @@
    * @returns {string} XPath representation of active range. */
   Range.prototype.computeXpath = function ()
   {
-    var node = this.start.marker.node,
+    var start = this.start.marker.node,
+        end = this.end.marker.node,
         computor = new TextNodeXpath(this.content.root),
         descr = {
-          xpath: computor.xpathOf(node),
-          start: this.start.offset + computor.offset(node)
+          start: {
+            xpath: computor.xpathOf(start),
+            offset: this.start.offset + computor.offset(start)
+          },
+          end: {
+            xpath: computor.xpathOf(end),
+            offset: this.end.offset + computor.offset(end)
+          }
         };
 
-    descr.end = descr.start + this.length() - 1;
     return descr;
   };
 
