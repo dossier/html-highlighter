@@ -1,17 +1,24 @@
 * To-do items
+** TODO Resolve items marked as =TODO=
+** TODO =XpathFinder.next=: don't always call =getAt_=
+
 ** TODO =Main.add=: do not save every single highlight id
 There is currently no need to save every single highlight id in the =sets= array since individual query set highlights will never be removed.  If they're never removed, then one can assume that highlight ids within a particular query set are contiguous, with the only attribute needed to be saved being the *start* highlight id.
 
 ** TODO =Range.computeXpath=: looking for index of =Css.highlight=
 This is potentially problematic if the document uses class names that contain or are equal to =Css.highlight=.
 
+** DONE Document new classes and code improvements
+- State "DONE"       from "IN-PROGRESS" [2015-04-02 Thu 12:26]
+- State "IN-PROGRESS" from "TODO"       [2015-04-02 Thu 07:58]
+Class =XPathFinder= and methods =nthOf_=, =elementAt=, =xpathOf=.
+
 ** DONE Employ binary search algorithm
 - State "DONE"       from "TODO"       [2015-03-30 Mon 14:20]
 Employ binary search algorithm to look up offset.
 
+** DONE =remove=: not recalculating the current query status
+- State "DONE"       from "TODO"       [2015-03-30 Mon 14:20]
 ** CANCELED =remove=: must update the `highlight-*´ class of all items
 - State "CANCELED"   from "TODO"       [2015-03-30 Mon 14:20] \\
   Not necessary anymore.
-
-** DONE =remove=: not recalculating the current query status
-- State "DONE"       from "TODO"       [2015-03-30 Mon 14:20]
