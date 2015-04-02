@@ -483,9 +483,7 @@
     Object.defineProperty(this,
       'root', { value:  std.$.is(root) ? root.get(0) : root } );
 
-    this.offset = 0;
-    this.markers = [ ];
-
+    this.text = this.markers = null;
     this.refresh();
   };
 
@@ -495,7 +493,17 @@
   TextContent.prototype.refresh = function ()
   {
     this.text = '';
-    this.visit_(this.root);
+    this.markers = [ ];
+
+    var marker = this.markers,
+        offset = this.visit_(this.root, 0);
+
+    /* Sanity check. */
+    if(this.markers.length !== 0) {
+      marker = marker[marker.length - 1];
+      if(offset - marker.node.nodeValue.length != marker.offset)
+        throw 'Invalid state detected: offset mismatch';
+    }
   };
 
   /**
@@ -667,24 +675,26 @@
    * @access private
    *
    * @param {DOMElement} node - The node to visit. */
-  TextContent.prototype.visit_ = function (node)
+  TextContent.prototype.visit_ = function (node, offset)
   {
     if(node.nodeType === 3) {
       var content = node.nodeValue,
           length = content.length;
 
-      this.markers.push( { node: node, offset: this.offset } );
+      /* Save reference to text node and store global offset in the markers
+       * array, in addition to . */
+      this.markers.push( { node: node, offset: offset } );
       this.text += content;
-      this.offset += length;
-
-      return;
+      return offset + length;
     }
 
     var ch = node.childNodes;
     if(ch.length > 0) {
       for(var i = 0, l = ch.length; i < l; ++i)
-        this.visit_(ch[i]);
+        offset = this.visit_(ch[i], offset);
     }
+
+    return offset;
   };
 
 
