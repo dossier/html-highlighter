@@ -80,21 +80,29 @@ var MainModule = function (window, $, hh, undefined) {
           if(mouseDown !== 0) return;
 
           var range = highlighter.getSelectedRange();
-          if(range !== null) {
-            elWidgetSelection.find('.offset').text(
-              range.start.marker.offset
-                + '(' + range.start.offset + ')'
-                + ':' + range.end.marker.offset
-                + '(' + range.end.offset + ')');
-
-            var xpath = range.computeXpath(elDocument);
-            elWidgetSelection.find('.xpath')
-              .text(xpath)
-              .attr('title', xpath);
-            new hh.HtmlRangeHighlighter(5).do(range);
-            elWidgetSelection.addClass('enabled');
-          } else
+          if(range === null) {
             elWidgetSelection.removeClass('enabled');
+            return;
+          }
+
+          elWidgetSelection.find('.offset').text(
+            range.start.marker.offset
+              + '(' + range.start.offset + ')'
+              + ':' + range.end.marker.offset
+              + '(' + range.end.offset + ')');
+
+          var hit,
+              xpath = range.computeXpath(elDocument),
+              finder = new hh.HtmlXpathFinder(highlighter.content, xpath);
+
+          elWidgetSelection.find('.xpath')
+            .text(xpath.xpath + ':' + xpath.start + ':' + xpath.end);
+
+          if((hit = finder.next()) !== false)
+            new hh.HtmlRangeHighlighter(5).do(hit);
+
+          highlighter.clearSelectedRange();
+          elWidgetSelection.addClass('enabled');
         }, 150);
       },
       mousedown: function () {
