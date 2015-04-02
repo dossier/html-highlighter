@@ -690,6 +690,48 @@
   };
 
 
+  var Finder = function (content, subject)
+  {
+    Object.defineProperty(this, 'content', { value: content } );
+
+    this.results = [ ];
+    this.current = 0;
+  };
+
+  Finder.construct = function (content, subject)
+  {
+    return std.is_obj(subject)
+      ? new XpathFinder(content, subject)
+      : new TextFinder(content, subject);
+  };
+
+  /**
+   * Return next available match.  If no more matches available, returns
+   * <code>false</code>.
+   * @abstract
+   *
+   * @returns {Range|false} Returns a <code>Range</code> if a match is
+   * available, or <code>false</code> if no more matches are available. */
+  Finder.prototype.next = std.absm_noti;
+
+  /* Protected interface
+   * ----------------- */
+  /**
+   * Return a <code>Range</code> descriptor for a given offset.
+   * @access private
+   *
+   * @param {number} offset - Text offset
+   * @returns {Object} Range descriptor. */
+  Finder.prototype.getAt_ = function (offset)
+  {
+    var index = this.content.indexOf(offset);
+    if(index === -1)
+      throw "Failed to retrieve marker for offset: " + offset;
+
+    return Range.descriptorAbs(this.content.at(index), offset);
+  };
+
+
   /**
    * @class
    * Class responsible for finding text in a <code>TextContent</code>
@@ -700,11 +742,10 @@
    * @param {string} subject - Subject string to match. */
   var TextFinder = function (content, subject)
   {
-    this.content = content;
-    this.results = [ ];
-    this.current = 0;
+    /* Construct base class. */
+    Finder.call(this, content);
 
-    /* TODO: allow regex searches. */
+    /* Build an array containing all hits of `subject´. */
     var match,
         re = new RegExp(subject.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"),
                         'gi');
@@ -712,6 +753,8 @@
     while((match = re.exec(this.content.text)) !== null)
       this.results.push( { length: match[0].length, index: match.index } );
   };
+
+  TextFinder.prototype = Object.create(Finder.prototype);
 
   /**
    * Return next available match.  If no more matches available, returns
@@ -741,21 +784,10 @@
     return range;
   };
 
-  /* Private interface
-   * ----------------- */
-  /**
-   * Return a <code>Range</code> descriptor for a given offset.
-   * @access private
-   *
-   * @param {number} offset - Text offset
-   * @returns {Object} Range descriptor. */
-  TextFinder.prototype.getAt_ = function (offset)
-  {
-    var index = this.content.indexOf(offset);
-    if(index === -1)
-      throw "Failed to retrieve marker for offset: " + offset;
 
-    return Range.descriptorAbs(this.content.at(index), offset);
+  /**
+  {
+
   };
 
 
