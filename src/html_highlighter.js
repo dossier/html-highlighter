@@ -962,6 +962,10 @@
   {
     this.content = content;
 
+    /* Sanity check: */
+    if(start.marker.offset + start.offset > end.marker.offset + end.offset)
+      throw 'Invalid range: start > end';
+
     /* Attributes */
     Object.defineProperties(this, {
       start: { value: start },
