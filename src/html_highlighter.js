@@ -88,14 +88,16 @@
     };
 
     /* TODO: There is currently no need to save every single highlight id in
-     * the `sets´ array since individual query set highlights will never be
-     * removed.  If they're never removed, then one can assume that highlight
-     * ids within a particular query set are contiguous, with the only
-     * attribute needed to be saved being the *start* highlight id.
+     * the `sets´ array since, if I understand it correctly, individual query
+     * set highlights will never be removed.  If they're never removed, then
+     * one can assume that highlight ids within a particular query set are
+     * contiguous, with the only attribute needed to be saved being the *start*
+     * highlight id; the end highlight id can be computed by adding set length
+     * minus 1 to start id.
      * --------------------------------------------------------------------- */
-    /* For each query, perform a lookup, in the internal text representation
+    /* For each query, perform a lookup in the internal text representation
      * and highlight each hit.  The global id of each highlight is recorded in
-     * `this.queries[name]´. */
+     * the `this.queries[name].set´ array. */
     queries.forEach(function (i) {
       var hit,
           finder = new TextFinder(self.content, i);
