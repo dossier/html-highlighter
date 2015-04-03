@@ -13,6 +13,8 @@
     window.define([ 'jquery', 'SortingCommon' ], function($, std) {
       return factory(window, $, std);
     } );
+  } else {
+    window.HtmlHighlighter = factory(window, $, SortingCommon);
   }
 
 } )(/** @lends <global> */ function (window, $, std, undefined) {
