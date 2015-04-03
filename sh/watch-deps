@@ -1,0 +1,20 @@
+#!/bin/bash
+
+readonly dir_root="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
+readonly dir_src="$dir_root/src"
+
+source "$dir_root/sh/settings.sh"
+source "$dir_root/sh/libtools.sh"
+
+command -v inotifywait >/dev/null 2>&1 || error "program \`inotifywait´ not found"
+
+set -e
+
+info "watching for changes: $dir_src"
+while [ 1 ]; do
+  file=$(inotifywait -r -e create,modify,delete,move "$dir_src" 2>/dev/null|cut -d' ' -f 3)
+
+  info "delayed update taking place"
+  sleep $DELAY_UPDATE
+  bash -c "$dir_root/sh/update-deps"
+done

@@ -1,0 +1,10 @@
+# settings.sh.default --- Contains DEFAULT project settings used by Bash scripts.
+#
+# Copyright (c) 2015 Diffeo
+#
+# Comments:
+# By default, the settings file (`settings.sh´) is a symbolic link to this file.
+# This file contains default settings and should *never* be changed. If you wish
+# to customise your own settings, please copy this file and name it
+# `settings.sh´.
+#

@@ -1,0 +1,5 @@
+g_descriptor = {
+  body: {
+     clean_html: "<p>Lorem <strong>ipsum <small>dolor</small> <a><span>amet</span></a></strong> sid.</p><p>Lorem <strong>ipsum <small>dolor</small> <a><span>amet</span></a></strong> sid.</p>"
+  }
+};
