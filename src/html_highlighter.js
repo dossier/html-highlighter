@@ -430,13 +430,13 @@
     }
 
     this.clearActive_();
-    var el = $('.' + Css.highlight + '-id-' + query.set[index - offset])
+    var $el = $('.' + Css.highlight + '-id-' + query.set[index - offset])
       .addClass(Css.enabled)
       .eq(0);
 
     /* Scroll viewport if element not visible. */
-    if(!std.$.inview(el))
-      std.$.scrollIntoView(el);
+    if(!std.$.inview($el))
+      std.$.scrollIntoView($el);
 
     this.query = query;
     this.index = index;
@@ -880,8 +880,7 @@
     /* Retrieve global character offset of the text node. */
     start = content.find(start); end = content.find(end);
     if(start < 0 || end < 0) {
-      console.error('Unable to derive global offsets: %d:%d',
-                    start, end);
+      console.error('Unable to derive global offsets: %d:%d', start, end);
       return;
     } else if(start > end)
       throw 'Invalid XPath representation: start > end';
@@ -948,12 +947,12 @@
      *
      * @param {number} id - Id of the highlight to remove. */
     this.undo = function (id) {
-      var coll = $('.' + Css.highlight + '-id-' + id);
-      coll.each(function () {
-        var el = $(this);
+      var $coll = $('.' + Css.highlight + '-id-' + id);
+      $coll.each(function () {
+        var $el = $(this);
 
-        el.contents().insertBefore(el);
-        el.remove();
+        $el.contents().insertBefore($el);
+        $el.remove();
       } );
     };
   };
@@ -1701,9 +1700,9 @@
     } );
 
     this.nodes.entities.click(function (ev) {
-      var node = $(ev.target);
-      if(node.data('hh-scope') === 'remove')
-        self.owner.remove(self.getName_(node));
+      var $node = $(ev.target);
+      if($node.data('hh-scope') === 'remove')
+        self.owner.remove(self.getName_($node));
     } );
 
     this.nodes.next.click(function () { self.owner.next(); } );
@@ -1737,37 +1736,37 @@
 
     /* Template `entity-row´ must supply an LI element skeleton. */
     var self = this,
-        elu = $('<ul/>');
+        $elu = $('<ul/>');
 
     for(var k in this.owner.queries) {
       var q = this.owner.queries[k],
-          eli = this.templates.entityRow.clone();
+          $eli = this.templates.entityRow.clone();
 
       if(q.enabled)
-        eli.find('enable').prop('checked', true);
+        $eli.find('enable').prop('checked', true);
 
-      eli.find('name').text(k);
-      eli.find('count').text(q.set.length);
-      elu.append(eli.get());
+      $eli.find('name').text(k);
+      $eli.find('count').text(q.set.length);
+      $elu.append($eli.get());
     }
 
-    elu.click(function (ev) {
-      var node = $(ev.target);
-      if(node.data('hh-scope') === 'enable') {
-        if(node.prop('checked'))
-          self.owner.enable(self.getName_(node));
+    $elu.click(function (ev) {
+      var $node = $(ev.target);
+      if($node.data('hh-scope') === 'enable') {
+        if($node.prop('checked'))
+          self.owner.enable(self.getName_($node));
         else
-          self.owner.disable(self.getName_(node));
+          self.owner.disable(self.getName_($node));
       }
     } );
 
     this.nodes.entities.children().remove();
-    this.nodes.entities.append(elu);
+    this.nodes.entities.append($elu);
   };
 
-  Ui.prototype.getName_ = function (node)
+  Ui.prototype.getName_ = function ($node)
   {
-    return node.parentsUntil('ul').last()
+    return $node.parentsUntil('ul').last()
       .find('[data-hh-scope="name"]').text();
   };
 
