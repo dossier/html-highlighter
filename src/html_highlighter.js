@@ -631,7 +631,7 @@
    *
    * <p>Throws an exception if the offset is invalid.</p>
    *
-   * Note: employs the binary search algorithm.
+   * <p>Note: employs the binary search algorithm.</p>
    *
    * @param {number} offset - The offset to look up.
    * @returns {number} The marker index that contains <code>offset</code>. */
