@@ -859,8 +859,11 @@
     /* Construct base class. */
     Finder.call(this, content);
 
-    if(!std.is_obj(subject))
+    if(!std.is_obj(subject)
+       || subject.start.offset < 1
+       || subject.end.offset < 1) {
       throw 'Invalid or no XPath object specified';
+    }
 
     /* Compute text node start and end elements that the XPath representation
      * refers to. */
@@ -888,8 +891,8 @@
 
     /* Save global character offset and relative start and end offsets in
      * descriptor. */
-    this.results.push( { start: start.offset + subject.start.offset,
-                         end: end.offset + subject.end.offset } );
+    this.results.push( { start: start.offset + subject.start.offset - 1,
+                         end: end.offset + subject.end.offset - 1 } );
   };
 
   XpathFinder.prototype = Object.create(Finder.prototype);
@@ -1058,11 +1061,11 @@
         descr = {
           start: {
             xpath: computor.xpathOf(start),
-            offset: this.start.offset + computor.offset(start)
+            offset: this.start.offset + computor.offset(start) + 1
           },
           end: {
             xpath: computor.xpathOf(end),
-            offset: this.end.offset + computor.offset(end)
+            offset: this.end.offset + computor.offset(end) + 1
           }
         };
 
