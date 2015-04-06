@@ -1363,7 +1363,8 @@
    * @returns {number} Index of node plus one. */
   TextNodeXpath.prototype.indexOfElement_ = function (node)
   {
-    var index = 1;
+    var index = 1,
+        name = node.nodeName.toLowerCase();
 
     if(node === null || this.isLikeText_(node))
       throw 'No node specified or node of text type';
@@ -1372,7 +1373,7 @@
       /* Don't count contiguous text nodes or highlight containers as being
        * separate nodes.  IOW, contiguous text nodes or highlight containers
        * are treated as ONE element. */
-      if(!this.isLikeText_(node))
+      if(!this.isLikeText_(node) && node.nodeName.toLowerCase() === name)
         ++ index;
     }
 
@@ -1492,26 +1493,18 @@
   {
     var node, ch = parent.children;
 
-    if(index >= ch.length) return null;
-
     /* Skip highlight containers. */
     for(var i = 0, l = ch.length; i < l; ++i) {
       node = ch[i];
 
-      if(this.isHighlight_(node))
-        continue;
-      else if(index === 0) {
-        if(node.nodeName.toLowerCase() !== tag) {
-          console.error('Failed to locate tag "%s" at index %d', tag, index);
-          return null;
-        }
-
-        return node;
+      if(this.isHighlight_(node)) continue;
+      else if(node.nodeName.toLowerCase() === tag) {
+        if(index === 0) return node;
+        --index;
       }
-
-      --index;
     }
 
+    console.error('Failed to locate tag "%s" at index %d', tag, index);
     return null;
   };
 
