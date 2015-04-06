@@ -864,13 +864,15 @@
 
     /* Compute text node start and end elements that the XPath representation
      * refers to. */
-    var xpath = new TextNodeXpath(this.content.root),
-        start = xpath.elementAt(subject.start.xpath),
-        end = xpath.elementAt(subject.end.xpath);
+    var end,
+        xpath = new TextNodeXpath(this.content.root),
+        start = xpath.elementAt(subject.start.xpath);
 
     /* If an element could not be obtained from the XPath representation, abort
      * now (messages will have been output).*/
-    if(start === null || end === null) return;
+    if(start === null) return;
+    end = xpath.elementAt(subject.end.xpath);
+    if(end === null) return;
 
     /* Retrieve global character offset of the text node. */
     start = content.find(start); end = content.find(end);
