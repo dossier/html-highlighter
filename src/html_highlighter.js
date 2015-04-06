@@ -1159,31 +1159,34 @@
    * @returns {string} XPath representation. */
   TextNodeXpath.prototype.xpathOf = function (node)
   {
-    var xpath = '';
+    /* Note: no checks required since `indexOfText_´ throws exception if node
+     * invalid: null or not like text. */
+    var xpath = '/text()[' + this.indexOfText_(node) + ']';
 
-    if(!node || node.nodeType !== 3)
-      throw 'Invalid or no text node specified';
+    /* Skip all text or highlight container nodes. */
+    for(node = node.parentNode;
+        node !== null && node !== this.root && this.isLikeText_(node);
+        node = node.parentNode);
 
-    /* Start traversing from `node´ upwards until `root´ or null is hit. */
-    for(; node !== this.root && (node.nodeType === 1 || node.nodeType === 3);
+    /* Start traversing upwards from `node´'s parent node until we hit `root´
+     * (or null). */
+    for(; node !== null && node !== this.root && node.nodeType === 1;
         node = node.parentNode)
     {
-      var id,
-          name = node.nodeName.toLowerCase(),
-          wasText = this.isContainer_(node) || node.nodeType === 3;
-
-      /* Skip all contiguous text nodes, including highlight containers, and
-       * calculate the index of element relative to the first sibling. */
-      node = this.skip_(node);
-      id = this.indexOf_(node, wasText);
-      xpath = '/' + name + (id === 1 ? '' : '[' + id + ']') + xpath;
+      var id = this.indexOfElement_(node);
+      xpath = '/' + node.nodeName.toLowerCase()
+        + (id === 1 ? '' : '[' + id + ']') + xpath;
     }
+
+    /* This is bad.  Lay off the LSD. */
+    if(node === null)
+      throw 'Specified node not within root\'s subtree';
 
     return xpath;
   };
 
   /**
-   * <p>Compute and return element referenced by an XPath string.</p>
+   * <p>Compute element referenced by an XPath string.</p>
    *
    * <p>The element computed is the same that would result from traversing a
    * DOM sub-tree fully normalised and thus unaffected by text node
@@ -1198,48 +1201,35 @@
         cur = this.root,          /* start from the root node */
         parts = xpath.split('/');
 
-    if(parts[0].length !== 0) throw 'Invalid XPath representation';
+    /* At an absolutely minimum, a XPath representation must be of the form:
+     * /text(), which results in `parts´ having a length of 2. */
+    if(parts[0].length !== 0 || parts.length < 2)
+      throw 'Invalid XPath representation';
 
     /* Break up the constituent parts of the XPath representation but discard
-     * the first element since it'll be '/'. */
-    for(var i = 1, l = parts.length; i < l; ++i) {
-      part = parts[i];
-      if(part.indexOf('[') === -1)
-        index = 0;              /* No index specified: assume first. */
-      else {
-        /* *Attempt* to retrieve element's index.  If an exception is thrown,
-         * produce a meaningful error but re-throw since the XPath
-         * representation is clearly invalid. */
-        try {
-          part = part.match(/([^[]+)\[(\d+)\]/);
-          index = parseInt(part[2]);
-          part = part[1];
-          if(-- index < 0) throw 'Invalid index: ' + index;
-        } catch(x) {
-          console.error('Failed to extract child index: %s', part);
-          throw x;              /* Shouldn't have happened. */
-        }
-      }
-
-      /* Actually get the element given by the XPath index. */
-      cur = this.nthOf_(cur, part, index);
+     * the first element since it'll be empty due to the starting forward
+     * slash in the XPath string. */
+    for(var i = 1, l = parts.length - 1; i < l; ++i) {
+      part = this.xpathPart_(parts[i]);
+      cur = this.nthElementOf_(cur, part.tag, part.index);
       if(cur === null) {
         /* This, we would hope, would be indicative that the tree mutated.
-         * Otherwise, boog in the valves changing the electrostatic
-         * potential of the system.  It can only be a boog. */
-        console.error('Failed to find nth child: %d', index, cur);
-        /* It's an actual _physical_ boog. Nothing wrong with the logic! */
-        return null;            /* Go and check the valves. */
+         * Otherwise, either this algorithm is flawed or the reverse operation
+         * is. */
+        console.error('Failed to find nth child:', part, cur);
+        return null;
       }
     }
 
-    /* The *last* element *must* be a text node.  Otherwise, the XPath
-     * representation is invalid; or see boog comments above.  Seeing as we
-     * can't prove the XPath representation is invalid, an exception isn't
-     * thrown. */
-    if(cur.nodeType !== 3) {
+    /* Now process the text element. */
+    part = this.xpathPart_(parts[i]);
+    cur = part.tag === 'text()'
+      ? this.nthTextOf_(cur, part.index)
+      : null;
+
+    if(cur === null || cur.nodeType !== 3) {
       console.error('Element at specified XPath NOT a text node: %s',
-                    xpath, cur);
+                    xpath, part, cur);
       return null;
     }
 
@@ -1278,14 +1268,14 @@
         node = node.parentNode;
         if(node === this.root || node === null)
           throw 'Invalid state: expected highlight container or text node';
-        else if(!this.isContainer_(node))
+        else if(!this.isHighlight_(node))
           return offset;
         else if(node.previousSibling !== null)
           break;
       }
 
       node = node.previousSibling;
-      if(node.nodeType !== 3 && !this.isContainer_(node))
+      if(!this.isLikeText_(node))
         break;
 
       offset += this.length_(node);
@@ -1339,7 +1329,7 @@
       while(true) {
         /* Skip to first highlight container element. */
         var parent = node.parentNode;
-        if(parent === this.root || !this.isContainer_(parent)) break;
+        if(parent === this.root || !this.isHighlight_(parent)) break;
         node = parent;
       }
     }
@@ -1354,7 +1344,7 @@
    *
    * @param {DOMElement} node - DOM element to check
    * @returns {boolean} <code>true</code> if it is a highlight container. */
-  TextNodeXpath.prototype.isContainer_ = function (node)
+  TextNodeXpath.prototype.isHighlight_ = function (node)
   {
     /* NOTE: this is potentially problematic if the document uses class names
      * that contain or are equal to `Css.highlight´. */
@@ -1363,10 +1353,38 @@
   };
 
   /**
-   * <p>Return the XPath index of an arbitrary node relative to its sibling
-   * nodes.  Since text nodes are liable to be truncated to enable highlight of
-   * a substring of text, this method counts contiguous text nodes and
-   * highlight container elements as one, e.g.:</p>
+   * <p>Return the XPath index of an arbitrary element node, excluding text
+   * nodes, relative to its sibling nodes.</p>
+   *
+   * <p>Note that XPath indices are <strong>not</strong> zero-based.</p>
+   *
+   * @access private
+   * @param {DOMElement} node - DOM element to calculate index of.
+   * @returns {number} Index of node plus one. */
+  TextNodeXpath.prototype.indexOfElement_ = function (node)
+  {
+    var index = 1;
+
+    if(node === null || this.isLikeText_(node))
+      throw 'No node specified or node of text type';
+
+    while( (node = node.previousSibling) !== null) {
+      /* Don't count contiguous text nodes or highlight containers as being
+       * separate nodes.  IOW, contiguous text nodes or highlight containers
+       * are treated as ONE element. */
+      if(!this.isLikeText_(node))
+        ++ index;
+    }
+
+    return index;
+  };
+
+  /**
+   * <p>Return the XPath index of an arbitrary <strong>text</strong> node,
+   * excluding element nodes, relative to its sibling nodes.  Since text nodes
+   * are liable to be truncated to enable highlight of a substring of text,
+   * this method counts contiguous text nodes and highlight container elements
+   * as one, e.g.:</p>
    *
    * <pre>
    * #text + STRONG + #text + SPAN.highlight
@@ -1384,52 +1402,148 @@
    * @access private
    * @param {DOMElement} node - DOM element to calculate index of.
    * @returns {number} Index of node plus one. */
-  TextNodeXpath.prototype.indexOf_ = function (node, wasText)
+  TextNodeXpath.prototype.indexOfText_ = function (node)
   {
-    var index = 1;
+    var index = 1,
+        wast = true;
 
+    if(node === null || !this.isLikeText_(node))
+      throw 'No node specified or not of text type';
+
+    node = this.skip_(node);
     while( (node = node.previousSibling) !== null) {
       /* Don't count contiguous text nodes or highlight containers as being
        * separate nodes.  IOW, contiguous text nodes or highlight containers
        * are treated as ONE element. */
-      if(this.isContainer_(node) || node.nodeType === 3) {
-        if(wasText) continue;
-        wasText = true;
-      } else
-        wasText = false;
+      if(this.isLikeText_(node)) {
+        if(wast) continue;
+        wast = true;
 
-      ++ index;
+        ++ index;
+      } else
+        wast = false;
     }
 
     return index;
   };
 
   /**
-   * <p>Find the nth normalised child element within a specified node.</p>
+   * <p>Return <code>true</code> if specified node is either of text type or a
+   * highlight container, thus like a text node.</p>
+   *
+   * @param {DOMElement} node - node to check
+   * @returns */
+  TextNodeXpath.prototype.isLikeText_ = function (node)
+  {
+    return node.nodeType === 3 || this.isHighlight_(node);
+  };
+
+  /**
+   * <p>Return an object map containing a tag and index of an XPath
+   * representation <i>part</i>.</p>
+   *
+   * <p>Exceptions may be thrown if the regular expression matcher encounters
+   * an unrecoverable error of if the index in the XPath <i>part</i> is less
+   * than 1.</p>
+   *
+   * <p>Object returned is of the form:</p>
+   * <pre>{
+   *   tag: string,
+   *   index: integer
+   * }</pre>
+   *
+   * @param {string} part - An XPath representation part; e.g. 'div[2]',
+   * 'text()[3]' or 'p'
+   * @returns {Object} Object containing tag and index */
+  TextNodeXpath.prototype.xpathPart_ = function (part)
+  {
+    var index;
+
+    if(part.indexOf('[') === -1)
+      return { tag: part, index: 0 }; /* No index specified: assume first. */
+
+    /* *Attempt* to retrieve element's index.  If an exception is thrown,
+     * produce a meaningful error but re-throw since the XPath
+     * representation is clearly invalid. */
+    try {
+      part = part.match(/([^[]+)\[(\d+)\]/);
+      index = parseInt(part[2]);
+      part = part[1];
+      if(-- index < 0) throw 'Invalid index: ' + index;
+    } catch(x) {
+      console.error('Failed to extract child index: %s', part);
+      throw x;    /* Re-throw after dumping inspectable object. */
+    }
+
+    return { tag: part, index: index };
+  };
+
+  /**
+   * <p>Find the nth child element of a specified node,
+   * <strong>excluding</strong> text nodes.</p>
+   *
+   * @param {DOMElement} parent - node whose children to search
+   * @param {string} tag - the tag name of the node sought in
+   * <strong>lowercase</strong> form
+   * @param {integer} index - child index of the node sought
+   *
+   * @returns {DOMElement} The nth element of <code>node</code> */
+  TextNodeXpath.prototype.nthElementOf_ = function (parent, tag, index)
+  {
+    var node, ch = parent.children;
+
+    if(index >= ch.length) return null;
+
+    /* Skip highlight containers. */
+    for(var i = 0, l = ch.length; i < l; ++i) {
+      node = ch[i];
+
+      if(this.isHighlight_(node))
+        continue;
+      else if(index === 0) {
+        if(node.nodeName.toLowerCase() !== tag) {
+          console.error('Failed to locate tag "%s" at index %d', tag, index);
+          return null;
+        }
+
+        return node;
+      }
+
+      --index;
+    }
+
+    return null;
+  };
+
+  /**
+   * <p>Find the nth normalised text node within a specified element node.</p>
    *
    * @param {DOMElement} parent - node whose children to search
    * @param {string} tag - the tag name of the node sought
    * @param {integer} index - child index of the node sought */
-  TextNodeXpath.prototype.nthOf_ = function (parent, tag, index)
+  TextNodeXpath.prototype.nthTextOf_ = function (parent, index)
   {
     var node,
         ch = parent.childNodes,
-        wasText = false;
+        wast = false;
 
     for(var i = 0, l = ch.length; i < l; ++i) {
       node = ch[i];
 
-      /* Don't count contiguous text or highlight container nodes. */
-      if(this.isContainer_(node) || node.nodeType === 3) {
-        if(wasText) continue;
-        wasText = true;
-      } else
-        wasText = false;
+      /* Don't count contiguous text or highlight container nodes and ignore
+       * non-text nodes. */
+      if(this.isLikeText_(node)) {
+        if(wast) continue;
+        wast = true;
+      } else {
+        wast = false;
+        continue;
+      }
 
       /* We have got a potential match when `index´ === 0 . */
       if(index === 0) {
         /* Skip to first text node if currently on a highlight container. */
-        while(this.isContainer_(node)) {
+        while(this.isHighlight_(node)) {
           ch = node.childNodes;
           if(ch.length === 0 && ch[0].nodeType !== 3)
             throw 'Invalid state: expected text node inside container';
@@ -1438,9 +1552,8 @@
         }
 
         /* Ensure tag sought after is the right one. */
-        if(node.nodeName.toLowerCase() !== tag) {
-          console.error('Failed to locate tag "%s" at index %d',
-                        tag, index);
+        if(node.nodeName.toLowerCase() !== '#text') {
+          console.error('Failed to locate text node at index %d', index);
           return null;
         }
 
@@ -1453,7 +1566,6 @@
     /* No match! */
     return null;
   };
-
 
   /**
    * <p>Convenient class for visiting all text nodes that are siblings and
