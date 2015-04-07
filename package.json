@@ -1,0 +1,20 @@
+{
+  "name": "html-highlighter",
+  "version": "0.1.0",
+  "description": "HTML Highlighter",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:dossier/html-highlighter.git"
+  },
+  "dependencies": { },
+  "devDependencies": {
+    "grunt": "0.4.x",
+    "grunt-cli": "0.1.x",
+    "grunt-saucelabs": "8.x",
+    "grunt-contrib-connect": "0.x",
+    "grunt-contrib-watch": "0.x"
+  },
+  "scripts": {
+    "test": "grunt test"
+  }
+}
