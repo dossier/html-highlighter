@@ -149,10 +149,8 @@
   {
     var q = this.queries[name];
 
-    if(q === undefined)
-      throw 'Query set non-existent';
-    else if(q.enabled)
-      return;
+    if(q === undefined) throw 'Query set non-existent';
+    else if(q.enabled)  return;
 
     q.set.forEach(function (i) {
       $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
