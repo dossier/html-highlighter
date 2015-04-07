@@ -21,6 +21,9 @@ var MainModule = function (window, $, hh, undefined) {
         name: 'Viber hacked',
         url: 'viber-attacked-by-syrian-electronic-army.json'
       }, {
+        name: 'Viber hacked -- cropped',
+        url: 'viber-attacked-by-syrian-electronic-army-cropped.json'
+      }, {
         name: 'Ars Technica',
         url: 'ars-technica.json'
       }, {
