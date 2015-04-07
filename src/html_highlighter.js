@@ -65,11 +65,12 @@
   };
 
   /**
-   * Create a query set by the name and containing one or more queries.  If the
-   * query set already exists, its contents and highlights are first destroyed
-   * and new one created.
+   * <p>Create a query set by the name and containing one or more queries.  If
+   * the query set already exists, its contents and highlights are first
+   * destroyed and new one created.</p>
    *
-   * Note that, at this point in time, only string queries are supported.
+   * <p>Note that, at this point in time, only string queries are
+   * supported.</p>
    *
    * @param {string} name - Name of the query set.
    * @param {string[]} queries - Array containing individual queries to
@@ -125,9 +126,9 @@
   };
 
   /**
-   * Remove a query set by name.
+   * <p>Remove a query set by name.</p>
    *
-   * An exception is thrown if the query set does not exist.
+   * <p>An exception is thrown if the query set does not exist.</p>
    *
    * @param {string} name - Name of the query set to remove. */
   Main.prototype.remove = function (name)
@@ -139,10 +140,10 @@
   };
 
   /**
-   * Enable a query set.
+   * <p>Enable a query set.</p>
    *
-   * An exception is thrown if the query set does not exist.  If the query set
-   * is currently already enabled, nothing is done.
+   * <p>An exception is thrown if the query set does not exist.  If the query
+   * set is currently already enabled, nothing is done.</p>
    *
    * @param {string} name - Name of the query set to enable. */
   Main.prototype.enable = function (name)
@@ -164,12 +165,12 @@
   };
 
   /**
-   * Disable a query set.
+   * <p>Disable a query set.</p>
    *
-   * An exception is thrown if the query set does not exist.  If the query set
-   * is currently already disabled, nothing is done.
+   * <p>An exception is thrown if the query set does not exist.  If the query
+   * set is currently already disabled, nothing is done.</p>
    *
-   * @parm {string} name - Name of the query set to disable. */
+   * @param {string} name - Name of the query set to disable. */
   Main.prototype.disable = function (name)
   {
     var q = this.queries[name];
@@ -204,21 +205,21 @@
   };
 
   /**
-   * Convenience method to clear the current cursor state.  The cursor is set
-   * to the first query if queries exist, otherwise it is set to an invalid
-   * state. */
+   * <p>Convenience method to clear the current cursor state.  The cursor is
+   * set to the first query if queries exist, otherwise it is set to an invalid
+   * state.</p> */
   Main.prototype.clearCursor = function ()
   {
     this.cursor.clear();
   };
 
   /**
-   * Move cursor position to the next query in the active query set.  If the
+   * <p>Move cursor position to the next query in the active query set.  If the
    * cursor moves past the last query in the active query set, the active query
    * set moves to the next available one and the cursor position to its first
    * query.  If the current query set is the last in the collection and thus it
    * is not possible to move to the next query set, the first query set is made
-   * active instead, thus ensuring that the cursor always rolls over. */
+   * active instead, thus ensuring that the cursor always rolls over.</p> */
   Main.prototype.next = function ()
   {
     /* Do not worry about overflow; just increment it. */
@@ -226,13 +227,13 @@
   };
 
   /**
-   * Move cursor position to the previous query in the active query set.  If
+   * <p>Move cursor position to the previous query in the active query set.  If
    * the cursor moves past the first query in the active query set, the active
    * query set moves to the previous available one and the cursor position to
    * its last query.  If the current query set is the first in the collection
    * and thus it is not possible to move to the previous query set, the last
    * query set is made active instead, thus ensuring that the cursor always
-   * rolls over. */
+   * rolls over.</p> */
   Main.prototype.prev = function ()
   {
     this.cursor.set((this.cursor.index === 0
@@ -241,8 +242,9 @@
   };
 
   /**
-   * Return the current selected text range in the form of a <code>Range</code>
-   * object.  If there is no selected text, <code>null</code> is returned.
+   * <p>Return the current selected text range in the form of a
+   * <code>Range</code> object.  If there is no selected text,
+   * <code>null</code> is returned.</p>
    *
    * @returns {Range|null} The current selected text range or <code>null</code>
    * if it could not be computed. */
@@ -294,6 +296,11 @@
     return new Range(this.content, start, end);
   };
 
+  /**
+   * <p>Clear the current text selection, if any.</p>
+   *
+   * <p>Only the Chrome and Firefox implementations are supported.</p>
+   * */
   Main.prototype.clearSelectedRange = function ()
   {
     /* From: http://stackoverflow.com/a/3169849/3001914
@@ -307,8 +314,8 @@
   };
 
   /**
-   * Return boolean indicative of whether one or more query sets are currently
-   * contained.
+   * <p>Return boolean indicative of whether one or more query sets are
+   * currently contained.</p>
    *
    * @returns {boolean} <code>false</code> if no query sets currently
    * contained; <code>true</code> otherwise. */
@@ -325,9 +332,9 @@
   /* Private interface
    * ----------------- */
   /**
-   * Remove a query set by name.
+   * <p>Remove a query set by name.</p>
    *
-   * Throws an exception if the query set does not exist.
+   * <p>Throws an exception if the query set does not exist.</p>
    * @access private
    *
    * @param {string} name - The name of the query set to remove. */
@@ -352,7 +359,7 @@
 
 
   /**
-   * Class responsible for managing the state of the highlight cursor.
+   * <p>Class responsible for managing the state of the highlight cursor.</p>
    * @class
    * @param {Object} owner - Reference to the owning instance.
    * */
@@ -365,7 +372,7 @@
   };
 
   /**
-   * Clear the current cursor state.
+   * <p>Clear the current cursor state.</p>
    *
    * @param {boolean} [update=true] - Boolean flag that, when
    * <strong>not</strong> <code>false</code>, results in the UI state being
@@ -379,21 +386,23 @@
   };
 
   /**
-   * Set cursor to query referenced by absolute query index.  The absolute
+   * <p>Set cursor to query referenced by absolute query index.  The absolute
    * query index is computed by adding the lengths of each preceding query set
-   * and the relative index of a given query set, as illustrated by:
+   * and the relative index of a given query set, as illustrated by:</p>
    *
    * <pre>
    * queries = first:  { set: [ 1, 2, 3 ] },
    *           second: { set: [ 4, 5, 6, 7 ] },
    *           third:  { set: [ 8, 9, 10, 11, 12 ] };</pre>
    *
-   * Using the example above, an absolute query index of 11 would reference
+   * <p>Using the example above, an absolute query index of 11 would reference
    * element <code>12</code> because <code>first.set.length + second.set.length
    * = 7</code>, and since <code>7 + 5</code> (<code>5</code> being the number
    * of elements in <code>third.set</code>) would be > than <code>11</code>,
    * then <code>11</code> must reference the relative index in
-   * <code>third</code> given by <code>11 - 7</code>, or <code>4</code>. */
+   * <code>third</code> given by <code>11 - 7</code>, or <code>4</code>.</p>
+   *
+   * @param {integer} index - Virtual cursor index */
   Cursor.prototype.set = function (index)
   {
     var query = null,
@@ -447,8 +456,8 @@
   /* Private interface
    * ----------------- */
   /**
-   * Clear the active cursor by making it inactive if no query sets exist, or
-   * moving the cursor to the first query of the first query set.
+   * <p>Clear the active cursor by making it inactive if no query sets exist,
+   * or moving the cursor to the first query of the first query set.</p>
    * @access private
    * */
   Cursor.prototype.clear_ = function ()
@@ -463,8 +472,8 @@
   };
 
   /**
-   * Clear the currently active cursor highlight.  The active cursor highlight
-   * is the element or elements at the current cursor position.
+   * <p>Clear the currently active cursor highlight.  The active cursor
+   * highlight is the element or elements at the current cursor position.</p>
    * @access private
    * */
   Cursor.prototype.clearActive_ = function ()
@@ -474,8 +483,8 @@
 
 
   /**
-   * Class responsible for building and keeping a convenient representation of
-   * the text present in an HTML DOM sub-tree.
+   * <p>Class responsible for building and keeping a convenient representation
+   * of the text present in an HTML DOM sub-tree.</p>
    * @class
    * @param {DOMElement|jQuery} root - Reference to a DOM element or jQuery
    * instance.  If a jQuery instance is given, its first element is used.
@@ -525,8 +534,8 @@
   };
 
   /**
-   * Debug method for asserting that the current textual representation if
-   * valid, in particular that the offset markers are all contiguous. */
+   * <p>Debug method for asserting that the current textual representation if
+   * valid, in particular that the offset markers are all contiguous.</p> */
   TextContent.prototype.assert = function ()
   {
     var offset = 0;
@@ -660,7 +669,8 @@
   };
 
   /**
-   * Find the index of the marker descriptor of a given text node element.
+   * <p>Find the index of the marker descriptor of a given text node
+   * element.</p>
    *
    * @param {DOMElement} element - Reference to the text node to look up.
    * @param {number} [start=0] - Start marker index if known for a fact that
@@ -733,7 +743,7 @@
 
 
   /**
-   * Abstract base class of all finder classes.
+   * <p>Abstract base class of all finder classes.</p>
    * @class
    * @abstract
    * @param {TextContent} content - reference to <code>TextContent</code>
@@ -749,8 +759,8 @@
   };
 
   /**
-   * Construct appropriate <code>Finder</code>-derived class for a given
-   * subject.
+   * <p>Construct appropriate <code>Finder</code>-derived class for a given
+   * subject.</p>
    * @static
    *
    * @param {TextContent} content - reference to <code>TextContent</code>
@@ -765,8 +775,8 @@
   };
 
   /**
-   * Return next available match.  If no more matches available, returns
-   * <code>false</code>.
+   * <p>Return next available match.  If no more matches available, returns
+   * <code>false</code>.</p>
    * @abstract
    *
    * @returns {Range|false} Returns a <code>Range</code> if a match is
@@ -776,7 +786,7 @@
   /* Protected interface
    * ----------------- */
   /**
-   * Return a <code>Range</code> descriptor for a given offset.
+   * <p>Return a <code>Range</code> descriptor for a given offset.</p>
    * @access private
    *
    * @param {number} offset - Text offset
@@ -792,8 +802,8 @@
 
 
   /**
-   * Class responsible for finding text in a <code>TextContent</code>
-   * instance.
+   * <p>Class responsible for finding text in a <code>TextContent</code>
+   * instance.</p>
    * @class
    *
    * @param {TextContent} content - Reference to <code>TextContent</code>
@@ -816,7 +826,7 @@
   TextFinder.prototype = Object.create(Finder.prototype);
 
   /**
-   * Return next available match.
+   * <p>Return next available match.</p>
    *
    * @returns {Range|false} Returns a <code>Range</code> if a match is
    * available, or <code>false</code> if no more matches are available. */
@@ -846,8 +856,8 @@
 
 
   /**
-   * Class responsible for locating text in a <code>TextContent</code>
-   * instance from an XPath representation and start and end offsets.
+   * <p>Class responsible for locating text in a <code>TextContent</code>
+   * instance from an XPath representation and start and end offsets.</p>
    * @class
    *
    * @param {TextContent} content - Reference to <code>TextContent</code>
@@ -897,7 +907,7 @@
   XpathFinder.prototype = Object.create(Finder.prototype);
 
   /**
-   * Return next available match.
+   * <p>Return next available match.</p>
    *
    * @returns {Range|false} Returns a <code>Range</code> if a match is
    * available, or <code>false</code> if no more matches are available. */
@@ -920,8 +930,8 @@
 
 
   /**
-   * Convenience class for applying or removing highlighting on
-   * <code>Range</code> instances.
+   * <p>Convenience class for applying or removing highlighting on
+   * <code>Range</code> instances.</p>
    * @class
    * @param {number} count - The CSS highlight class index to use.
    * */
@@ -931,7 +941,7 @@
                     Css.highlight + '-' + count ].join(' ');
 
     /**
-     * Highlight a <code>Range</code> instance.
+     * <p>Highlight a <code>Range</code> instance.</p>
      *
      * @param {Range} range - Range instance to apply highlighting to.
      * @returns {number} Unique highlight id. */
@@ -943,7 +953,7 @@
     };
 
     /**
-     * Remove highlighting given by id.
+     * <p>Remove highlighting given by id.</p>
      *
      * @param {number} id - Id of the highlight to remove. */
     this.undo = function (id) {
@@ -958,12 +968,12 @@
   };
 
   /**
-   * Last highlight id used. */
+   * <p>Last highlight id used.</p> */
   RangeHighlighter.id = 0;
 
 
   /**
-   * Holds a representation of a range between two text nodes.
+   * <p>Holds a representation of a range between two text nodes.</p>
    * @class
    * @param {TextContent} content - text representation instance.
    * @param {Object} start - descriptor of start of range.
@@ -985,7 +995,7 @@
   };
 
   /**
-   * Create a range descriptor from a global offset.
+   * <p>Create a range descriptor from a global offset.</p>
    *
    * @param {Object} marker - Text offset marker object.
    * @param {number} offset - Global offset.
@@ -999,8 +1009,8 @@
   };
 
   /**
-   * Create a range descriptor from an offset relative to the start of the text
-   * node.
+   * <p>Create a range descriptor from an offset relative to the start of the
+   * text node.</p>
    *
    * @param {Object} marker - Text offset marker object.
    * @param {number} offset - Relative offset from start of text node.
@@ -1014,8 +1024,8 @@
   };
 
   /**
-   * Highlight a range by wrapping one or more text nodes with a
-   * <code>span</code> tag and applying a particular CSS class.
+   * <p>Highlight a range by wrapping one or more text nodes with a
+   * <code>span</code> tag and applying a particular CSS class.</p>
    *
    * @param {string} className - The CSS class name to apply. */
   Range.prototype.surround = function (className)
@@ -1050,7 +1060,7 @@
   };
 
   /**
-   * Compute the XPath representation of the active range.
+   * <p>Compute the XPath representation of the active range.</p>
    * @returns {string} XPath representation of active range. */
   Range.prototype.computeXpath = function ()
   {
@@ -1072,7 +1082,7 @@
   };
 
   /**
-   * Compute the length of the active range.
+   * <p>Compute the length of the active range.</p>
    * @returns {number} Number of characters. */
   Range.prototype.length = function ()
   {
@@ -1098,9 +1108,9 @@
   /* Private interface
    * ----------------- */
   /**
-   * Truncate text node into 2 or 3 text nodes and apply highlighting to
+   * <p>Truncate text node into 2 or 3 text nodes and apply highlighting to
    * relevant node, which is always the node referenced by
-   * <code>descr.marker.node</code>.
+   * <code>descr.marker.node</code>.</p>
    *
    * @param {Object} descr - Start or end <code>Range</code> descriptor.
    * @param {number} start - Start offset.
@@ -1135,10 +1145,10 @@
 
 
   /**
-   * This class builds XPath representations of text nodes, optionally within a
-   * DOM sub-tree.  If a root node is specified, the XPath produced will
-   * include the elements up to but <strong>not</strong> including said root
-   * node.
+   * <p>This class builds XPath representations of text nodes, optionally
+   * within a DOM sub-tree.  If a root node is specified, the XPath produced
+   * will include the elements up to but <strong>not</strong> including said
+   * root node.</p>
    * @class
    * @param {DOMElement} [root=null] - Root DOM node. */
   var TextNodeXpath = function (root)
@@ -1340,8 +1350,8 @@
   };
 
   /**
-   * Return boolean value indicative of whether a given node is a highlight
-   * container.
+   * <p>Return boolean value indicative of whether a given node is a highlight
+   * container.</p>
    * @access private
    *
    * @param {DOMElement} node - DOM element to check
@@ -1637,8 +1647,8 @@
 
 
   /**
-   * Class responsible for updating the user interface widget, if one is
-   * supplied.
+   * <p>Class responsible for updating the user interface widget, if one is
+   * supplied.</p>
    * @class
    * @param {Main} owner - reference to owning <code>Main</code> instance
    * @param {Object} options - map containing options
