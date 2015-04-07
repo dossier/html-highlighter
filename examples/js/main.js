@@ -48,14 +48,6 @@ var MainModule = function (window, $, hh, undefined) {
     /* Set-up sequence
      * --
      * UI */
-    elSelector.change(function () {
-      highlighter.clear();
-      elDocument.html(dataSources[parseInt($(this).val())]
-                      .content.body.clean_html);
-      highlighter.refresh();
-      elSearch.focus();
-    } );
-
     elSearch.keyup(function () {
       elAdd.attr('disabled', elSearch.val().trim().length === 0);
     } );
@@ -68,10 +60,8 @@ var MainModule = function (window, $, hh, undefined) {
     } );
 
     elSelector
-      .children().remove()
-      .change(function () {
-        load(parseInt(elSelector.val()));
-      } );
+      .change(function () { load(parseInt(elSelector.val())); } )
+      .children().remove();
 
     var timeout = null;
     elDocument.on( {
@@ -114,13 +104,13 @@ var MainModule = function (window, $, hh, undefined) {
     /* Done setting up.  Now load mock data. */
     var next = function (i) {
       if(i >= dataSources.length) {
-        load(0);
-
         highlighter = new hh.HtmlHighlighter( {
           container: elDocument,
           widget: elWidgetMain,
           maxHighlight: MAX_HIGHLIGHT
         } );
+
+        load(0);
         return;
       }
 
@@ -129,10 +119,9 @@ var MainModule = function (window, $, hh, undefined) {
         /* Note: due to obvious constraints imposed on loading of local system
          * resources (via file://), data source files are required to export the
          * global variable `g_descriptor´. */
-        if(g_descriptor !== undefined) {
+        if(typeof result === 'string' && result.length > 0) {
           elSelector.append($('<option/>').attr('value', i).html(d.name));
-          d.content = g_descriptor;
-          g_descriptor = null;
+          d.content = result;
           ++i;
         } else
           dataSources.splice(i, 1);
@@ -146,7 +135,10 @@ var MainModule = function (window, $, hh, undefined) {
 
   function load(index)
   {
-    elDocument.html(dataSources[index].content.body.clean_html);
+    highlighter.clear();
+    elDocument.html(dataSources[index].content);
+    highlighter.refresh();
+    elSearch.focus();
   }
 
   function highlight_(start, end)
