@@ -9,3 +9,4 @@ doc/*.pdf
 out/
 *.zip
 *.xpi
+node_modules
