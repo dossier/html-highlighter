@@ -425,7 +425,7 @@
     /* `index´ past maximum offset? Back to top, if so. */
     if(query === null) {
       /* Re-compute to account for disabled query sets. */
-      this.set(0);
+      if(index > 0) this.set(0);
       return;
     }
 
