@@ -1547,14 +1547,16 @@
         /* Skip to first text node if currently on a highlight container. */
         while(this.isHighlight_(node)) {
           ch = node.childNodes;
-          if(ch.length === 0 && ch[0].nodeType !== 3)
-            throw 'Invalid state: expected text node inside container';
+          if(ch.length === 0 || !this.isLikeText_(ch[0])) {
+            throw 'Invalid state: expected text node or highlight container'
+              + ' inside container';
+          }
 
           node = ch[0];
         }
 
         /* Ensure tag sought after is the right one. */
-        if(node.nodeName.toLowerCase() !== '#text') {
+        if(node.nodeType !== 3) {
           console.error('Failed to locate text node at index %d', index);
           return null;
         }
