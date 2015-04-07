@@ -1615,8 +1615,8 @@
     {
       /* Abort if invalid or root node; otherwise attempt to advance to sibling
        * node. */
-      if(node === null || node === root)
-        return null;
+      if(node === null)      throw 'Invalid state: outside of root sub-tree';
+      else if(node === root) return null;
       else if(node.nextSibling !== null)
         return node.nextSibling;
 
@@ -1633,7 +1633,7 @@
      * available or the root node was reached. */
     function nextText_(node)
     {
-      if(node === null || node.nodeType === 3)
+      if(node === root || node.nodeType === 3)
         return node;
 
       var ch = node.childNodes;
