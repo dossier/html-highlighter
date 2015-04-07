@@ -74,7 +74,7 @@ var MainModule = function (window, $, hh, undefined) {
       } );
 
     var timeout = null;
-    $(window).on( {
+    elDocument.on( {
       mouseup: function () {
         -- mouseDown;
 
