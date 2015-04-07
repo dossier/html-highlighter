@@ -31,13 +31,6 @@
     /* Merge default options. */
     options = $.extend(true, $.extend(true, {}, defaults), options);
 
-    /* Define instance immutable properties. */
-    Object.defineProperties(this, {
-      ui:      { value: new Ui(this, options) },
-      options: { value: options               },
-      cursor:  { value: new Cursor(this)      }
-    } );
-
     /* Mutable properties. */
     this.queries = { };
     this.stats = {
@@ -45,6 +38,12 @@
       total: 0,
       highlight: 0
     };
+
+    /* Define instance immutable properties. */
+    Object.defineProperty(this, 'options', { value: options               });
+    Object.defineProperty(this, 'cursor',  { value: new Cursor(this)      });
+    Object.defineProperty(this, 'ui',      { value: new Ui(this, options) });
+    Object.defineProperty(this, 'stats',   { value: this.stats            });
 
     /* Start by refreshing the internal document's text representation. */
     this.refresh();
