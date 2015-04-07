@@ -1429,9 +1429,7 @@
        * separate nodes.  IOW, contiguous text nodes or highlight containers
        * are treated as ONE element. */
       if(this.isLikeText_(node)) {
-        if(wast) continue;
-        wast = true;
-
+        if(wast) continue; else wast = true;
         ++ index;
       } else
         wast = false;
@@ -1505,10 +1503,11 @@
   {
     var node, ch = parent.children;
 
-    /* Skip highlight containers. */
     for(var i = 0, l = ch.length; i < l; ++i) {
       node = ch[i];
 
+      /* Skip highlight containers since tag could be `span´, the same as
+       * highlight containers. */
       if(this.isHighlight_(node)) continue;
       else if(node.nodeName.toLowerCase() === tag) {
         if(index === 0) return node;
@@ -1538,11 +1537,9 @@
       /* Don't count contiguous text or highlight container nodes and ignore
        * non-text nodes. */
       if(this.isLikeText_(node)) {
-        if(wast) continue;
-        wast = true;
+        if(wast) continue; else wast = true;
       } else {
-        wast = false;
-        continue;
+        wast = false; continue;
       }
 
       /* We have got a potential match when `index´ === 0 . */
