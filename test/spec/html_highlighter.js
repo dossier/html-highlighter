@@ -731,8 +731,7 @@
           init();
         } );
 
-        it('highlights one query set from XPath representation after dense query set '
-           + 'add', function ()
+        it('highlights one query set from XPath representation after dense query set add', function ()
         {
           hl.add('test-the', [ 'the' ]);
           assertUi();

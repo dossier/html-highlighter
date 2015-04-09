@@ -7,12 +7,13 @@
  */
 
 
-require( [ 'jquery', 'src/html_highlighter' ], function ($, hh) {
-  return MainModule(window, $, hh);
-} );
+(function (factory, window) {
 
+  window.require( [ 'jquery', 'src/html_highlighter' ], function ($, hh) {
+    return factory(window, $, hh);
+  } );
 
-var MainModule = function (window, $, hh, undefined) {
+}(function (window, $, hh, undefined) {
 
   var MAX_HIGHLIGHT = 5;
 
@@ -162,4 +163,4 @@ var MainModule = function (window, $, hh, undefined) {
   /* Initialise module */
   init();
 
-};
+}, window));
