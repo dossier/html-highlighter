@@ -1467,8 +1467,9 @@
   {
     var index;
 
+    /* If no index specified: assume first. */
     if(part.indexOf('[') === -1)
-      return { tag: part, index: 0 }; /* No index specified: assume first. */
+      return { tag: part.toLowerCase(), index: 0 };
 
     /* *Attempt* to retrieve element's index.  If an exception is thrown,
      * produce a meaningful error but re-throw since the XPath
@@ -1483,7 +1484,7 @@
       throw x;    /* Re-throw after dumping inspectable object. */
     }
 
-    return { tag: part, index: index };
+    return { tag: part.toLowerCase(), index: index };
   };
 
   /**
