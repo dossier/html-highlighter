@@ -11,6 +11,8 @@ The HTML Highlighter is a JavaScript that solves these problems:
        in the browser or in a server-side environment that processes
        the HTML and text of a page to decide which portions of content
        should be marked.
+ 1. Provide these offsets to either JavaScript or backend tools.
+    [StreamCorpus Pipeline](https:/github.com/trec-kba/streamcorpus-pipeline) is being extended to provide translation between 
  1. Provide objects isomorphic to JavaScript's `Range` object, which
     has [character offsets relative to DOM nodes identified by Xpaths](https://github.com/dossier/html-highlighter/blob/0.1.0/src/html_highlighter.js#L1067-L1076):
 ```javascript
@@ -25,9 +27,6 @@ The HTML Highlighter is a JavaScript that solves these problems:
     }
 }
 ```
- 1. Provide these offsets to either JavaScript or backend tools.
-    [StreamCorpus Pipeline](https:/github.com/trec-kba/streamcorpus-pipeline) is being extended to provide translation between 
-
 
 The inline comments and class documentation are sufficient for a
 JavaScript programmer to jump in and start using this.  To see an
