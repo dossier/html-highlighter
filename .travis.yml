@@ -1,3 +1,8 @@
+language: node_js
+node_js:
+- 0.1
+before_script:
+- npm install -g grunt-cli
 env:
   global:
   - secure: DfzCbO0kAVDhseVlcdqyqZPprWXiqmnYUbXaaD5JJtHL/j5GzJsBsSNynibXSYL+cGRKuCQZlDT5pYtWDyaJjc6OQ+tUFHFYYB3P4H/4mIJWGU8TgiFMRbBh/tD8Q/qiaEieONWy/r9EiIdXXxyGd8z3QvBAyfoPQFUCw0sCeN4=
