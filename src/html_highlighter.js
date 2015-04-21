@@ -441,8 +441,11 @@
       .eq(0);
 
     /* Scroll viewport if element not visible. */
-    if(!std.$.inview($el))
-      std.$.scrollIntoView($el);
+    if (typeof this.owner.options.scrollTo !== 'undefined') {
+      this.owner.options.scrollTo($el);
+    } else if(!std.$.inview($el)) {
+      std.$.scrollIntoView($el, this.owner.options.scrollNode);
+    }
 
     this.query = query;
     this.index = index;
@@ -1791,6 +1794,10 @@
   };
 
   var defaults = {
+    // Sometimes it is useful for the client to determine how to bring an
+    // element into view via scrolling. If `scrollTo` is set, then it is
+    // called as a function with a jQuery node to scroll to.
+    scrollTo: undefined,
     maxHighlight: 1,
     delays: {
       toggleEntities: 250
