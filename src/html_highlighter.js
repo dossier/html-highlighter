@@ -456,8 +456,8 @@
   /* Private interface
    * ----------------- */
   /**
-   * <p>Clear the active cursor by making it inactive if no query sets exist,
-   * or moving the cursor to the first query of the first query set.</p>
+   * <p>Clear the active cursor by making it inactive if no query sets
+   * exist.</p>
    * @access private
    * */
   Cursor.prototype.clear_ = function ()
@@ -467,8 +467,7 @@
     if(this.owner.empty()) {
       this.query = null;
       this.index = -1;
-    } else
-      this.set(0);
+    }
   };
 
   /**
