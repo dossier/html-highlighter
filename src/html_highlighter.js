@@ -1185,8 +1185,7 @@
         node = node.parentNode)
     {
       var id = this.indexOfElement_(node);
-      xpath = '/' + node.nodeName.toLowerCase()
-        + (id === 1 ? '' : '[' + id + ']') + xpath;
+      xpath = '/' + node.nodeName.toLowerCase() + '[' + id + ']' + xpath;
     }
 
     /* This is bad.  Lay off the LSD. */
