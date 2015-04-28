@@ -59,7 +59,7 @@
 
     elAdd.click(function () {
       var name = elSearch.val();
-      highlighter.add(name, [ name ]);
+      highlighter.add(name, [ name ], true);
       elSearch.select().focus();
     } );
 
