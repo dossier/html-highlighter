@@ -69,6 +69,7 @@
 
     var timeout = null;
     elDocument.on( {
+      dblclick: function () { mouseDown = 0; },
       mouseup: function () {
         -- mouseDown;
 
