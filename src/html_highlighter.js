@@ -33,6 +33,7 @@
 
     /* Mutable properties. */
     this.queries = { };
+    this.order = [ ];
     this.stats = {
       queries: 0,
       total: 0,
@@ -90,26 +91,37 @@
     if(name in this.queries)
       this.remove(name);
 
+    /* Create and contain descriptor object and add reference to it in the
+     * ordered array. */
     q = this.queries[name] = {
       enabled: enabled,
-      set: [ ]
+      id: null,
+      set: [ ],
+      order: this.order.length
     };
 
-    /* TODO: There is currently no need to save every single highlight id in
-     * the `sets´ array since, if I understand it correctly, individual query
-     * set highlights will never be removed.  If they're never removed, then
-     * one can assume that highlight ids within a particular query set are
-     * contiguous, with the only attribute needed to be saved being the *start*
-     * highlight id; the end highlight id can be computed by adding set length
-     * minus 1 to start id.
-     * --------------------------------------------------------------------- */
+    this.order.push(q);
+
     /* For each query, perform a lookup in the internal text representation
-     * and highlight each hit.  The global id of each highlight is recorded in
-     * the `this.queries[name].set´ array. */
+     * and highlight each hit.  The global offset of each highlight is recorded
+     * in the `this.queries[name].set´ array.  The offset is used by the
+     * `Cursor´ class to compute the next/previous highlight to show. */
     queries.forEach(function (i) {
-      var hit, finder = Finder.construct(content, i);
-      while((hit = finder.next(i)) !== false)
-        q.set.push(highlighter.do(hit));
+      var finder = Finder.construct(content, i),
+          hit = finder.next();
+
+      if(hit === false) {
+        console.info("Query has no hits: ", i);
+        return;
+      }
+
+      q.id = highlighter.do(hit);
+      q.set.push(hit.start.marker.offset);
+
+      while((hit = finder.next()) !== false) {
+        highlighter.do(hit);
+        q.set.push(hit.start.marker.offset);
+      }
     } );
 
 
@@ -149,11 +161,10 @@
   Main.prototype.enable = function (name)
   {
     var q = this.get_(name);
-    if(q.enabled) return;
+    if(q.enabled || q.id === null) return;
 
-    q.set.forEach(function (i) {
+    for(var i = q.id, l = i + q.set.length; i < l; ++i)
       $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
-    } );
 
     q.enabled = true;
     this.stats.total += q.set.length;
@@ -170,11 +181,10 @@
   Main.prototype.disable = function (name)
   {
     var q = this.get_(name);
-    if(!q.enabled) return;
+    if(!q.enabled || q.id === null) return;
 
-    q.set.forEach(function (i) {
+    for(var i = q.id, l = i + q.set.length; i < l; ++i)
       $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
-    } );
 
     q.enabled = false;
     this.stats.total -= q.set.length;
@@ -329,10 +339,10 @@
     --this.stats.queries;
     this.stats.total -= q.set.length;
 
-    q.set.forEach(function (i) {
+    for(var i = q.id, l = i + q.set.length; i < l; ++i)
       unhighlighter.undo(i);
-    } );
 
+    this.order.splice(q.order, 1);
     delete this.queries[name];
   };
 
@@ -397,9 +407,10 @@
    * @param {integer} index - Virtual cursor index */
   Cursor.prototype.set = function (index)
   {
-    var query = null,
+    var l, q,
+        query = null,
         offset = 0,
-        queries = this.owner.queries;
+        order = this.owner.order;
 
     if(index < 0)
       throw 'Invalid cursor index specified';
@@ -407,16 +418,13 @@
       return;
 
     /* Find query set that corresponds to specified global index. */
-    for(var k in queries) {
-      var l, q = queries[k];
-
-      if(!q.enabled)
-        continue;
-
+    for(var i = 0, j = order.length; i < j; ++i) {
+      q = order[i];
+      if(!q.enabled) continue;
       l = q.set.length;
 
-      if(index >= offset && index < offset + l) {
-        query = q;
+      if(index < offset + l) {
+        query = i;
         break;
       }
 
@@ -431,16 +439,15 @@
     }
 
     this.clearActive_();
-    var $el = $('.' + Css.highlight + '-id-' + query.set[index - offset])
+    var $el = $('.' + Css.highlight + '-id-' + (q.id + index - offset))
       .addClass(Css.enabled)
       .eq(0);
 
     /* Scroll viewport if element not visible. */
-    if (typeof this.owner.options.scrollTo !== 'undefined') {
+    if(typeof this.owner.options.scrollTo !== 'undefined')
       this.owner.options.scrollTo($el);
-    } else if(!std.$.inview($el)) {
+    else if(!std.$.inview($el))
       std.$.scrollIntoView($el, this.owner.options.scrollNode);
-    }
 
     this.query = query;
     this.index = index;
