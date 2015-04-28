@@ -73,21 +73,25 @@
    *
    * @param {string} name - Name of the query set.
    * @param {string[]} queries - Array containing individual queries to
-   * highlight. */
-  Main.prototype.add = function (name, queries)
+   * highlight.
+   * @param {bool} enabled - If explicitly <code>true</code>, query set is
+   * also enabled. */
+  Main.prototype.add = function (name, queries, enabled /* = false */)
   {
     if(!std.is_arr(queries))
       throw 'Invalid or no queries array specified';
 
-    var q, self = this,
-        highlighter = new RangeHighlighter(this.stats.highlight);
+    enabled = enabled === true;
+
+    var q, content = this.content,
+        highlighter = new RangeHighlighter(this.stats.highlight, enabled);
 
     /* Remove query set if it exists. */
     if(name in this.queries)
       this.remove(name);
 
     q = this.queries[name] = {
-      enabled: true,
+      enabled: enabled,
       set: [ ]
     };
 
@@ -103,7 +107,7 @@
      * and highlight each hit.  The global id of each highlight is recorded in
      * the `this.queries[name].set´ array. */
     queries.forEach(function (i) {
-      var hit, finder = Finder.construct(self.content, i);
+      var hit, finder = Finder.construct(content, i);
       while((hit = finder.next(i)) !== false)
         q.set.push(highlighter.do(hit));
     } );
@@ -111,7 +115,7 @@
 
     /* Update global statistics. */
     ++this.stats.queries;
-    this.stats.total += q.set.length;
+    if(enabled) this.stats.total += q.set.length;
 
     /* Ensure CSS highlight class rolls over on overflow. */
     ++this.stats.highlight;
@@ -331,18 +335,14 @@
    * @param {string} name - The name of the query set to remove. */
   Main.prototype.remove_ = function (name)
   {
-
-    if(q === undefined)
-      throw 'Query set non-existent';
-
-    var highlighter = new RangeHighlighter(0);
     var q = this.get_(name),
+        unhighlighter = new RangeUnhighlighter();
 
     --this.stats.queries;
     this.stats.total -= q.set.length;
 
     q.set.forEach(function (i) {
-      highlighter.undo(i);
+      unhighlighter.undo(i);
     } );
 
     delete this.queries[name];
@@ -936,15 +936,19 @@
 
 
   /**
-   * <p>Convenience class for applying or removing highlighting on
-   * <code>Range</code> instances.</p>
+   * <p>Convenience class for applying highlighting on <code>Range</code>
+   * instances.</p>
    * @class
    * @param {number} count - The CSS highlight class index to use.
-   * */
-  var RangeHighlighter = function (count)
+   * @param {bool} enabled - If explicitly <code>false</code>, highlights are
+   * created but not shown. */
+  var RangeHighlighter = function (count, enabled)
   {
     var classes = [ Css.highlight,
-                    Css.highlight + '-' + count ].join(' ');
+                    Css.highlight + '-' + count ];
+
+    if(enabled === false) classes.push(Css.disabled);
+    classes = classes.join(' ');
 
     /**
      * <p>Highlight a <code>Range</code> instance.</p>
@@ -957,9 +961,21 @@
 
       return RangeHighlighter.id ++;
     };
+  };
 
+  /**
+   * <p>Last highlight id used.</p> */
+  RangeHighlighter.id = 0;
+
+
+  /**
+   * <p>Convenience class for removing highlighting.</p>
+   * @class
+   * */
+  var RangeUnhighlighter = function ()
+  {
     /**
-     * <p>Remove highlighting given by id.</p>
+     * <p>Remove highlighting given by its id.</p>
      *
      * @param {number} id - Id of the highlight to remove. */
     this.undo = function (id) {
@@ -972,10 +988,6 @@
       } );
     };
   };
-
-  /**
-   * <p>Last highlight id used.</p> */
-  RangeHighlighter.id = 0;
 
 
   /**
