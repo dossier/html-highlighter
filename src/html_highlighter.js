@@ -122,9 +122,6 @@
     if(this.stats.highlight >= this.options.maxHighlight)
       this.stats.highlight = 0;
 
-    /* Set cursor on the first query of the first query set and update the UI
-     * state. */
-    this.cursor.clear(false);
     this.ui.update();
   };
 
