@@ -197,15 +197,6 @@
   };
 
   /**
-   * <p>Convenience method to clear the current cursor state.  The cursor is
-   * set to the first query if queries exist, otherwise it is set to an invalid
-   * state.</p> */
-  Main.prototype.clearCursor = function ()
-  {
-    this.cursor.clear();
-  };
-
-  /**
    * <p>Move cursor position to the next query in the active query set.  If the
    * cursor moves past the last query in the active query set, the active query
    * set moves to the next available one and the cursor position to its first
