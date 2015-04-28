@@ -1663,6 +1663,57 @@
   };
 
 
+  var DeferredExecution = function (hh)
+  {
+    this.hh = hh;
+    this.commands = [ ];
+  };
+
+  DeferredExecution.prototype.add = function (cmd)
+  {
+    this.commands.push(cmd);
+    return this;
+  };
+
+  DeferredExecution.prototype.run = function ()
+  {
+    var hh = this.hh;
+
+    this.commands.forEach(function (cmd) {
+      var r;
+
+      try { r = cmd.run(hh); }
+      catch (x) {
+        console.error("Command failed with exception:", x, cmd);
+        return;
+      }
+
+      if(r !== true)
+        console.info("Command reported failed execution", cmd);
+    } );
+
+    this.commands = [];
+  };
+
+
+  var CommandAddQuery = function (name, queries)
+  {
+    this.name = name;
+    this.queries = queries;
+  };
+
+  CommandAddQuery.prototype.run = function (hh)
+  { hh.add(this.name, this.queries); return true; };
+
+
+  var CommandEnableQuery = function (name)
+  { this.name = name; };
+
+  CommandEnableQuery.prototype.run = function (hh)
+  { hh.enable(this.name); return true; };
+
+
+
   /**
    * <p>Class responsible for updating the user interface widget, if one is
    * supplied.</p>
@@ -1828,7 +1879,11 @@
     HtmlHighlighterUi: Ui,
     HtmlRangeHighlighter: RangeHighlighter,
     HtmlTextFinder: TextFinder,
-    HtmlXpathFinder: XpathFinder
+    HtmlXpathFinder: XpathFinder,
+
+    DeferredExecution: DeferredExecution,
+    CommandAddQuery: CommandAddQuery,
+    CommandEnableQuery: CommandEnableQuery
   };
 
 }, this);
