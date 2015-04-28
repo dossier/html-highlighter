@@ -147,10 +147,8 @@
    * @param {string} name - Name of the query set to enable. */
   Main.prototype.enable = function (name)
   {
-    var q = this.queries[name];
-
-    if(q === undefined) throw 'Query set non-existent';
-    else if(q.enabled)  return;
+    var q = this.get_(name);
+    if(q.enabled) return;
 
     q.set.forEach(function (i) {
       $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
@@ -170,12 +168,8 @@
    * @param {string} name - Name of the query set to disable. */
   Main.prototype.disable = function (name)
   {
-    var q = this.queries[name];
-
-    if(q === undefined)
-      throw 'Query set non-existent';
-    else if(!q.enabled)
-      return;
+    var q = this.get_(name);
+    if(!q.enabled) return;
 
     q.set.forEach(function (i) {
       $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
@@ -337,12 +331,12 @@
    * @param {string} name - The name of the query set to remove. */
   Main.prototype.remove_ = function (name)
   {
-    var q = this.queries[name];
 
     if(q === undefined)
       throw 'Query set non-existent';
 
     var highlighter = new RangeHighlighter(0);
+    var q = this.get_(name),
 
     --this.stats.queries;
     this.stats.total -= q.set.length;
@@ -352,6 +346,19 @@
     } );
 
     delete this.queries[name];
+  };
+
+  /**
+   * <p>Safely retrieve a query set's descriptor.</p>
+   *
+   * <p>Throws an exception if the query set does not exist.</p>
+   *
+   * @param {string} name - The name of the query set to retrieve. */
+  Main.prototype.get_ = function (name)
+  {
+    var q = this.queries[name];
+    if(q === undefined) throw 'Query set non-existent';
+    return q;
   };
 
 
