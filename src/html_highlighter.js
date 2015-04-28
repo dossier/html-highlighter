@@ -33,7 +33,7 @@
 
     /* Mutable properties. */
     this.queries = { };
-    this.order = [ ];
+    this.highlights = [ ];
     this.stats = {
       queries: 0,
       total: 0,
@@ -84,7 +84,9 @@
 
     enabled = enabled === true;
 
-    var q, content = this.content,
+    var q, count = 0,
+        content = this.content,
+        markers = this.highlights,
         highlighter = new RangeHighlighter(this.stats.highlight, enabled);
 
     /* Remove query set if it exists. */
@@ -95,39 +97,49 @@
      * ordered array. */
     q = this.queries[name] = {
       enabled: enabled,
-      id: null,
-      set: [ ],
-      order: this.order.length
+      id: null
+/*    length: 0   ; set below */
     };
 
-    this.order.push(q);
-
-    /* For each query, perform a lookup in the internal text representation
-     * and highlight each hit.  The global offset of each highlight is recorded
-     * in the `this.queries[name].set´ array.  The offset is used by the
-     * `Cursor´ class to compute the next/previous highlight to show. */
+    /* For each query, perform a lookup in the internal text representation and
+     * highlight each hit.  The global offset of each highlight is recorded in
+     * the `this.highlights´ array.  The offset is used by the `Cursor´ class
+     * to compute the next/previous highlight to show. */
     queries.forEach(function (i) {
-      var finder = Finder.construct(content, i),
-          hit = finder.next();
+      var hit, finder = Finder.construct(content, i);
 
       if(hit === false) {
         console.info("Query has no hits: ", i);
         return;
       }
 
-      q.id = highlighter.do(hit);
-      q.set.push(hit.start.marker.offset);
+      q.id = RangeHighlighter.id;
 
       while((hit = finder.next()) !== false) {
+        var mid, min = 0, max = markers.length - 1,
+            offset = hit.start.marker.offset + hit.start.offset;
+
+        while(min < max) {
+          mid = Math.floor((min + max) / 2);
+
+          if(markers[mid].offset < offset) min = mid + 1;
+          else max = mid;
+        }
+
+        markers.splice(markers.length > 0 && markers[min].offset < offset
+                       ? min + 1 : min, 0,
+                       { query: q, index: count, offset: offset });
+
         highlighter.do(hit);
-        q.set.push(hit.start.marker.offset);
+        ++count;
       }
     } );
 
+    q.length = count;
 
     /* Update global statistics. */
     ++this.stats.queries;
-    if(enabled) this.stats.total += q.set.length;
+    if(enabled) this.stats.total += count;
 
     /* Ensure CSS highlight class rolls over on overflow. */
     ++this.stats.highlight;
@@ -135,6 +147,7 @@
       this.stats.highlight = 0;
 
     this.ui.update();
+    this.assert_();             /* TODO: remove */
   };
 
   /**
@@ -163,11 +176,11 @@
     var q = this.get_(name);
     if(q.enabled || q.id === null) return;
 
-    for(var i = q.id, l = i + q.set.length; i < l; ++i)
+    for(var i = q.id, l = i + q.length; i < l; ++i)
       $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
 
     q.enabled = true;
-    this.stats.total += q.set.length;
+    this.stats.total += q.length;
     this.cursor.clear();
   };
 
@@ -183,11 +196,11 @@
     var q = this.get_(name);
     if(!q.enabled || q.id === null) return;
 
-    for(var i = q.id, l = i + q.set.length; i < l; ++i)
+    for(var i = q.id, l = i + q.length; i < l; ++i)
       $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
 
     q.enabled = false;
-    this.stats.total -= q.set.length;
+    this.stats.total -= q.length;
     this.cursor.clear();
   };
 
@@ -315,7 +328,7 @@
   Main.prototype.empty = function ()
   {
     for(var k in this.queries) {
-      if(this.queries[k].set.length > 0)
+      if(this.queries[k].length > 0)
         return false;
     }
 
@@ -333,16 +346,21 @@
    * @param {string} name - The name of the query set to remove. */
   Main.prototype.remove_ = function (name)
   {
-    var q = this.get_(name),
-        unhighlighter = new RangeUnhighlighter();
+    var i, l, q = this.get_(name),
+        unhighlighter = new RangeUnhighlighter(),
+        markers = this.highlights;
 
     --this.stats.queries;
-    this.stats.total -= q.set.length;
+    this.stats.total -= q.length;
 
-    for(var i = q.id, l = i + q.set.length; i < l; ++i)
+    for(i = q.id, l = i + q.length; i < l; ++i)
       unhighlighter.undo(i);
 
-    this.order.splice(q.order, 1);
+    for(i = 0; i < markers.length;) {
+      if(markers[i].query === q) markers.splice(i, 1);
+      else ++i;
+    }
+
     delete this.queries[name];
   };
 
@@ -359,6 +377,17 @@
     return q;
   };
 
+  Main.prototype.assert_ = function ()
+  {
+    var prev = 0;
+
+    this.highlights.forEach(function (i) {
+      if(i.offset < prev || i.index >= i.query.length)
+        throw "Invalid state";
+      prev = i.offset;
+    } );
+  };
+
 
   /**
    * <p>Class responsible for managing the state of the highlight cursor.</p>
@@ -369,7 +398,6 @@
   {
     std.Owned.call(this, owner);
 
-    this.query = null;
     this.index = -1;
   };
 
@@ -388,71 +416,50 @@
   };
 
   /**
-   * <p>Set cursor to query referenced by absolute query index.  The absolute
-   * query index is computed by adding the lengths of each preceding query set
-   * and the relative index of a given query set, as illustrated by:</p>
-   *
-   * <pre>
-   * queries = first:  { set: [ 1, 2, 3 ] },
-   *           second: { set: [ 4, 5, 6, 7 ] },
-   *           third:  { set: [ 8, 9, 10, 11, 12 ] };</pre>
-   *
-   * <p>Using the example above, an absolute query index of 11 would reference
-   * element <code>12</code> because <code>first.set.length + second.set.length
-   * = 7</code>, and since <code>7 + 5</code> (<code>5</code> being the number
-   * of elements in <code>third.set</code>) would be > than <code>11</code>,
-   * then <code>11</code> must reference the relative index in
-   * <code>third</code> given by <code>11 - 7</code>, or <code>4</code>.</p>
+   * <p>Set cursor to query referenced by absolute query index.</p>
    *
    * @param {integer} index - Virtual cursor index */
   Cursor.prototype.set = function (index)
   {
-    var l, q,
-        query = null,
-        offset = 0,
-        order = this.owner.order;
+    var owner = this.owner,
+        markers = this.owner.highlights;
 
     if(index < 0)
       throw 'Invalid cursor index specified';
-    else if(this.owner.empty())
+    else if(owner.stats.total <= 0)
       return;
 
-    /* Find query set that corresponds to specified global index. */
-    for(var i = 0, j = order.length; i < j; ++i) {
-      q = order[i];
-      if(!q.enabled) continue;
-      l = q.set.length;
+    var count = index,
+        ndx = null;
 
-      if(index < offset + l) {
-        query = i;
-        break;
-      }
+    markers.some(function (m, i) {
+      if(!m.query.enabled)   return false;
+      else if(count === 0) { ndx = i; return true; }
+      --count; return false;
+    } );
 
-      offset += l;
-    }
-
-    /* `index´ past maximum offset? Back to top, if so. */
-    if(query === null) {
-      /* Re-compute to account for disabled query sets. */
-      if(index > 0) this.set(0);
+    /* If index overflown, set to first highlight. */
+    if(ndx === null) {
+      this.set(0);
       return;
     }
 
+    /* Clear currently active highlight, if any, and set requested highlight
+     * active. */
     this.clearActive_();
-    var $el = $('.' + Css.highlight + '-id-' + (q.id + index - offset))
-      .addClass(Css.enabled)
-      .eq(0);
+    var c = markers[ndx],
+        $el = $('.' + Css.highlight + '-id-' + (c.query.id + c.index))
+          .addClass(Css.enabled)
+          .eq(0);
 
     /* Scroll viewport if element not visible. */
-    if(typeof this.owner.options.scrollTo !== 'undefined')
-      this.owner.options.scrollTo($el);
+    if(typeof owner.options.scrollTo !== 'undefined')
+      owner.options.scrollTo($el);
     else if(!std.$.inview($el))
-      std.$.scrollIntoView($el, this.owner.options.scrollNode);
+      std.$.scrollIntoView($el, owner.options.scrollNode);
 
-    this.query = query;
     this.index = index;
-
-    this.owner.ui.update(false);
+    owner.ui.update(false);
   };
 
   /* Private interface
@@ -465,11 +472,7 @@
   Cursor.prototype.clear_ = function ()
   {
     this.clearActive_();
-
-    if(this.owner.empty()) {
-      this.query = null;
-      this.index = -1;
-    }
+    this.index = -1;
   };
 
   /**
@@ -1818,7 +1821,7 @@
         $eli.find('enable').prop('checked', true);
 
       $eli.find('name').text(k);
-      $eli.find('count').text(q.set.length);
+      $eli.find('count').text(q.length);
       $elu.append($eli.get());
     }
 
