@@ -182,7 +182,8 @@
    * rolls over.</p> */
   Main.prototype.prev = function ()
   {
-    this.cursor.set((this.cursor.index === 0
+    if(this.stats.total <= 0) return;
+    this.cursor.set((this.cursor.index < 1
                      ? this.stats.total
                      : this.cursor.index) - 1);
   };
