@@ -272,7 +272,7 @@
       text += textOf(node.childNodes[i]);
 
     return text;
-  }
+  };
 
   var selectStandard = function ()
   {
@@ -290,7 +290,7 @@
 
     expect(result.computeXpath())
       .to.deep.equal({ end: { offset: 260, xpath: "/p[3]/text()[1]" },
-                       start: { offset: 1, xpath: "/p[3]/a/text()[1]" } });
+                       start: { offset: 1, xpath: "/p[3]/a[1]/text()[1]" } });
     return result;
   };
 
@@ -309,7 +309,7 @@
   var highlight = function (name, qsetname)
   {
     if(qsetname === undefined) qsetname = name;
-    hl.add('test-' + qsetname, [ tests[name].xpath  ] );
+    hl.add('test-' + qsetname, [ tests[name].xpath  ] ).apply();
     assertHighlight(hh.HtmlRangeHighlighter.id - 1, tests[name].text);
   };
 
@@ -332,197 +332,192 @@
       } );
 
       it('adds a query set', function () {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
       } );
 
       it('does not allow duplicate query sets', function () {
-        hl.add('test-the', [ 'the' ]);
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ])
+          .add('test-the', [ 'the' ])
+          .apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
       } );
 
       it('removes query set when only one exists', function () {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
-        hl.remove('test-the');
+        hl.remove('test-the').apply();
         assertUi();
         assert.strictEqual(hl.stats.total, 0);
         assertClear();
       } );
 
       it('removes correct query set when multiple queries exist', function () {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
-        hl.remove('test-the');
+        hl.remove('test-the').apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_VIBER);
       } );
 
       it('removes all query sets when multiple queries exist', function () {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
-        hl.remove('test-the');
+        hl.remove('test-the').apply()
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_VIBER);
 
-        hl.remove('test-viber');
+        hl.remove('test-viber').apply()
         assertUi();
         assert.strictEqual(hl.stats.total, 0);
         assertClear();
       } );
 
       it('clears state when only one query set exists', function () {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.clear();
+        hl.clear().apply();
         assertUi();
         assert.strictEqual(hl.stats.total, 0);
         assertClear();
       } );
 
       it('clears state when multiple query sets exist', function () {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
-        hl.clear();
+        hl.clear().apply();
         assertUi();
         assert.strictEqual(hl.stats.total, 0);
         assertClear();
       } );
 
-      it('moves cursor to next element within query set', function () {
-        hl.add('test-the', [ 'the' ]);
+      it('moves cursor to next element', function () {
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
+        assert.strictEqual(cursor(), 0);
+        hl.next();
+        assert.strictEqual(cursor(), 1);
+      } );
+
+      it('moves cursor to previous element', function () {
+        hl.add('test-the', [ 'the' ]).apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE);
+
+        hl.add('test-viber', [ 'viber' ]).apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+
+        assert.strictEqual(cursor(), 0);
+        hl.next();
         assert.strictEqual(cursor(), 1);
         hl.next();
         assert.strictEqual(cursor(), 2);
-      } );
-
-      it('moves cursor to previous element within query set', function () {
-        hl.add('test-the', [ 'the' ]);
-        assertUi();
-        assert.strictEqual(hl.stats.total, COUNT_THE);
-
-        hl.add('test-viber', [ 'viber' ]);
-        assertUi();
-        assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
-
-        assert.strictEqual(cursor(), 1);
-        hl.next();
-        assert.strictEqual(cursor(), 2);
         hl.prev();
         assert.strictEqual(cursor(), 1);
       } );
 
-      it('moves cursor to next element in next query set', function () {
+      it('moves cursor to last element', function () {
         var id = hh.HtmlRangeHighlighter.id;
 
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
-        for(var i = 0; i < COUNT_THE; ++i) {
-          assert.strictEqual(cursor(), i + 1);
+        for(var i = 0; i < COUNT_THE + COUNT_VIBER; ++i) {
+          assert.strictEqual(cursor(), i);
           hl.next();
         }
 
-        assert.strictEqual(cursor(), COUNT_THE + 1);
-        assertCursor(COUNT_THE + id, 'Viber');
+        assert.strictEqual(cursor(), COUNT_THE + COUNT_VIBER);
+//        assertCursor(COUNT_THE + COUNT_VIBER, 'Viber');
       } );
 
-      it('moves cursor to previous element in previous query set', function () {
+      it('cursor rolls over to first element from last', function () {
         var id = hh.HtmlRangeHighlighter.id;
 
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
-        for(var i = 0; i < COUNT_THE; ++i) {
-          assert.strictEqual(cursor(), i + 1);
+        for(var i = 0; i < COUNT_THE + COUNT_VIBER + 1; ++i) {
+          assert.strictEqual(cursor(), i);
           hl.next();
         }
 
-        assert.strictEqual(cursor(), COUNT_THE + 1);
-        assertCursor(COUNT_THE + id, 'Viber');
-
-        hl.prev();
-        assert.strictEqual(cursor(), COUNT_THE);
-        assertCursor(COUNT_THE + id - 1, 'the');
+        assert.strictEqual(cursor(), 1);
       } );
 
-      it('moves cursor to last element in last query set', function () {
+      it('cursor rolls over to last element from first', function () {
         var id = hh.HtmlRangeHighlighter.id;
 
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
-        assert.strictEqual(cursor(), 1);
+        assert.strictEqual(cursor(), 0);
         hl.prev();
         assert.strictEqual(cursor(), COUNT_THE + COUNT_VIBER);
-        assertCursor(COUNT_THE + COUNT_VIBER + id - 1, 'Viber');
       } );
 
-      it('moves cursor to first element in first query set', function () {
+      it('cursor rolls over to last element from first and back', function () {
         var id = hh.HtmlRangeHighlighter.id;
 
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
-        assert.strictEqual(cursor(), 1);
+        assert.strictEqual(cursor(), 0);
         hl.prev();
         assert.strictEqual(cursor(), COUNT_THE + COUNT_VIBER);
-        assertCursor(COUNT_THE + COUNT_VIBER + id - 1, 'Viber');
 
         hl.next();
         assert.strictEqual(cursor(), 1);
-        assertCursor(id, 'the');
       } );
     } );
 
@@ -536,7 +531,7 @@
       });
 
       it('correctly selects text after single query set add', function() {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
 
@@ -544,9 +539,9 @@
       });
 
       it('correctly selects text after second query set add', function() {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
 
@@ -554,11 +549,11 @@
       });
 
       it('correctly selects text after dense query set add', function() {
-        hl.add('test-the', [ 'the' ]);
+        hl.add('test-the', [ 'the' ]).apply();
         assertUi();
-        hl.add('test-viber', [ 'viber' ]);
+        hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
-        hl.add('test-a', [ 'a' ]);
+        hl.add('test-a', [ 'a' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
@@ -621,7 +616,7 @@
         } );
 
         it('highlights query set from XPath representation with noise', function () {
-          hl.add('test-the', [ 'the' ]);
+          hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE);
 
@@ -629,7 +624,7 @@
         } );
 
         it('highlights two query sets from XPath representations with noise', function () {
-          hl.add('test-the', [ 'the' ]);
+          hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE);
 
@@ -638,7 +633,7 @@
         } );
 
         it('highlights three query sets from XPath representations with noise', function () {
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_VIBER);
 
@@ -648,7 +643,7 @@
         } );
 
         it('highlights four query sets from XPath representations with noise', function () {
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_VIBER);
 
@@ -665,25 +660,25 @@
         } );
 
         it('highlights one query set from XPath representation with noise', function () {
-          hl.add('test-the', [ 'the' ]);
+          hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           highlight('standard');
           assert.strictEqual(hl.stats.total, COUNT_THE + 1);
 
-          hl.add('test-the-2', [ 'the' ]);
+          hl.add('test-the-2', [ 'the' ]).apply();
           assertUi();
           highlight('standard', 'standard-2');
           assert.strictEqual(hl.stats.total, (COUNT_THE + 1) << 1);
         } );
 
         it('highlights two query sets from XPath representations with noise', function () {
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           highlight('standard');
           highlight('wrapElement');
           assert.strictEqual(hl.stats.total, COUNT_VIBER + 2);
 
-          hl.add('test-viber-2', [ 'viber' ]);
+          hl.add('test-viber-2', [ 'viber' ]).apply();
           assertUi();
 
           highlight('standard', 'standard-2');
@@ -692,14 +687,14 @@
         } );
 
         it('highlights three query sets from XPath representations with noise', function () {
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           highlight('standard');
           highlight('wrapElement');
           highlight('multiElement');
           assert.strictEqual(hl.stats.total, COUNT_VIBER + 3);
 
-          hl.add('test-viber-2', [ 'viber' ]);
+          hl.add('test-viber-2', [ 'viber' ]).apply();
           assertUi();
           highlight('standard', 'standard-2');
           highlight('wrapElement', 'wrapElement-2');
@@ -708,7 +703,7 @@
         } );
 
         it('highlights four query sets from XPath representations with noise', function () {
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           highlight('standard');
           highlight('wrapElement');
@@ -716,7 +711,7 @@
           highlight('bottomup');
           assert.strictEqual(hl.stats.total, COUNT_VIBER + 4);
 
-          hl.add('test-viber-2', [ 'viber' ]);
+          hl.add('test-viber-2', [ 'viber' ]).apply();
           assertUi();
           highlight('standard', 'standard-2');
           highlight('wrapElement', 'wrapElement-2');
@@ -733,13 +728,13 @@
 
         it('highlights one query set from XPath representation after dense query set add', function ()
         {
-          hl.add('test-the', [ 'the' ]);
+          hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE);
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
-          hl.add('test-a', [ 'a' ]);
+          hl.add('test-a', [ 'a' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
@@ -748,13 +743,13 @@
 
         it('highlights two query sets from XPath representation after dense query set add', function ()
         {
-          hl.add('test-the', [ 'the' ]);
+          hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE);
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
-          hl.add('test-a', [ 'a' ]);
+          hl.add('test-a', [ 'a' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
@@ -764,13 +759,13 @@
 
         it('highlights three query sets from XPath representation after dense query set add', function ()
         {
-          hl.add('test-the', [ 'the' ]);
+          hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE);
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
-          hl.add('test-a', [ 'a' ]);
+          hl.add('test-a', [ 'a' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
@@ -781,13 +776,13 @@
 
         it('highlights four query sets from XPath representation after dense query set add', function ()
         {
-          hl.add('test-the', [ 'the' ]);
+          hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE);
-          hl.add('test-viber', [ 'viber' ]);
+          hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
-          hl.add('test-a', [ 'a' ]);
+          hl.add('test-a', [ 'a' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
