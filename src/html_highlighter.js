@@ -32,6 +32,7 @@
     options = $.extend(true, $.extend(true, {}, defaults), options);
 
     /* Mutable properties. */
+    this.transaction = [ ];
     this.queries = { };
     this.highlights = [ ];
     this.stats = {
@@ -61,7 +62,7 @@
     this.content = new TextContent(this.options.container.get(0));
 
     /* TODO: remove */
-    this.content.assert();
+    this.content.assert_();
   };
 
   /**
@@ -79,75 +80,11 @@
    * also enabled. */
   Main.prototype.add = function (name, queries, enabled /* = false */)
   {
-    if(!std.is_arr(queries))
-      throw 'Invalid or no queries array specified';
-
-    enabled = enabled === true;
-
-    var q, count = 0,
-        content = this.content,
-        markers = this.highlights,
-        highlighter = new RangeHighlighter(this.stats.highlight, enabled);
-
-    /* Remove query set if it exists. */
-    if(name in this.queries)
-      this.remove(name);
-
-    /* Create and contain descriptor object and add reference to it in the
-     * ordered array. */
-    q = this.queries[name] = {
-      enabled: enabled,
-      id: null
-/*    length: 0   ; set below */
-    };
-
-    /* For each query, perform a lookup in the internal text representation and
-     * highlight each hit.  The global offset of each highlight is recorded in
-     * the `this.highlights´ array.  The offset is used by the `Cursor´ class
-     * to compute the next/previous highlight to show. */
-    queries.forEach(function (i) {
-      var hit, finder = Finder.construct(content, i);
-
-      if(hit === false) {
-        console.info("Query has no hits: ", i);
-        return;
-      }
-
-      q.id = RangeHighlighter.id;
-
-      while((hit = finder.next()) !== false) {
-        var mid, min = 0, max = markers.length - 1,
-            offset = hit.start.marker.offset + hit.start.offset;
-
-        while(min < max) {
-          mid = Math.floor((min + max) / 2);
-
-          if(markers[mid].offset < offset) min = mid + 1;
-          else max = mid;
-        }
-
-        markers.splice(markers.length > 0 && markers[min].offset < offset
-                       ? min + 1 : min, 0,
-                       { query: q, index: count, offset: offset });
-
-        highlighter.do(hit);
-        ++count;
-      }
+    var self = this;
+    this.transaction.push( function () {
+      self.deferred_add_(name, queries, enabled !== false);
     } );
-
-    q.length = count;
-
-    /* Update global statistics. */
-    ++this.stats.queries;
-    if(enabled) this.stats.total += count;
-
-    /* Ensure CSS highlight class rolls over on overflow. */
-    ++this.stats.highlight;
-    if(this.stats.highlight >= this.options.maxHighlight)
-      this.stats.highlight = 0;
-
-    this.ui.update();
-    this.assert_();             /* TODO: remove */
+    return this;
   };
 
   /**
@@ -158,10 +95,9 @@
    * @param {string} name - Name of the query set to remove. */
   Main.prototype.remove = function (name)
   {
-    this.remove_(name);
-
-    this.cursor.clear(false);
-    this.ui.update();
+    var self = this;
+    this.transaction.push( function () { self.deferred_remove_(name); } );
+    return this;
   };
 
   /**
@@ -173,15 +109,9 @@
    * @param {string} name - Name of the query set to enable. */
   Main.prototype.enable = function (name)
   {
-    var q = this.get_(name);
-    if(q.enabled || q.id === null) return;
-
-    for(var i = q.id, l = i + q.length; i < l; ++i)
-      $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
-
-    q.enabled = true;
-    this.stats.total += q.length;
-    this.cursor.clear();
+    var self = this;
+    this.transaction.push( function () { self.deferred_enable_(name); } );
+    return this;
   };
 
   /**
@@ -193,15 +123,9 @@
    * @param {string} name - Name of the query set to disable. */
   Main.prototype.disable = function (name)
   {
-    var q = this.get_(name);
-    if(!q.enabled || q.id === null) return;
-
-    for(var i = q.id, l = i + q.length; i < l; ++i)
-      $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
-
-    q.enabled = false;
-    this.stats.total -= q.length;
-    this.cursor.clear();
+    var self = this;
+    this.transaction.push( function () { self.deferred_disable_(name); } );
+    return this;
   };
 
   /**
@@ -209,14 +133,30 @@
    * */
   Main.prototype.clear = function ()
   {
-    for(var k in this.queries)
-      this.remove_(k);
+    var self = this;
+    this.transaction.push( function () { self.deferred_clear_(); } );
+    return this;
+  };
 
-    if(!std.is_obj_empty(this.queries))
-      throw "Query set object not empty";
+  /**
+   * <p>Apply transaction.</p>
+   *
+   * <p>Note that transactions are <strong>not</strong> atomic.  One failure
+   * does not lead to a transaction rollback or even interruption of
+   * execution; the transaction is applied regardless.</p> */
+  Main.prototype.apply = function ()
+  {
+    if(this.transaction.length === 0) {
+      console.info("Nothing to apply: transaction queue empty");
+      return;
+    }
 
-    this.cursor.clear(false);
-    this.ui.update();
+    this.transaction.forEach(function (action) {
+      try      { action(); }
+      catch(x) { console.error("Failed to apply action: %s", x); }
+    } );
+
+    this.transaction = [ ];
   };
 
   /**
@@ -379,13 +319,142 @@
 
   Main.prototype.assert_ = function ()
   {
-    var prev = 0;
+    var c = 0, l = 0, k;
 
+    for(k in this.queries)
+      l += this.queries[k].length;
+
+    k = 0;
     this.highlights.forEach(function (i) {
-      if(i.offset < prev || i.index >= i.query.length)
-        throw "Invalid state";
-      prev = i.offset;
+      if(i.offset < c || i.index >= i.query.length)
+        throw "Invalid state: highlight out of position";
+
+      c = i.offset;
+      ++k;
     } );
+
+    if(k !== l) throw "Invalid state: length mismatch";
+  };
+
+  Main.prototype.deferred_add_ = function (name, queries, enabled)
+  {
+    if(!std.is_arr(queries))
+      throw 'Invalid or no queries array specified';
+
+    enabled = enabled === true;
+
+    var q, count = 0,
+        content = this.content,
+        markers = this.highlights,
+        highlighter = new RangeHighlighter(this.stats.highlight, enabled);
+
+    /* Remove query set if it exists. */
+    if(name in this.queries)
+      this.deferred_remove_(name);
+
+    /* Create and contain descriptor object and add reference to it in the
+     * ordered array. */
+    q = this.queries[name] = {
+      enabled: enabled,
+      id: null
+/*    length: 0   ; set below */
+    };
+
+    /* For each query, perform a lookup in the internal text representation and
+     * highlight each hit.  The global offset of each highlight is recorded in
+     * the `this.highlights´ array.  The offset is used by the `Cursor´ class
+     * to compute the next/previous highlight to show. */
+    queries.forEach(function (i) {
+      var hit, finder = Finder.construct(content, i);
+
+      if(hit === false) {
+        console.info("Query has no hits: ", i);
+        return;
+      }
+
+      q.id = RangeHighlighter.id;
+
+      /* Note: insertion of global offsets to the `this.highlights` array could
+       * (should?) be done in a web worker concurrently. */
+      while((hit = finder.next()) !== false) {
+        var mid, min = 0, max = markers.length - 1,
+            offset = hit.start.marker.offset + hit.start.offset;
+
+        while(min < max) {
+          mid = Math.floor((min + max) / 2);
+
+          if(markers[mid].offset < offset) min = mid + 1;
+          else max = mid;
+        }
+
+        markers.splice(markers.length > 0 && markers[min].offset < offset
+                       ? min + 1 : min, 0,
+                       { query: q, index: count, offset: offset });
+
+        highlighter.do(hit);
+        ++count;
+      }
+    } );
+
+    q.length = count;
+
+    /* Update global statistics. */
+    ++this.stats.queries;
+    if(enabled) this.stats.total += count;
+
+    /* Ensure CSS highlight class rolls over on overflow. */
+    ++this.stats.highlight;
+    if(this.stats.highlight >= this.options.maxHighlight)
+      this.stats.highlight = 0;
+
+    this.ui.update();
+    this.assert_();             /* TODO: remove */
+  };
+
+  Main.prototype.deferred_remove_ = function (name)
+  {
+    this.remove_(name);
+
+    this.cursor.clear(false);
+    this.ui.update();
+  };
+
+  Main.prototype.deferred_enable_ = function (name)
+  {
+    var q = this.get_(name);
+    if(q.enabled || q.id === null) return;
+
+    for(var i = q.id, l = i + q.length; i < l; ++i)
+      $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
+
+    q.enabled = true;
+    this.stats.total += q.length;
+    this.cursor.clear();
+  };
+
+  Main.prototype.deferred_disable_ = function (name)
+  {
+    var q = this.get_(name);
+    if(!q.enabled || q.id === null) return;
+
+    for(var i = q.id, l = i + q.length; i < l; ++i)
+      $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
+
+    q.enabled = false;
+    this.stats.total -= q.length;
+    this.cursor.clear();
+  };
+
+  Main.prototype.deferred_clear_ = function ()
+  {
+    for(var k in this.queries)
+      this.remove_(k);
+
+    if(!std.is_obj_empty(this.queries))
+      throw "Query set object not empty";
+
+    this.cursor.clear(false);
+    this.ui.update();
   };
 
 
@@ -538,27 +607,6 @@
   };
 
   /**
-   * <p>Debug method for asserting that the current textual representation if
-   * valid, in particular that the offset markers are all contiguous.</p> */
-  TextContent.prototype.assert = function ()
-  {
-    var offset = 0;
-
-    /* Ensure offsets are contiguous. */
-    for(var i = 0, l = this.markers.length; i < l; ++i) {
-      var marker = this.markers[i];
-
-      if(marker.offset !== offset) {
-        console.error("Invalid offset: %d@ %d:%d ->",
-                      i, marker.offset, offset, marker);
-        throw "Invalid offset";
-      }
-
-      offset += marker.node.nodeValue.length;
-    }
-  };
-
-  /**
    * <p>Truncate a text node given by <code>marker</code> by turning it into 2
    * or 3 text nodes, with one of them used for highlighting purposes.</p>
    *
@@ -631,7 +679,7 @@
     }
 
     /* TODO: remove me. */
-    this.assert();
+    this.assert_();
 
     /* Remove old node. */
     old.parentNode.removeChild(old);
@@ -743,6 +791,27 @@
     }
 
     return offset;
+  };
+
+  /**
+   * <p>Debug method for asserting that the current textual representation if
+   * valid, in particular that the offset markers are all contiguous.</p> */
+  TextContent.prototype.assert_ = function ()
+  {
+    var offset = 0;
+
+    /* Ensure offsets are contiguous. */
+    for(var i = 0, l = this.markers.length; i < l; ++i) {
+      var marker = this.markers[i];
+
+      if(marker.offset !== offset) {
+        console.error("Invalid offset: %d@ %d:%d ->",
+                      i, marker.offset, offset, marker);
+        throw "Invalid offset";
+      }
+
+      offset += marker.node.nodeValue.length;
+    }
   };
 
 
@@ -1661,57 +1730,6 @@
   };
 
 
-  var DeferredExecution = function (hh)
-  {
-    this.hh = hh;
-    this.commands = [ ];
-  };
-
-  DeferredExecution.prototype.add = function (cmd)
-  {
-    this.commands.push(cmd);
-    return this;
-  };
-
-  DeferredExecution.prototype.run = function ()
-  {
-    var hh = this.hh;
-
-    this.commands.forEach(function (cmd) {
-      var r;
-
-      try { r = cmd.run(hh); }
-      catch (x) {
-        console.error("Command failed with exception:", x, cmd);
-        return;
-      }
-
-      if(r !== true)
-        console.info("Command reported failed execution", cmd);
-    } );
-
-    this.commands = [];
-  };
-
-
-  var CommandAddQuery = function (name, queries)
-  {
-    this.name = name;
-    this.queries = queries;
-  };
-
-  CommandAddQuery.prototype.run = function (hh)
-  { hh.add(this.name, this.queries); return true; };
-
-
-  var CommandEnableQuery = function (name)
-  { this.name = name; };
-
-  CommandEnableQuery.prototype.run = function (hh)
-  { hh.enable(this.name); return true; };
-
-
-
   /**
    * <p>Class responsible for updating the user interface widget, if one is
    * supplied.</p>
@@ -1778,7 +1796,7 @@
     this.nodes.entities.click(function (ev) {
       var $node = $(ev.target);
       if($node.data('hh-scope') === 'remove')
-        self.owner.remove(self.getName_($node));
+        self.owner.remove(self.getName_($node)).apply();
     } );
 
     this.nodes.next.click(function () { self.owner.next(); } );
@@ -1832,6 +1850,8 @@
           self.owner.enable(self.getName_($node));
         else
           self.owner.disable(self.getName_($node));
+
+        self.owner.apply();
       }
     } );
 
@@ -1877,11 +1897,7 @@
     HtmlHighlighterUi: Ui,
     HtmlRangeHighlighter: RangeHighlighter,
     HtmlTextFinder: TextFinder,
-    HtmlXpathFinder: XpathFinder,
-
-    DeferredExecution: DeferredExecution,
-    CommandAddQuery: CommandAddQuery,
-    CommandEnableQuery: CommandEnableQuery
+    HtmlXpathFinder: XpathFinder
   };
 
 }, this);
