@@ -32,7 +32,9 @@
     options = $.extend(true, $.extend(true, {}, defaults), options);
 
     /* Mutable properties. */
+    this.transaction = [ ];
     this.queries = { };
+    this.highlights = [ ];
     this.stats = {
       queries: 0,
       total: 0,
@@ -60,7 +62,7 @@
     this.content = new TextContent(this.options.container.get(0));
 
     /* TODO: remove */
-    this.content.assert();
+    this.content.assert_();
   };
 
   /**
@@ -73,55 +75,16 @@
    *
    * @param {string} name - Name of the query set.
    * @param {string[]} queries - Array containing individual queries to
-   * highlight. */
-  Main.prototype.add = function (name, queries)
+   * highlight.
+   * @param {bool} enabled - If explicitly <code>true</code>, query set is
+   * also enabled. */
+  Main.prototype.add = function (name, queries, enabled /* = false */)
   {
-    if(!std.is_arr(queries))
-      throw 'Invalid or no queries array specified';
-
-    var q, self = this,
-        highlighter = new RangeHighlighter(this.stats.highlight);
-
-    /* Remove query set if it exists. */
-    if(name in this.queries)
-      this.remove(name);
-
-    q = this.queries[name] = {
-      enabled: true,
-      set: [ ]
-    };
-
-    /* TODO: There is currently no need to save every single highlight id in
-     * the `sets´ array since, if I understand it correctly, individual query
-     * set highlights will never be removed.  If they're never removed, then
-     * one can assume that highlight ids within a particular query set are
-     * contiguous, with the only attribute needed to be saved being the *start*
-     * highlight id; the end highlight id can be computed by adding set length
-     * minus 1 to start id.
-     * --------------------------------------------------------------------- */
-    /* For each query, perform a lookup in the internal text representation
-     * and highlight each hit.  The global id of each highlight is recorded in
-     * the `this.queries[name].set´ array. */
-    queries.forEach(function (i) {
-      var hit, finder = Finder.construct(self.content, i);
-      while((hit = finder.next(i)) !== false)
-        q.set.push(highlighter.do(hit));
+    var self = this;
+    this.transaction.push( function () {
+      self.deferred_add_(name, queries, enabled !== false);
     } );
-
-
-    /* Update global statistics. */
-    ++this.stats.queries;
-    this.stats.total += q.set.length;
-
-    /* Ensure CSS highlight class rolls over on overflow. */
-    ++this.stats.highlight;
-    if(this.stats.highlight >= this.options.maxHighlight)
-      this.stats.highlight = 0;
-
-    /* Set cursor on the first query of the first query set and update the UI
-     * state. */
-    this.cursor.clear(false);
-    this.ui.update();
+    return this;
   };
 
   /**
@@ -132,10 +95,9 @@
    * @param {string} name - Name of the query set to remove. */
   Main.prototype.remove = function (name)
   {
-    this.remove_(name);
-
-    this.cursor.clear(false);
-    this.ui.update();
+    var self = this;
+    this.transaction.push( function () { self.deferred_remove_(name); } );
+    return this;
   };
 
   /**
@@ -147,18 +109,9 @@
    * @param {string} name - Name of the query set to enable. */
   Main.prototype.enable = function (name)
   {
-    var q = this.queries[name];
-
-    if(q === undefined) throw 'Query set non-existent';
-    else if(q.enabled)  return;
-
-    q.set.forEach(function (i) {
-      $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
-    } );
-
-    q.enabled = true;
-    this.stats.total += q.set.length;
-    this.cursor.clear();
+    var self = this;
+    this.transaction.push( function () { self.deferred_enable_(name); } );
+    return this;
   };
 
   /**
@@ -170,20 +123,9 @@
    * @param {string} name - Name of the query set to disable. */
   Main.prototype.disable = function (name)
   {
-    var q = this.queries[name];
-
-    if(q === undefined)
-      throw 'Query set non-existent';
-    else if(!q.enabled)
-      return;
-
-    q.set.forEach(function (i) {
-      $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
-    } );
-
-    q.enabled = false;
-    this.stats.total -= q.set.length;
-    this.cursor.clear();
+    var self = this;
+    this.transaction.push( function () { self.deferred_disable_(name); } );
+    return this;
   };
 
   /**
@@ -191,23 +133,30 @@
    * */
   Main.prototype.clear = function ()
   {
-    for(var k in this.queries)
-      this.remove_(k);
-
-    if(!std.is_obj_empty(this.queries))
-      throw "Query set object not empty";
-
-    this.cursor.clear(false);
-    this.ui.update();
+    var self = this;
+    this.transaction.push( function () { self.deferred_clear_(); } );
+    return this;
   };
 
   /**
-   * <p>Convenience method to clear the current cursor state.  The cursor is
-   * set to the first query if queries exist, otherwise it is set to an invalid
-   * state.</p> */
-  Main.prototype.clearCursor = function ()
+   * <p>Apply transaction.</p>
+   *
+   * <p>Note that transactions are <strong>not</strong> atomic.  One failure
+   * does not lead to a transaction rollback or even interruption of
+   * execution; the transaction is applied regardless.</p> */
+  Main.prototype.apply = function ()
   {
-    this.cursor.clear();
+    if(this.transaction.length === 0) {
+      console.info("Nothing to apply: transaction queue empty");
+      return;
+    }
+
+    this.transaction.forEach(function (action) {
+      try      { action(); }
+      catch(x) { console.error("Failed to apply action: %s", x); }
+    } );
+
+    this.transaction = [ ];
   };
 
   /**
@@ -233,7 +182,8 @@
    * rolls over.</p> */
   Main.prototype.prev = function ()
   {
-    this.cursor.set((this.cursor.index === 0
+    if(this.stats.total <= 0) return;
+    this.cursor.set((this.cursor.index < 1
                      ? this.stats.total
                      : this.cursor.index) - 1);
   };
@@ -319,7 +269,7 @@
   Main.prototype.empty = function ()
   {
     for(var k in this.queries) {
-      if(this.queries[k].set.length > 0)
+      if(this.queries[k].length > 0)
         return false;
     }
 
@@ -337,21 +287,175 @@
    * @param {string} name - The name of the query set to remove. */
   Main.prototype.remove_ = function (name)
   {
-    var q = this.queries[name];
-
-    if(q === undefined)
-      throw 'Query set non-existent';
-
-    var highlighter = new RangeHighlighter(0);
+    var i, l, q = this.get_(name),
+        unhighlighter = new RangeUnhighlighter(),
+        markers = this.highlights;
 
     --this.stats.queries;
-    this.stats.total -= q.set.length;
+    this.stats.total -= q.length;
 
-    q.set.forEach(function (i) {
-      highlighter.undo(i);
-    } );
+    for(i = q.id, l = i + q.length; i < l; ++i)
+      unhighlighter.undo(i);
+
+    for(i = 0; i < markers.length;) {
+      if(markers[i].query === q) markers.splice(i, 1);
+      else ++i;
+    }
 
     delete this.queries[name];
+  };
+
+  /**
+   * <p>Safely retrieve a query set's descriptor.</p>
+   *
+   * <p>Throws an exception if the query set does not exist.</p>
+   *
+   * @param {string} name - The name of the query set to retrieve. */
+  Main.prototype.get_ = function (name)
+  {
+    var q = this.queries[name];
+    if(q === undefined) throw 'Query set non-existent';
+    return q;
+  };
+
+  Main.prototype.assert_ = function ()
+  {
+    var c = 0, l = 0, k;
+
+    for(k in this.queries)
+      l += this.queries[k].length;
+
+    k = 0;
+    this.highlights.forEach(function (i) {
+      if(i.offset < c || i.index >= i.query.length)
+        throw "Invalid state: highlight out of position";
+
+      c = i.offset;
+      ++k;
+    } );
+
+    if(k !== l) throw "Invalid state: length mismatch";
+  };
+
+  Main.prototype.deferred_add_ = function (name, queries, enabled)
+  {
+    if(!std.is_arr(queries))
+      throw 'Invalid or no queries array specified';
+
+    enabled = enabled === true;
+
+    var q, count = 0,
+        content = this.content,
+        markers = this.highlights,
+        highlighter = new RangeHighlighter(this.stats.highlight, enabled);
+
+    /* Remove query set if it exists. */
+    if(name in this.queries)
+      this.deferred_remove_(name);
+
+    /* Create and contain descriptor object and add reference to it in the
+     * ordered array. */
+    q = this.queries[name] = {
+      enabled: enabled,
+      id: null
+/*    length: 0   ; set below */
+    };
+
+    /* For each query, perform a lookup in the internal text representation and
+     * highlight each hit.  The global offset of each highlight is recorded in
+     * the `this.highlights´ array.  The offset is used by the `Cursor´ class
+     * to compute the next/previous highlight to show. */
+    queries.forEach(function (i) {
+      var hit, finder = Finder.construct(content, i);
+
+      if(hit === false) {
+        console.info("Query has no hits: ", i);
+        return;
+      }
+
+      q.id = RangeHighlighter.id;
+
+      /* Note: insertion of global offsets to the `this.highlights` array could
+       * (should?) be done in a web worker concurrently. */
+      while((hit = finder.next()) !== false) {
+        var mid, min = 0, max = markers.length - 1,
+            offset = hit.start.marker.offset + hit.start.offset;
+
+        while(min < max) {
+          mid = Math.floor((min + max) / 2);
+
+          if(markers[mid].offset < offset) min = mid + 1;
+          else max = mid;
+        }
+
+        markers.splice(markers.length > 0 && markers[min].offset < offset
+                       ? min + 1 : min, 0,
+                       { query: q, index: count, offset: offset });
+
+        highlighter.do(hit);
+        ++count;
+      }
+    } );
+
+    q.length = count;
+
+    /* Update global statistics. */
+    ++this.stats.queries;
+    if(enabled) this.stats.total += count;
+
+    /* Ensure CSS highlight class rolls over on overflow. */
+    ++this.stats.highlight;
+    if(this.stats.highlight >= this.options.maxHighlight)
+      this.stats.highlight = 0;
+
+    this.ui.update();
+    this.assert_();             /* TODO: remove */
+  };
+
+  Main.prototype.deferred_remove_ = function (name)
+  {
+    this.remove_(name);
+
+    this.cursor.clear(false);
+    this.ui.update();
+  };
+
+  Main.prototype.deferred_enable_ = function (name)
+  {
+    var q = this.get_(name);
+    if(q.enabled || q.id === null) return;
+
+    for(var i = q.id, l = i + q.length; i < l; ++i)
+      $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
+
+    q.enabled = true;
+    this.stats.total += q.length;
+    this.cursor.clear();
+  };
+
+  Main.prototype.deferred_disable_ = function (name)
+  {
+    var q = this.get_(name);
+    if(!q.enabled || q.id === null) return;
+
+    for(var i = q.id, l = i + q.length; i < l; ++i)
+      $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
+
+    q.enabled = false;
+    this.stats.total -= q.length;
+    this.cursor.clear();
+  };
+
+  Main.prototype.deferred_clear_ = function ()
+  {
+    for(var k in this.queries)
+      this.remove_(k);
+
+    if(!std.is_obj_empty(this.queries))
+      throw "Query set object not empty";
+
+    this.cursor.clear(false);
+    this.ui.update();
   };
 
 
@@ -364,7 +468,6 @@
   {
     std.Owned.call(this, owner);
 
-    this.query = null;
     this.index = -1;
   };
 
@@ -383,74 +486,50 @@
   };
 
   /**
-   * <p>Set cursor to query referenced by absolute query index.  The absolute
-   * query index is computed by adding the lengths of each preceding query set
-   * and the relative index of a given query set, as illustrated by:</p>
-   *
-   * <pre>
-   * queries = first:  { set: [ 1, 2, 3 ] },
-   *           second: { set: [ 4, 5, 6, 7 ] },
-   *           third:  { set: [ 8, 9, 10, 11, 12 ] };</pre>
-   *
-   * <p>Using the example above, an absolute query index of 11 would reference
-   * element <code>12</code> because <code>first.set.length + second.set.length
-   * = 7</code>, and since <code>7 + 5</code> (<code>5</code> being the number
-   * of elements in <code>third.set</code>) would be > than <code>11</code>,
-   * then <code>11</code> must reference the relative index in
-   * <code>third</code> given by <code>11 - 7</code>, or <code>4</code>.</p>
+   * <p>Set cursor to query referenced by absolute query index.</p>
    *
    * @param {integer} index - Virtual cursor index */
   Cursor.prototype.set = function (index)
   {
-    var query = null,
-        offset = 0,
-        queries = this.owner.queries;
+    var owner = this.owner,
+        markers = this.owner.highlights;
 
     if(index < 0)
       throw 'Invalid cursor index specified';
-    else if(this.owner.empty())
+    else if(owner.stats.total <= 0)
       return;
 
-    /* Find query set that corresponds to specified global index. */
-    for(var k in queries) {
-      var l, q = queries[k];
+    var count = index,
+        ndx = null;
 
-      if(!q.enabled)
-        continue;
+    markers.some(function (m, i) {
+      if(!m.query.enabled)   return false;
+      else if(count === 0) { ndx = i; return true; }
+      --count; return false;
+    } );
 
-      l = q.set.length;
-
-      if(index >= offset && index < offset + l) {
-        query = q;
-        break;
-      }
-
-      offset += l;
-    }
-
-    /* `index´ past maximum offset? Back to top, if so. */
-    if(query === null) {
-      /* Re-compute to account for disabled query sets. */
-      if(index > 0) this.set(0);
+    /* If index overflown, set to first highlight. */
+    if(ndx === null) {
+      this.set(0);
       return;
     }
 
+    /* Clear currently active highlight, if any, and set requested highlight
+     * active. */
     this.clearActive_();
-    var $el = $('.' + Css.highlight + '-id-' + query.set[index - offset])
-      .addClass(Css.enabled)
-      .eq(0);
+    var c = markers[ndx],
+        $el = $('.' + Css.highlight + '-id-' + (c.query.id + c.index))
+          .addClass(Css.enabled)
+          .eq(0);
 
     /* Scroll viewport if element not visible. */
-    if (typeof this.owner.options.scrollTo !== 'undefined') {
-      this.owner.options.scrollTo($el);
-    } else if(!std.$.inview($el)) {
-      std.$.scrollIntoView($el, this.owner.options.scrollNode);
-    }
+    if(typeof owner.options.scrollTo !== 'undefined')
+      owner.options.scrollTo($el);
+    else if(!std.$.inview($el))
+      std.$.scrollIntoView($el, owner.options.scrollNode);
 
-    this.query = query;
     this.index = index;
-
-    this.owner.ui.update(false);
+    owner.ui.update(false);
   };
 
   /* Private interface
@@ -463,11 +542,7 @@
   Cursor.prototype.clear_ = function ()
   {
     this.clearActive_();
-
-    if(this.owner.empty()) {
-      this.query = null;
-      this.index = -1;
-    }
+    this.index = -1;
   };
 
   /**
@@ -529,27 +604,6 @@
       marker = marker[marker.length - 1];
       if(offset - marker.node.nodeValue.length != marker.offset)
         throw 'Invalid state detected: offset mismatch';
-    }
-  };
-
-  /**
-   * <p>Debug method for asserting that the current textual representation if
-   * valid, in particular that the offset markers are all contiguous.</p> */
-  TextContent.prototype.assert = function ()
-  {
-    var offset = 0;
-
-    /* Ensure offsets are contiguous. */
-    for(var i = 0, l = this.markers.length; i < l; ++i) {
-      var marker = this.markers[i];
-
-      if(marker.offset !== offset) {
-        console.error("Invalid offset: %d@ %d:%d ->",
-                      i, marker.offset, offset, marker);
-        throw "Invalid offset";
-      }
-
-      offset += marker.node.nodeValue.length;
     }
   };
 
@@ -626,7 +680,7 @@
     }
 
     /* TODO: remove me. */
-    this.assert();
+    this.assert_();
 
     /* Remove old node. */
     old.parentNode.removeChild(old);
@@ -738,6 +792,27 @@
     }
 
     return offset;
+  };
+
+  /**
+   * <p>Debug method for asserting that the current textual representation if
+   * valid, in particular that the offset markers are all contiguous.</p> */
+  TextContent.prototype.assert_ = function ()
+  {
+    var offset = 0;
+
+    /* Ensure offsets are contiguous. */
+    for(var i = 0, l = this.markers.length; i < l; ++i) {
+      var marker = this.markers[i];
+
+      if(marker.offset !== offset) {
+        console.error("Invalid offset: %d@ %d:%d ->",
+                      i, marker.offset, offset, marker);
+        throw "Invalid offset";
+      }
+
+      offset += marker.node.nodeValue.length;
+    }
   };
 
 
@@ -929,15 +1004,19 @@
 
 
   /**
-   * <p>Convenience class for applying or removing highlighting on
-   * <code>Range</code> instances.</p>
+   * <p>Convenience class for applying highlighting on <code>Range</code>
+   * instances.</p>
    * @class
    * @param {number} count - The CSS highlight class index to use.
-   * */
-  var RangeHighlighter = function (count)
+   * @param {bool} enabled - If explicitly <code>false</code>, highlights are
+   * created but not shown. */
+  var RangeHighlighter = function (count, enabled)
   {
     var classes = [ Css.highlight,
-                    Css.highlight + '-' + count ].join(' ');
+                    Css.highlight + '-' + count ];
+
+    if(enabled === false) classes.push(Css.disabled);
+    classes = classes.join(' ');
 
     /**
      * <p>Highlight a <code>Range</code> instance.</p>
@@ -950,9 +1029,21 @@
 
       return RangeHighlighter.id ++;
     };
+  };
 
+  /**
+   * <p>Last highlight id used.</p> */
+  RangeHighlighter.id = 0;
+
+
+  /**
+   * <p>Convenience class for removing highlighting.</p>
+   * @class
+   * */
+  var RangeUnhighlighter = function ()
+  {
     /**
-     * <p>Remove highlighting given by id.</p>
+     * <p>Remove highlighting given by its id.</p>
      *
      * @param {number} id - Id of the highlight to remove. */
     this.undo = function (id) {
@@ -965,10 +1056,6 @@
       } );
     };
   };
-
-  /**
-   * <p>Last highlight id used.</p> */
-  RangeHighlighter.id = 0;
 
 
   /**
@@ -1710,7 +1797,7 @@
     this.nodes.entities.click(function (ev) {
       var $node = $(ev.target);
       if($node.data('hh-scope') === 'remove')
-        self.owner.remove(self.getName_($node));
+        self.owner.remove(self.getName_($node)).apply();
     } );
 
     this.nodes.next.click(function () { self.owner.next(); } );
@@ -1753,7 +1840,7 @@
         $eli.find('enable').prop('checked', true);
 
       $eli.find('name').text(k);
-      $eli.find('count').text(q.set.length);
+      $eli.find('count').text(q.length);
       $elu.append($eli.get());
     }
 
@@ -1764,6 +1851,8 @@
           self.owner.enable(self.getName_($node));
         else
           self.owner.disable(self.getName_($node));
+
+        self.owner.apply();
       }
     } );
 

@@ -59,7 +59,7 @@
 
     elAdd.click(function () {
       var name = elSearch.val();
-      highlighter.add(name, [ name ]);
+      highlighter.add(name, [ name ], true).apply();
       elSearch.select().focus();
     } );
 
@@ -69,6 +69,7 @@
 
     var timeout = null;
     elDocument.on( {
+      dblclick: function () { mouseDown = 0; },
       mouseup: function () {
         -- mouseDown;
 
@@ -139,7 +140,7 @@
 
   function load(index)
   {
-    highlighter.clear();
+    highlighter.clear().apply();
     elDocument.html(dataSources[index].content);
     highlighter.refresh();
     elSearch.focus();
