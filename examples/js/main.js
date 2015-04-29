@@ -59,7 +59,7 @@
 
     elAdd.click(function () {
       var name = elSearch.val();
-      highlighter.add(name, [ name ], true);
+      highlighter.add(name, [ name ], true).apply();
       elSearch.select().focus();
     } );
 
@@ -140,7 +140,7 @@
 
   function load(index)
   {
-    highlighter.clear();
+    highlighter.clear().apply();
     elDocument.html(dataSources[index].content);
     highlighter.refresh();
     elSearch.focus();
