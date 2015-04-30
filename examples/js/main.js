@@ -20,19 +20,28 @@
   var dataBaseUrl = 'data/',
       dataSources = [ {
         name: 'Viber hacked',
-        url: 'viber-attacked-by-syrian-electronic-army.json'
+        url: 'viber_attacked_by_syrian_electronic_army.json'
       }, {
         name: 'Viber hacked -- cropped',
-        url: 'viber-attacked-by-syrian-electronic-army-cropped.json'
+        url: 'viber_attacked_by_syrian_electronic_army-cropped.json'
       }, {
         name: 'Ars Technica',
-        url: 'ars-technica.json'
+        url: 'ars_technica.json'
       }, {
         name: 'Simple',
         url: 'simple.json'
       }, {
         name: 'One paragraph',
-        url: 'one-para.json'
+        url: 'one_paragraph.json'
+      }, {
+        name: 'One paragraph with ampersand',
+        url: 'one_paragraph-ampersand.json'
+      }, {
+        name: 'One paragraph with escaped ampersand',
+        url: 'one_paragraph-ampersand_escaped.json'
+      }, {
+        name: 'One paragraph with nonexistent ampersand',
+        url: 'one_paragraph-ampersand_nonexistent.json'
       } ];
 
   var elSelector = $('#filter-data'),
