@@ -8,8 +8,9 @@
 
 
 (function (factory, window) {
-  window.define([ 'jquery', 'html_highlighter', 'data' ], function ($, hh, data) {
-    return factory(window, $, hh, data);
+  var d = [ 'jquery', 'html_highlighter', 'data1', 'data2', 'data3', 'data4' ];
+  window.define(d, function ($, hh, d1, d2, d3, d4) {
+    return factory(window, $, hh, [ d1, d2, d3, d4 ]);
   } );
 })( function (window, $, hh, data, undefined) {
   /* Module-related & convenience references. */
@@ -61,22 +62,68 @@
         + " with over 200 million users globally.Update — Viber has followed up"
         + " with more details",
       xpath: {
-        start: { xpath: "/p[10]/text()[1]", offset: 338 },
-        end:   { xpath: "/p[13]/strong/text()[1]:", offset: 48 }
+        start: { xpath: "/p[10]/text()[1]",         offset: 338 },
+        end:   { xpath: "/p[13]/strong/text()[1]:", offset: 48  }
       }
     },
     bottomup: {
       text: " support page, though it",
       xpath: {
-        start: { xpath: "/p[2]/a[2]/text()", offset: 6 },
-        end:   { xpath: "/p[2]/text()[2]", offset: 11 }
+        start: { xpath: "/p[2]/a[2]/text()", offset: 6  },
+        end:   { xpath: "/p[2]/text()[2]",   offset: 11 }
       }
     },
     uppercase: {
       text: "Spot originally",
       xpath: {
-        start: { xpath: "/P[2]/A/TEXT()[1]", offset: 6 },
-        end:   { xpath: "/P[2]/TEXT()[1]", offset: 11 }
+        start: { xpath: "/P[2]/A/TEXT()[1]", offset: 6  },
+        end:   { xpath: "/P[2]/TEXT()[1]",   offset: 11 }
+      }
+    },
+    "wampersand-&": {
+      text: "Army (a pro-government group of computer hackers aligned with"
+        + " Syrian President Bashar al-Assad) & the world cried foul",
+      xpath: {
+        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 19  },
+        end:   { xpath: "/p[1]/text()[4]",         offset: 114 }
+      }
+    },
+    "sampersand-&": {
+      text: "& the world cried foul",
+      xpath: {
+        start: { xpath: "/p[1]/text()[4]", offset: 93  },
+        end:   { xpath: "/p[1]/text()[4]", offset: 114 }
+      }
+    },
+    "eampersand-&": {
+      text: "Army (a pro-government group of computer hackers aligned with"
+        + " Syrian President Bashar al-Assad) &",
+      xpath: {
+        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 19  },
+        end:   { xpath: "/p[1]/text()[4]",         offset: 93 }
+      }
+    },
+    "wampersand-n": {
+      text: "Army (a pro-government group of computer hackers aligned with"
+        + " Syrian President Bashar al-Assad) n the world cried foul",
+      xpath: {
+        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 19  },
+        end:   { xpath: "/p[1]/text()[4]",         offset: 114 }
+      }
+    },
+    "sampersand-n": {
+      text: "n the world cried foul",
+      xpath: {
+        start: { xpath: "/p[1]/text()[4]", offset: 93  },
+        end:   { xpath: "/p[1]/text()[4]", offset: 114 }
+      }
+    },
+    "eampersand-n": {
+      text: "Army (a pro-government group of computer hackers aligned with"
+        + " Syrian President Bashar al-Assad) n",
+      xpath: {
+        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 19  },
+        end:   { xpath: "/p[1]/text()[4]",         offset: 93 }
       }
     }
   };
@@ -91,9 +138,9 @@
     };
   };
 
-  var init = function ()
+  var init = function (ndx)
   {
-    $document.html(data);
+    $document.html(data[ndx || 0]);
     hl = new hh.HtmlHighlighter(options());
     assertUi();
   };
@@ -294,6 +341,13 @@
     return result;
   };
 
+  var highlight = function (name, qsetname)
+  {
+    if(qsetname === undefined) qsetname = name;
+    hl.add('test-' + qsetname, [ tests[name].xpath  ] ).apply();
+    assertHighlight(hh.HtmlRangeHighlighter.id - 1, tests[name].text);
+  };
+
   var assertHighlight = function (id, text)
   {
     var l = 0, t = '';
@@ -304,13 +358,6 @@
     assert.strictEqual(text, t, 'expected highlight text');
     assert.strictEqual(text.length, l, 'expected highlight length');
     assertUi();
-  };
-
-  var highlight = function (name, qsetname)
-  {
-    if(qsetname === undefined) qsetname = name;
-    hl.add('test-' + qsetname, [ tests[name].xpath  ] ).apply();
-    assertHighlight(hh.HtmlRangeHighlighter.id - 1, tests[name].text);
   };
 
 
@@ -792,6 +839,41 @@
           highlight('bottomup');
         } );
       } );
+
+      describe('Special character handling', function () {
+        it('creates a highlight encompassing an ampersand', function () {
+          init(1);
+          highlight("wampersand-n");
+
+          init(2);
+          highlight("wampersand-&");
+
+          init(3);
+          highlight("wampersand-&");
+        } );
+
+        it('creates a highlight starting at an ampersand', function () {
+          init(1);
+          highlight("sampersand-n");
+
+          init(2);
+          highlight("sampersand-&");
+
+          init(3);
+          highlight("sampersand-&");
+        } );
+
+        it('creates a highlight ending at an ampersand', function () {
+          init(1);
+          highlight("eampersand-n");
+
+          init(2);
+          highlight("eampersand-&");
+
+          init(3);
+          highlight("eampersand-&");
+        } );
+      } );
     } );
-  });
+  } );
 }, window);
