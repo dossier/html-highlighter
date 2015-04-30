@@ -9,8 +9,9 @@
 
 (function (factory, window) {
   var d = [ 'jquery', 'html_highlighter', 'data1', 'data2', 'data3', 'data4' ];
-  window.define(d, function ($, hh, d1, d2, d3, d4) {
-    return factory(window, $, hh, [ d1, d2, d3, d4 ]);
+  window.define(d, function () {
+    return factory(window, arguments[0], arguments[1],
+                   Array.prototype.splice.call(arguments, 2));
   } );
 })( function (window, $, hh, data, undefined) {
   /* Module-related & convenience references. */
