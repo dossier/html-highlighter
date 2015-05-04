@@ -10,14 +10,14 @@
 (function (factory, window) {
 
   if(typeof window.define === "function" && window.define.amd) {
-    window.define([ 'jquery', 'SortingCommon' ], function($, std) {
-      return factory(window, $, std);
+    window.define([ 'jquery' ], function($) {
+      return factory(window, $);
     } );
   } else {
-    window.HtmlHighlighter = factory(window, $, SortingCommon);
+    window.HtmlHighlighter = factory(window, $);
   }
 
-} )(/** @lends <global> */ function (window, $, std, undefined) {
+} )(/** @lends <global> */ function (window, $, undefined) {
 
   /**
    * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -339,7 +339,7 @@
 
   Main.prototype.deferred_add_ = function (name, queries, enabled)
   {
-    if(!std.is_arr(queries))
+    if(!is_arr(queries))
       throw 'Invalid or no queries array specified';
 
     enabled = enabled === true;
@@ -451,7 +451,7 @@
     for(var k in this.queries)
       this.remove_(k);
 
-    if(!std.is_obj_empty(this.queries))
+    if(!is_obj_empty(this.queries))
       throw "Query set object not empty";
 
     this.cursor.clear(false);
@@ -466,12 +466,9 @@
    * */
   var Cursor = function (owner)
   {
-    std.Owned.call(this, owner);
-
+    this.owner = owner;
     this.index = -1;
   };
-
-  Cursor.prototype = Object.create(std.Owned.prototype);
 
   /**
    * <p>Clear the current cursor state.</p>
@@ -527,8 +524,8 @@
     /* Scroll viewport if element not visible. */
     if(typeof owner.options.scrollTo !== 'undefined')
       owner.options.scrollTo($el);
-    else if(!std.$.inview($el))
-      std.$.scrollIntoView($el, owner.options.scrollNode);
+    else if(!inview($el))
+      scrollIntoView($el, owner.options.scrollNode);
 
     this.index = index;
     owner.ui.update(false);
@@ -568,7 +565,7 @@
   var TextContent = function (root)
   {
     Object.defineProperty(this,
-      'root', { value:  std.$.is(root) ? root.get(0) : root } );
+      'root', { value: is_$(root) ? root.get(0) : root } );
 
     this.text = this.markers = null;
     this.refresh();
@@ -845,7 +842,7 @@
    * */
   Finder.construct = function (content, subject)
   {
-    return std.is_obj(subject)
+    return is_obj(subject)
       ? new XpathFinder(content, subject)
       : new TextFinder(content, subject);
   };
@@ -857,7 +854,7 @@
    *
    * @returns {Range|false} Returns a <code>Range</code> if a match is
    * available, or <code>false</code> if no more matches are available. */
-  Finder.prototype.next = std.absm_noti;
+  Finder.prototype.next = absm_noti;
 
   /* Protected interface
    * ----------------- */
@@ -945,7 +942,7 @@
     /* Construct base class. */
     Finder.call(this, content);
 
-    if(!std.is_obj(subject)
+    if(!is_obj(subject)
        || subject.start.offset < 1
        || subject.end.offset < 1) {
       throw 'Invalid or no XPath object specified';
@@ -1242,7 +1239,7 @@
   var TextNodeXpath = function (root)
   {
     this.root = root || null;
-    if(std.$.is(this.root)) this.root = this.root.get(0);
+    if(is_$(this.root)) this.root = this.root.get(0);
   };
 
   /**
@@ -1742,9 +1739,9 @@
    * */
   var Ui = function (owner, options)
   {
-    std.Owned.call(this, owner);
+    this.owner = owner;
 
-    if(!std.$.is(options.widget)) {
+    if(!is_$(options.widget)) {
       console.warn('HTML highlighter UI unavailable');
       Object.defineProperty(this, 'options', { value: false } );
       return;
@@ -1753,7 +1750,7 @@
     Object.defineProperty(this, 'options', { value: options } );
 
     var self = this,
-        finder = new std.NodeFinder('data-hh-scope', '', options.widget);
+        finder = new NodeFinder('data-hh-scope', '', options.widget);
 
     this.root = finder.root;
     this.nodes = {
@@ -1765,7 +1762,7 @@
       entities: finder.find('entities')
     };
 
-    finder = new std.TemplateFinder('text/hh-template', 'data-hh-scope');
+    finder = new TemplateFinder('text/hh-template', 'data-hh-scope');
     this.templates = {
       entityRow: finder.find('entity-row'),
       entityEmpty: finder.find('entity-empty')
@@ -1812,8 +1809,6 @@
     console.info('HTML highlighter UI instantiated');
   };
 
-  Ui.prototype = Object.create(std.Owned.prototype);
-
   Ui.prototype.update = function (full)
   {
     if(!this.options) return false;
@@ -1825,7 +1820,7 @@
 
     if(full === false || this.templates.entityRow === null)
       return;
-    else if(std.is_obj_empty(this.owner.queries)) {
+    else if(is_obj_empty(this.owner.queries)) {
       this.setEmpty_();
       return;
     }
@@ -1873,6 +1868,156 @@
     this.nodes.entities.children().remove();
     if(this.templates.entityEmpty !== null)
       this.nodes.entities.append(this.templates.entityEmpty.clone().get());
+  };
+
+
+  /* Helper methods */
+  var absm_noti = function ( ) { throw "Abstract method not implemented"; };
+
+  var is_$ = function (el) { return el instanceof $; };
+  var is_arr = function (r) { return r instanceof Array; };
+  var is_str = function (r)
+  { return typeof r === 'string' || r instanceof String; };
+
+  var is_obj = function (r) { return r !== null && typeof r === 'object'; };
+  var like_obj = function (r) { return r instanceof Object; };
+
+  var is_obj_empty = function (x)
+  {
+    if(!like_obj(x))
+      throw "Reference not provided or not an object";
+
+    for(var k in x) {
+      if(x.hasOwnProperty(k))
+        return false;
+    }
+
+    return true;
+  };
+
+  var inview = function (el)
+  {
+    var $window = $(window),
+        docTop = $window.scrollTop(),
+        docBottom = docTop + $window.height(),
+        top = el.offset().top,
+        bottom = top + el.height();
+
+    return ((bottom <= docBottom) && (top >= docTop));
+  };
+
+  var scrollIntoView = function (el, c)
+  {
+    var container = c === undefined ? $(window) : c,
+        containerTop = container.scrollTop(),
+        containerBottom = containerTop + container.height(),
+        elemTop = el.offset().top,
+        elemBottom = elemTop + el.height();
+
+    if (elemTop < containerTop)
+      container.off().scrollTop(elemTop);
+    else if (elemBottom > containerBottom)
+      container.off().scrollTop(elemBottom - container.height());
+  };
+
+  /**
+   * @class
+   * */
+  var NodeFinder = function (tag, prefix, root)
+  {
+    this.tag_ = tag;
+    this.prefix_ = [ '[', tag, '="',
+                     prefix && prefix.length > 0 ? prefix + '-' : ''
+                   ].join('');
+    this.root_ = root;
+  };
+
+  NodeFinder.prototype = {
+    tag_: null,
+    prefix_: null,
+    root_: null,
+
+    get root() { return this.root_;  },
+
+    find: function (scope, parent /* = prefix */ )
+    {
+      var p;
+
+      if(is_$(parent))        p = parent;
+      else if(is_str(parent)) p = this.find(parent);
+      else                    p = this.root_;
+
+      return p.find( [ this.prefix_, scope, '"]' ].join(''));
+    },
+
+    withroot: function (newRoot, callback)
+    {
+      if(!is_fn(callback))
+        throw "Invalid or no callback function specified";
+
+      var nf = new NodeFinder(this.tag_, this.prefix_, newRoot);
+      return callback.call(this);
+    }
+  };
+
+
+  /**
+   * @class
+   * */
+  var TemplateFinder = function (type, tag)
+  {
+    this.scripts = Array.prototype.slice.call(
+      document.getElementsByTagName('script'), 0)
+      .filter(function (i) {
+        return i.type === type;
+      } );
+
+    this.tag = tag || 'data-scope';
+  };
+
+  TemplateFinder.prototype.find = function (id)
+  {
+    for(var i = 0, l = this.scripts.length; i < l; ++i) {
+      if(this.scripts[i].id === id)
+        return new Template(this.scripts[i].innerHTML, this.tag);
+    }
+
+    return null;
+  };
+
+
+  /**
+   * @class
+   * */
+  var Template = function (html, tag)
+  {
+    this.html = html;
+    this.tag = tag || null;
+
+    Object.defineProperty(this, 'html', { value: html } );
+  };
+
+  Template.prototype.clone = function ()
+  {
+    return new TemplateInstance($(this.html), this.tag);
+  };
+
+
+  /**
+   * @class
+   * */
+  var TemplateInstance = function (node, tag)
+  {
+    this.node = node;
+    this.tag = tag || null;
+  };
+
+  TemplateInstance.prototype.get = function () { return this.node; };
+
+  TemplateInstance.prototype.find = function (scope)
+  {
+    if(this.prefix === null) return $();
+    return this.node.find('[' + this.tag + '=' + scope + ']');
   };
 
 
