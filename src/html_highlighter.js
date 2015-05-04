@@ -471,6 +471,8 @@
     this.index = -1;
   };
 
+  Cursor.prototype = Object.create(std.Owned.prototype);
+
   /**
    * <p>Clear the current cursor state.</p>
    *
