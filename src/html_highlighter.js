@@ -357,7 +357,7 @@
      * ordered array. */
     q = this.queries[name] = {
       enabled: enabled,
-      id: null
+      id: RangeHighlighter.id,
 /*    length: 0   ; set below */
     };
 
@@ -372,8 +372,6 @@
         console.info("Query has no hits: ", i);
         return;
       }
-
-      q.id = RangeHighlighter.id;
 
       /* Note: insertion of global offsets to the `this.highlights` array could
        * (should?) be done in a web worker concurrently. */
@@ -391,8 +389,7 @@
         markers.splice(markers.length > 0 && markers[min].offset < offset
                        ? min + 1 : min, 0,
                        { query: q, index: count, offset: offset });
-
-        highlighter.do(hit);
+        highlighter.do(hit, count);
         ++count;
       }
     } );
@@ -1024,7 +1021,7 @@
      * @returns {number} Unique highlight id. */
     this.do = function (range) {
       range.surround(classes + ' ' + Css.highlight + '-id-'
-                     + RangeHighlighter.id);
+                     + (RangeHighlighter.id + count));
 
       return RangeHighlighter.id ++;
     };
