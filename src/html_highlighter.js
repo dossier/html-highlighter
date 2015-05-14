@@ -357,7 +357,7 @@
      * ordered array. */
     q = this.queries[name] = {
       enabled: enabled,
-      id: RangeHighlighter.id,
+      id: RangeHighlighter.id
 /*    length: 0   ; set below */
     };
 
@@ -389,7 +389,7 @@
         markers.splice(markers.length > 0 && markers[min].offset < offset
                        ? min + 1 : min, 0,
                        { query: q, index: count, offset: offset });
-        highlighter.do(hit, count);
+        highlighter.do(hit);
         ++count;
       }
     } );
@@ -1021,7 +1021,7 @@
      * @returns {number} Unique highlight id. */
     this.do = function (range) {
       range.surround(classes + ' ' + Css.highlight + '-id-'
-                     + (RangeHighlighter.id + count));
+                     + RangeHighlighter.id);
 
       return RangeHighlighter.id ++;
     };
