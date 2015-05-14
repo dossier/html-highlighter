@@ -393,6 +393,28 @@
         assert.strictEqual(hl.stats.total, COUNT_THE);
       } );
 
+      it('does not allow duplicate query sets - II', function () {
+        hl.add('test-the', [ 'the' ]).apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE);
+
+        hl.add('test-the', [ 'the' ]).apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE);
+      } );
+
+      it('does not allow duplicate query sets - III', function () {
+        hl.add('test-the', [ 'the' ])
+          .add('test-the', [ 'the' ])
+          .apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE);
+
+        hl.add('test-the', [ 'the' ]).apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE);
+      } );
+
       it('removes query set when only one exists', function () {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
