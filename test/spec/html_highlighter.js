@@ -379,13 +379,22 @@
         assert.strictEqual($total.text(), '0', 'no query sets');
       } );
 
-      it('adds a query set', function () {
+      it('adds a query set with a single mention', function () {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
       } );
 
-      it('does not allow duplicate query sets', function () {
+      it('adds a query set with multiple mentions', function () {
+        var id = hh.HtmlRangeHighlighter.id;
+        hl.add('test-the-viber', [ 'the', 'viber' ]).apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hh.HtmlRangeHighlighter.id,
+                           COUNT_THE + COUNT_VIBER + id);
+      } );
+
+      it('does not allow duplicate query sets - I', function () {
         hl.add('test-the', [ 'the' ])
           .add('test-the', [ 'the' ])
           .apply();
