@@ -347,7 +347,8 @@
     var q, count = 0,
         content = this.content,
         markers = this.highlights,
-        highlighter = new RangeHighlighter(this.stats.highlight, enabled);
+        highlighter = new RangeHighlighter(name, this.stats.highlight,
+                                           enabled);
 
     /* Remove query set if it exists. */
     if(name in this.queries)
@@ -1006,10 +1007,11 @@
    * @param {number} count - The CSS highlight class index to use.
    * @param {bool} enabled - If explicitly <code>false</code>, highlights are
    * created but not shown. */
-  var RangeHighlighter = function (count, enabled)
+  var RangeHighlighter = function (name, count, enabled)
   {
     var classes = [ Css.highlight,
-                    Css.highlight + '-' + count ];
+                    Css.highlight + '-' + count,
+                    Css.highlight + '-' + name ];
 
     if(enabled === false) classes.push(Css.disabled);
     classes = classes.join(' ');
