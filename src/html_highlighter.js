@@ -41,6 +41,11 @@
       highlight: 0
     };
 
+    if(!options.container)
+      options.container = $(window.document.body);
+    else if(options.container instanceof HTMLElement)
+      options.container = $(options.container);
+
     /* Define instance immutable properties. */
     Object.defineProperty(this, 'options', { value: options               });
     Object.defineProperty(this, 'cursor',  { value: new Cursor(this)      });
