@@ -31,6 +31,9 @@
         name: 'Simple',
         url: 'simple.json'
       }, {
+        name: 'Spaces',
+        url: 'spaces.json'
+      }, {
         name: 'One paragraph',
         url: 'one_paragraph.json'
       }, {
