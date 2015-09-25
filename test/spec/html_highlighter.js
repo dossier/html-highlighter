@@ -346,7 +346,7 @@
   {
     if(qsetname === undefined) qsetname = name;
     hl.add('test-' + qsetname, [ tests[name].xpath  ] ).apply();
-    assertHighlight(hh.HtmlRangeHighlighter.id - 1, tests[name].text);
+    assertHighlight(hl.lastId - 1, tests[name].text);
   };
 
   var assertHighlight = function (id, text)
@@ -386,12 +386,11 @@
       } );
 
       it('adds a query set with multiple mentions', function () {
-        var id = hh.HtmlRangeHighlighter.id;
+        var id = hl.lastId;
         hl.add('test-the-viber', [ 'the', 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
-        assert.strictEqual(hh.HtmlRangeHighlighter.id,
-                           COUNT_THE + COUNT_VIBER + id);
+        assert.strictEqual(hl.lastId, COUNT_THE + COUNT_VIBER + id);
       } );
 
       it('does not allow duplicate query sets - I', function () {
@@ -526,7 +525,7 @@
       } );
 
       it('moves cursor to last element', function () {
-        var id = hh.HtmlRangeHighlighter.id;
+        var id = hl.lastId;
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
@@ -546,7 +545,7 @@
       } );
 
       it('cursor rolls over to first element from last', function () {
-        var id = hh.HtmlRangeHighlighter.id;
+        var id = hl.lastId;
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
@@ -565,7 +564,7 @@
       } );
 
       it('cursor rolls over to last element from first', function () {
-        var id = hh.HtmlRangeHighlighter.id;
+        var id = hl.lastId;
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
@@ -581,7 +580,7 @@
       } );
 
       it('cursor rolls over to last element from first and back', function () {
-        var id = hh.HtmlRangeHighlighter.id;
+        var id = hl.lastId;
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();

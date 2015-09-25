@@ -10,7 +10,7 @@
 (function (factory, window) {
 
   if(typeof window.define === "function" && window.define.amd) {
-    window.define([ 'jquery' ], function($) {
+    window.define([ "jquery" ], function($) {
       return factory(window, $);
     } );
   } else {
@@ -18,6 +18,10 @@
   }
 
 } )(/** @lends <global> */ function (window, $, undefined) {
+
+  /** Constant that sets the debug state for methods that don't have access to
+   * the `options` descriptor and thus can't query the `debug` attribute. */
+  var DEBUG = true;
 
   /**
    * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -35,21 +39,27 @@
     this.transaction = [ ];
     this.queries = { };
     this.highlights = [ ];
+    this.lastId = 0;
     this.stats = {
       queries: 0,
       total: 0,
       highlight: 0
     };
 
+    if(!options.container)
+      options.container = $(window.document.body);
+    else if(options.container instanceof HTMLElement)
+      options.container = $(options.container);
+
     /* Define instance immutable properties. */
-    Object.defineProperty(this, 'options', { value: options               });
-    Object.defineProperty(this, 'cursor',  { value: new Cursor(this)      });
-    Object.defineProperty(this, 'ui',      { value: new Ui(this, options) });
-    Object.defineProperty(this, 'stats',   { value: this.stats            });
+    Object.defineProperty(this, "options", { value: options               });
+    Object.defineProperty(this, "cursor",  { value: new Cursor(this)      });
+    Object.defineProperty(this, "ui",      { value: new Ui(this, options) });
+    Object.defineProperty(this, "stats",   { value: this.stats            });
 
     /* Start by refreshing the internal document's text representation. */
     this.refresh();
-    console.info('HTML highlighter instantiated');
+    console.info("HTML highlighter instantiated");
   };
 
   /**
@@ -60,9 +70,7 @@
   Main.prototype.refresh = function ()
   {
     this.content = new TextContent(this.options.container.get(0));
-
-    /* TODO: remove */
-    this.content.assert_();
+    if(this.options.debug === true) this.content.assert_();
   };
 
   /**
@@ -70,19 +78,42 @@
    * the query set already exists, its contents and highlights are first
    * destroyed and new one created.</p>
    *
-   * <p>Note that, at this point in time, only string queries are
-   * supported.</p>
+   * <p>Note that, at this point in time, only string queries and XPath
+   * representations are supported.</p>
    *
    * @param {string} name - Name of the query set.
    * @param {string[]} queries - Array containing individual queries to
    * highlight.
    * @param {bool} enabled - If explicitly <code>true</code>, query set is
    * also enabled. */
-  Main.prototype.add = function (name, queries, enabled /* = false */)
+  Main.prototype.add = function (
+    name, queries, enabled /* = false */, reserve /* = null */)
   {
     var self = this;
     this.transaction.push( function () {
-      self.deferred_add_(name, queries, enabled !== false);
+      self.deferred_add_(name, queries, enabled !== false, reserve);
+    } );
+    return this;
+  };
+
+  /**
+   * <p>Append one or more queries to an existing query set.  If the query set
+   * doesn't yet exist, an exception is thrown.</p>
+   *
+   * <p>In addition, the query set <strong>must</strong> have enough reserved
+   * space available to contain the new queries.  All queries not fitting in
+   * the container are suppressed.</p>
+   *
+   * @param {string} name - Name of the query set.
+   * @param {string[]} queries - Array containing individual queries to
+   * highlight.
+   * @param {bool} enabled - If explicitly <code>true</code>, query set is
+   * also enabled. */
+  Main.prototype.append = function (name, queries, enabled /* = false */)
+  {
+    var self = this;
+    this.transaction.push( function () {
+      self.deferred_append_(name, queries, enabled !== false);
     } );
     return this;
   };
@@ -204,7 +235,7 @@
     if(!(sel && sel.anchorNode && (len = sel.toString().length) > 0))
       return null;
     else if(sel.anchorNode.nodeType !== 3 || sel.focusNode.nodeType !== 3) {
-      console.info('Selection anchor or focus node(s) not text: ignoring');
+      console.info("Selection anchor or focus node(s) not text: ignoring");
       return null;
     }
 
@@ -214,8 +245,8 @@
                ? start : this.content.find(sel.focusNode));
 
     if(start < 0 || end < 0) {
-      console.error('Unable to retrieve offset of selection anchor or focus'
-                    + 'node(s)', sel.anchorNode, sel.focusNode);
+      console.error("Unable to retrieve offset of selection anchor or focus"
+                    + "node(s)", sel.anchorNode, sel.focusNode);
       return null;
     }
 
@@ -279,6 +310,81 @@
   /* Private interface
    * ----------------- */
   /**
+   * <p>Add or append queries to a query set, either enabled or disabled.</p>
+   *
+   * @param {Object} q - query set descriptor.
+   * @param {Array} queries - array containing the queries to add or append.
+   * @param {boolean} enabled - highlights are enabled if <code>true</code>;
+   * this is the default state.
+   *
+   * @returns {number} number of highlights added.
+   * */
+  Main.prototype.add_queries_ = function (q, queries, enabled)
+  {
+    var count = 0,
+        content = this.content,
+        markers = this.highlights,
+        highlighter = new RangeHighlighter(
+          q.id_highlight, q.id + q.length, enabled
+        ),
+        reserve = q.reserve > 0 ? q.reserve - q.length : null;
+
+    /* For each query, perform a lookup in the internal text representation and
+     * highlight each hit.  The global offset of each highlight is recorded in
+     * the `this.highlights´ array.  The offset is used by the `Cursor´ class
+     * to compute the next/previous highlight to show. */
+    queries.forEach(function (i) {
+      var hit, finder;
+
+      try {
+        finder = Finder.construct(content, i);
+      } catch(x) {
+        console.error("exception: ", x);
+        return;
+      }
+
+      if(hit === false) {
+        console.info("Query has no hits: ", i);
+        return;
+      }
+
+      /* Note: insertion of global offsets to the `this.highlights` array could
+       * (should?) be done in a web worker concurrently. */
+      while((hit = finder.next()) !== false) {
+        if(reserve !== null && count >= reserve) {
+          console.error("highlight reserve exceeded");
+          break;
+        }
+
+        var mid, min = 0, max = markers.length - 1,
+            offset = hit.start.marker.offset + hit.start.offset;
+
+        while(min < max) {
+          mid = Math.floor((min + max) / 2);
+
+          if(markers[mid].offset < offset) min = mid + 1;
+          else max = mid;
+        }
+
+        markers.splice(markers.length > 0 && markers[min].offset < offset
+                       ? min + 1 : min, 0,
+                       { query: q, index: count, offset: offset });
+
+        try {
+          highlighter.do(hit);
+          ++count;
+        } catch(x) {
+          console.error("exception: ", x);
+        }
+      }
+    } );
+
+    q.length += count;
+    if(enabled) this.stats.total += count;
+    return count;
+  };
+
+  /**
    * <p>Remove a query set by name.</p>
    *
    * <p>Throws an exception if the query set does not exist.</p>
@@ -314,7 +420,7 @@
   Main.prototype.get_ = function (name)
   {
     var q = this.queries[name];
-    if(q === undefined) throw 'Query set non-existent';
+    if(q === undefined) throw "Query set non-existent";
     return q;
   };
 
@@ -337,69 +443,39 @@
     if(k !== l) throw "Invalid state: length mismatch";
   };
 
-  Main.prototype.deferred_add_ = function (name, queries, enabled)
+  Main.prototype.deferred_add_ = function (name, queries, enabled, reserve)
   {
     if(!is_arr(queries))
-      throw 'Invalid or no queries array specified';
+      throw "Invalid or no queries array specified";
 
     enabled = enabled === true;
-
-    var q, count = 0,
-        content = this.content,
-        markers = this.highlights,
-        highlighter = new RangeHighlighter(name, this.stats.highlight,
-                                           enabled);
+    if(typeof reserve !== "number" || reserve < 1) reserve = null;
 
     /* Remove query set if it exists. */
     if(name in this.queries)
       this.deferred_remove_(name);
 
-    /* Create and contain descriptor object and add reference to it in the
-     * ordered array. */
-    q = this.queries[name] = {
-      enabled: enabled,
-      id: RangeHighlighter.id
-/*    length: 0   ; set below */
-    };
+    var q = this.queries[name] = {
+          enabled: enabled,
+          id_highlight: this.stats.highlight,
+          id: this.lastId,
+          length: 0
+        };
 
-    /* For each query, perform a lookup in the internal text representation and
-     * highlight each hit.  The global offset of each highlight is recorded in
-     * the `this.highlights´ array.  The offset is used by the `Cursor´ class
-     * to compute the next/previous highlight to show. */
-    queries.forEach(function (i) {
-      var hit, finder = Finder.construct(content, i);
-
-      if(hit === false) {
-        console.info("Query has no hits: ", i);
-        return;
+    var count = this.add_queries_(q, queries, enabled);
+    if(reserve !== null) {
+      if(reserve > count) {
+        this.lastId = reserve;
+        q.reserve = reserve;
+      } else {
+        console.error("Invalid or insufficient reserve specified");
+        q.reserve = count;
       }
-
-      /* Note: insertion of global offsets to the `this.highlights` array could
-       * (should?) be done in a web worker concurrently. */
-      while((hit = finder.next()) !== false) {
-        var mid, min = 0, max = markers.length - 1,
-            offset = hit.start.marker.offset + hit.start.offset;
-
-        while(min < max) {
-          mid = Math.floor((min + max) / 2);
-
-          if(markers[mid].offset < offset) min = mid + 1;
-          else max = mid;
-        }
-
-        markers.splice(markers.length > 0 && markers[min].offset < offset
-                       ? min + 1 : min, 0,
-                       { query: q, index: count, offset: offset });
-        highlighter.do(hit);
-        ++count;
-      }
-    } );
-
-    q.length = count;
+    } else
+      this.lastId += count;
 
     /* Update global statistics. */
     ++this.stats.queries;
-    if(enabled) this.stats.total += count;
 
     /* Ensure CSS highlight class rolls over on overflow. */
     ++this.stats.highlight;
@@ -407,7 +483,19 @@
       this.stats.highlight = 0;
 
     this.ui.update();
-    this.assert_();             /* TODO: remove */
+    if(this.options.debug === true) this.assert_();
+  };
+
+  Main.prototype.deferred_append_ = function (name, queries, enabled)
+  {
+    if(!is_arr(queries))
+      throw "Invalid or no queries array specified";
+    else if(!(name in this.queries))
+      throw "Invalid or query set not yet created";
+
+    this.add_queries_(this.queries[name], queries, enabled === true);
+    this.ui.update();
+    if(this.options.debug === true) this.assert_();
   };
 
   Main.prototype.deferred_remove_ = function (name)
@@ -424,7 +512,7 @@
     if(q.enabled || q.id === null) return;
 
     for(var i = q.id, l = i + q.length; i < l; ++i)
-      $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
+      $("." + Css.highlight + "-id-" + i).removeClass(Css.disabled);
 
     q.enabled = true;
     this.stats.total += q.length;
@@ -437,7 +525,7 @@
     if(!q.enabled || q.id === null) return;
 
     for(var i = q.id, l = i + q.length; i < l; ++i)
-      $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
+      $("." + Css.highlight + "-id-" + i).addClass(Css.disabled);
 
     q.enabled = false;
     this.stats.total -= q.length;
@@ -492,7 +580,7 @@
         markers = this.owner.highlights;
 
     if(index < 0)
-      throw 'Invalid cursor index specified';
+      throw "Invalid cursor index specified";
     else if(owner.stats.total <= 0)
       return;
 
@@ -515,12 +603,12 @@
      * active. */
     this.clearActive_();
     var c = markers[ndx],
-        $el = $('.' + Css.highlight + '-id-' + (c.query.id + c.index))
+        $el = $("." + Css.highlight + "-id-" + (c.query.id + c.index))
           .addClass(Css.enabled)
           .eq(0);
 
     /* Scroll viewport if element not visible. */
-    if(typeof owner.options.scrollTo !== 'undefined')
+    if(typeof owner.options.scrollTo !== "undefined")
       owner.options.scrollTo($el);
     else if(!inview($el))
       scrollIntoView($el, owner.options.scrollNode);
@@ -549,7 +637,7 @@
    * */
   Cursor.prototype.clearActive_ = function ()
   {
-    $('.' + Css.highlight + '.' + Css.enabled).removeClass(Css.enabled);
+    $("." + Css.highlight + "." + Css.enabled).removeClass(Css.enabled);
   };
 
 
@@ -563,7 +651,7 @@
   var TextContent = function (root)
   {
     Object.defineProperty(this,
-      'root', { value: is_$(root) ? root.get(0) : root } );
+      "root", { value: is_$(root) ? root.get(0) : root } );
 
     this.text = this.markers = null;
     this.refresh();
@@ -590,7 +678,7 @@
    * */
   TextContent.prototype.refresh = function ()
   {
-    this.text = '';
+    this.text = "";
     this.markers = [ ];
 
     var marker = this.markers,
@@ -600,7 +688,7 @@
     if(this.markers.length !== 0) {
       marker = marker[marker.length - 1];
       if(offset - marker.node.nodeValue.length != marker.offset)
-        throw 'Invalid state detected: offset mismatch';
+        throw "Invalid state detected: offset mismatch";
     }
   };
 
@@ -676,8 +764,9 @@
       } );
     }
 
-    /* TODO: remove me. */
-    this.assert_();
+    /* From global state since we don't have access to the `options`
+     * descriptor. */
+    if(DEBUG) this.assert_();
 
     /* Remove old node. */
     old.parentNode.removeChild(old);
@@ -823,7 +912,7 @@
    * */
   var Finder = function (content, subject)
   {
-    Object.defineProperty(this, 'content', { value: content } );
+    Object.defineProperty(this, "content", { value: content } );
 
     this.results = [ ];
     this.current = 0;
@@ -888,7 +977,7 @@
     /* Build an array containing all hits of `subject´. */
     var match,
         re = new RegExp(subject.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"),
-                        'gi');
+                        "gi");
 
     while((match = re.exec(this.content.text)) !== null)
       this.results.push( { length: match[0].length, index: match.index } );
@@ -943,7 +1032,7 @@
     if(!is_obj(subject)
        || subject.start.offset < 1
        || subject.end.offset < 1) {
-      throw 'Invalid or no XPath object specified';
+      throw "Invalid or no XPath object specified";
     }
 
     /* Compute text node start and end elements that the XPath representation
@@ -961,10 +1050,10 @@
     /* Retrieve global character offset of the text node. */
     start = content.find(start); end = content.find(end);
     if(start < 0 || end < 0) {
-      console.error('Unable to derive global offsets: %d:%d', start, end);
+      console.error("Unable to derive global offsets: %d:%d", start, end);
       return;
     } else if(start > end)
-      throw 'Invalid XPath representation: start > end';
+      throw "Invalid XPath representation: start > end";
 
     /* Retrieve offset markers. */
     start = content.at(start); end = content.at(end);
@@ -1005,16 +1094,16 @@
    * instances.</p>
    * @class
    * @param {number} count - The CSS highlight class index to use.
+   * @param {number} id - The individual id to apply to the highlight.
    * @param {bool} enabled - If explicitly <code>false</code>, highlights are
    * created but not shown. */
-  var RangeHighlighter = function (name, count, enabled)
+  var RangeHighlighter = function (count, id, enabled)
   {
     var classes = [ Css.highlight,
-                    Css.highlight + '-' + count,
-                    Css.highlight + '-' + name ];
+                    Css.highlight + "-" + count ];
 
     if(enabled === false) classes.push(Css.disabled);
-    classes = classes.join(' ');
+    classes = classes.join(" ");
 
     /**
      * <p>Highlight a <code>Range</code> instance.</p>
@@ -1022,16 +1111,10 @@
      * @param {Range} range - Range instance to apply highlighting to.
      * @returns {number} Unique highlight id. */
     this.do = function (range) {
-      range.surround(classes + ' ' + Css.highlight + '-id-'
-                     + RangeHighlighter.id);
-
-      return RangeHighlighter.id ++;
+      range.surround(classes + " " + Css.highlight + "-id-" + id);
+      return id++;
     };
   };
-
-  /**
-   * <p>Last highlight id used.</p> */
-  RangeHighlighter.id = 0;
 
 
   /**
@@ -1045,7 +1128,7 @@
      *
      * @param {number} id - Id of the highlight to remove. */
     this.undo = function (id) {
-      var $coll = $('.' + Css.highlight + '-id-' + id);
+      var $coll = $("." + Css.highlight + "-id-" + id);
       $coll.each(function () {
         var $el = $(this);
 
@@ -1069,7 +1152,7 @@
 
     /* Sanity check: */
     if(start.marker.offset + start.offset > end.marker.offset + end.offset)
-      throw 'Invalid range: start > end';
+      throw "Invalid range: start > end";
 
     /* Attributes */
     Object.defineProperties(this, {
@@ -1207,7 +1290,7 @@
       descr.marker, start,
       end === null ? descr.marker.node.nodeValue.length - 1 : end);
 
-    $('<span/>')
+    $("<span/>")
       .addClass(className)
       .insertBefore(descr.marker.node)
       .append(descr.marker.node);
@@ -1221,7 +1304,7 @@
    * */
   Range.prototype.surround_whole_ = function (node, className)
   {
-    $('<span/>')
+    $("<span/>")
       .addClass(className)
       .insertBefore(node)
       .append(node);
@@ -1257,7 +1340,7 @@
   {
     /* Note: no checks required since `indexOfText_´ throws exception if node
      * invalid: null or not like text. */
-    var xpath = '/text()[' + this.indexOfText_(node) + ']';
+    var xpath = "/text()[" + this.indexOfText_(node) + "]";
 
     /* Skip all text or highlight container nodes. */
     for(node = node.parentNode;
@@ -1270,12 +1353,12 @@
         node = node.parentNode)
     {
       var id = this.indexOfElement_(node);
-      xpath = '/' + node.nodeName.toLowerCase() + '[' + id + ']' + xpath;
+      xpath = "/" + node.nodeName.toLowerCase() + "[" + id + "]" + xpath;
     }
 
     /* This is bad.  Lay off the LSD. */
     if(node === null)
-      throw 'Specified node not within root\'s subtree';
+      throw "Specified node not within root's subtree";
 
     return xpath;
   };
@@ -1294,12 +1377,12 @@
   {
     var part, index,
         cur = this.root,          /* start from the root node */
-        parts = xpath.split('/');
+        parts = xpath.split("/");
 
     /* At an absolutely minimum, a XPath representation must be of the form:
      * /text(), which results in `parts´ having a length of 2. */
     if(parts[0].length !== 0 || parts.length < 2)
-      throw 'Invalid XPath representation';
+      throw "Invalid XPath representation";
 
     /* Break up the constituent parts of the XPath representation but discard
      * the first element since it'll be empty due to the starting forward
@@ -1311,19 +1394,19 @@
         /* This, we would hope, would be indicative that the tree mutated.
          * Otherwise, either this algorithm is flawed or the reverse operation
          * is. */
-        console.error('Failed to find nth child:', part, cur);
+        console.error("Failed to find nth child:", part, cur);
         return null;
       }
     }
 
     /* Now process the text element. */
     part = this.xpathPart_(parts[i]);
-    cur = part.tag === 'text()'
+    cur = part.tag === "text()"
       ? this.nthTextOf_(cur, part.index)
       : null;
 
     if(cur === null || cur.nodeType !== 3) {
-      console.error('Element at specified XPath NOT a text node: %s',
+      console.error("Element at specified XPath NOT a text node: %s",
                     xpath, part, cur);
       return null;
     }
@@ -1353,7 +1436,7 @@
     var offset = 0;
 
     if(!node || node.nodeType !== 3)
-      throw 'Invalid or no text node specified';
+      throw "Invalid or no text node specified";
 
     /* Climb the tree of nested highlight containers in a left to right
      * order, if any, calculating their respective lengths and adding to the
@@ -1362,7 +1445,7 @@
       while(node.previousSibling === null) {
         node = node.parentNode;
         if(node === this.root || node === null)
-          throw 'Invalid state: expected highlight container or text node';
+          throw "Invalid state: expected highlight container or text node";
         else if(!this.isHighlight_(node))
           return offset;
         else if(node.previousSibling !== null)
@@ -1443,7 +1526,7 @@
   {
     /* NOTE: this is potentially problematic if the document uses class names
      * that contain or are equal to `Css.highlight´. */
-    return node.nodeName.toLowerCase() === 'span'
+    return node.nodeName.toLowerCase() === "span"
       && node.className.indexOf(Css.highlight) !== -1;
   };
 
@@ -1462,7 +1545,7 @@
         name = node.nodeName.toLowerCase();
 
     if(node === null || this.isLikeText_(node))
-      throw 'No node specified or node of text type';
+      throw "No node specified or node of text type";
 
     while( (node = node.previousSibling) !== null) {
       /* Don't count contiguous text nodes or highlight containers as being
@@ -1504,7 +1587,7 @@
         wast = true;
 
     if(node === null || !this.isLikeText_(node))
-      throw 'No node specified or not of text type';
+      throw "No node specified or not of text type";
 
     node = this.skip_(node);
     while( (node = node.previousSibling) !== null) {
@@ -1546,15 +1629,15 @@
    *   index: integer
    * }</pre>
    *
-   * @param {string} part - An XPath representation part; e.g. 'div[2]',
-   * 'text()[3]' or 'p'
+   * @param {string} part - An XPath representation part; e.g. "div[2]",
+   * "text()[3]" or "p"
    * @returns {Object} Object containing tag and index */
   TextNodeXpath.prototype.xpathPart_ = function (part)
   {
     var index;
 
     /* If no index specified: assume first. */
-    if(part.indexOf('[') === -1)
+    if(part.indexOf("[") === -1)
       return { tag: part.toLowerCase(), index: 0 };
 
     /* *Attempt* to retrieve element's index.  If an exception is thrown,
@@ -1564,9 +1647,9 @@
       part = part.match(/([^[]+)\[(\d+)\]/);
       index = parseInt(part[2]);
       part = part[1];
-      if(-- index < 0) throw 'Invalid index: ' + index;
+      if(-- index < 0) throw "Invalid index: " + index;
     } catch(x) {
-      console.error('Failed to extract child index: %s', part);
+      console.error("Failed to extract child index: %s", part);
       throw x;    /* Re-throw after dumping inspectable object. */
     }
 
@@ -1599,7 +1682,7 @@
       }
     }
 
-    console.error('Failed to locate tag "%s" at index %d', tag, index);
+    console.error("Failed to locate tag '%s' at index %d", tag, index);
     return null;
   };
 
@@ -1632,8 +1715,8 @@
         while(this.isHighlight_(node)) {
           ch = node.childNodes;
           if(ch.length === 0 || !this.isLikeText_(ch[0])) {
-            throw 'Invalid state: expected text node or highlight container'
-              + ' inside container';
+            throw "Invalid state: expected text node or highlight container"
+              + " inside container";
           }
 
           node = ch[0];
@@ -1641,7 +1724,7 @@
 
         /* Ensure tag sought after is the right one. */
         if(node.nodeType !== 3) {
-          console.error('Failed to locate text node at index %d', index);
+          console.error("Failed to locate text node at index %d", index);
           return null;
         }
 
@@ -1670,7 +1753,7 @@
 
     /* Getters */
     Object.defineProperty(
-      this, 'current', { get: function () { return current; } });
+      this, "current", { get: function () { return current; } });
 
 
     /**
@@ -1699,7 +1782,7 @@
     {
       /* Abort if invalid or root node; otherwise attempt to advance to sibling
        * node. */
-      if(node === null)      throw 'Invalid state: outside of root sub-tree';
+      if(node === null)      throw "Invalid state: outside of root sub-tree";
       else if(node === root) return null;
       else if(node.nextSibling !== null)
         return node.nextSibling;
@@ -1741,30 +1824,30 @@
     this.owner = owner;
 
     if(!is_$(options.widget)) {
-      console.warn('HTML highlighter UI unavailable');
-      Object.defineProperty(this, 'options', { value: false } );
+      console.warn("HTML highlighter UI unavailable");
+      Object.defineProperty(this, "options", { value: false } );
       return;
     }
 
-    Object.defineProperty(this, 'options', { value: options } );
+    Object.defineProperty(this, "options", { value: options } );
 
     var self = this,
-        finder = new NodeFinder('data-hh-scope', '', options.widget);
+        finder = new NodeFinder("data-hh-scope", "", options.widget);
 
     this.root = finder.root;
     this.nodes = {
-      statsCurrent: finder.find('stats-current'),
-      statsTotal: finder.find('stats-total'),
-      next: finder.find('button-next'),
-      prev: finder.find('button-prev'),
-      expander: finder.find('expand'),
-      entities: finder.find('entities')
+      statsCurrent: finder.find("stats-current"),
+      statsTotal: finder.find("stats-total"),
+      next: finder.find("button-next"),
+      prev: finder.find("button-prev"),
+      expander: finder.find("expand"),
+      entities: finder.find("entities")
     };
 
-    finder = new TemplateFinder('text/hh-template', 'data-hh-scope');
+    finder = new TemplateFinder("text/hh-template", "data-hh-scope");
     this.templates = {
-      entityRow: finder.find('entity-row'),
-      entityEmpty: finder.find('entity-empty')
+      entityRow: finder.find("entity-row"),
+      entityEmpty: finder.find("entity-empty")
     };
 
     this.timeouts = { };
@@ -1774,27 +1857,27 @@
 
       el.toggleClass(Css.enabled);
 
-      if('entities' in self.timeouts) {
+      if("entities" in self.timeouts) {
         window.clearTimeout(self.timeouts.entities);
         self.timeouts.entities = null;
       }
 
       if(el.hasClass(Css.enabled)) {
         self.timeouts.entities = window.setTimeout(function () {
-          el.css('overflow-y', 'auto');
+          el.css("overflow-y", "auto");
           self.timeouts.entities = null;
         }, self.options.delays.toggleEntities);
 
         self.nodes.expander.addClass(Css.enabled);
       } else {
-        el.css('overflow-y', 'hidden');
+        el.css("overflow-y", "hidden");
         self.nodes.expander.removeClass(Css.enabled);
       }
     } );
 
     this.nodes.entities.click(function (ev) {
       var $node = $(ev.target);
-      if($node.data('hh-scope') === 'remove')
+      if($node.data("hh-scope") === "remove")
         self.owner.remove(self.getName_($node)).apply();
     } );
 
@@ -1805,7 +1888,7 @@
     this.setEmpty_();
     this.update();
 
-    console.info('HTML highlighter UI instantiated');
+    console.info("HTML highlighter UI instantiated");
   };
 
   Ui.prototype.update = function (full)
@@ -1814,7 +1897,7 @@
 
     this.nodes.statsCurrent.html( this.owner.cursor.index >= 0
                                   ? this.owner.cursor.index + 1
-                                  : '-');
+                                  : "-");
     this.nodes.statsTotal.html(this.owner.stats.total);
 
     if(full === false || this.templates.entityRow === null)
@@ -1826,24 +1909,24 @@
 
     /* Template `entity-row´ must supply an LI element skeleton. */
     var self = this,
-        $elu = $('<ul/>');
+        $elu = $("<ul/>");
 
     for(var k in this.owner.queries) {
       var q = this.owner.queries[k],
           $eli = this.templates.entityRow.clone();
 
       if(q.enabled)
-        $eli.find('enable').prop('checked', true);
+        $eli.find("enable").prop("checked", true);
 
-      $eli.find('name').text(k);
-      $eli.find('count').text(q.length);
+      $eli.find("name").text(k);
+      $eli.find("count").text(q.length);
       $elu.append($eli.get());
     }
 
     $elu.click(function (ev) {
       var $node = $(ev.target);
-      if($node.data('hh-scope') === 'enable') {
-        if($node.prop('checked'))
+      if($node.data("hh-scope") === "enable") {
+        if($node.prop("checked"))
           self.owner.enable(self.getName_($node));
         else
           self.owner.disable(self.getName_($node));
@@ -1858,7 +1941,7 @@
 
   Ui.prototype.getName_ = function ($node)
   {
-    return $node.parentsUntil('ul').last()
+    return $node.parentsUntil("ul").last()
       .find('[data-hh-scope="name"]').text();
   };
 
@@ -1874,11 +1957,12 @@
   var absm_noti = function ( ) { throw "Abstract method not implemented"; };
 
   var is_$ = function (el) { return el instanceof $; };
+  var is_fn = function (r) { return typeof r === 'function'; };
   var is_arr = function (r) { return r instanceof Array; };
   var is_str = function (r)
-  { return typeof r === 'string' || r instanceof String; };
+  { return typeof r === "string" || r instanceof String; };
 
-  var is_obj = function (r) { return r !== null && typeof r === 'object'; };
+  var is_obj = function (r) { return r !== null && typeof r === "object"; };
   var like_obj = function (r) { return r instanceof Object; };
 
   var is_obj_empty = function (x)
@@ -1926,9 +2010,9 @@
   var NodeFinder = function (tag, prefix, root)
   {
     this.tag_ = tag;
-    this.prefix_ = [ '[', tag, '="',
-                     prefix && prefix.length > 0 ? prefix + '-' : ''
-                   ].join('');
+    this.prefix_ = [ "[", tag, '="',
+                     prefix && prefix.length > 0 ? prefix + "-" : ""
+                   ].join("");
     this.root_ = root;
   };
 
@@ -1947,7 +2031,7 @@
       else if(is_str(parent)) p = this.find(parent);
       else                    p = this.root_;
 
-      return p.find( [ this.prefix_, scope, '"]' ].join(''));
+      return p.find( [ this.prefix_, scope, '"]' ].join(""));
     },
 
     withroot: function (newRoot, callback)
@@ -1970,12 +2054,12 @@
   var TemplateFinder = function (type, tag)
   {
     this.scripts = Array.prototype.slice.call(
-      document.getElementsByTagName('script'), 0)
+      document.getElementsByTagName("script"), 0)
       .filter(function (i) {
         return i.type === type;
       } );
 
-    this.tag = tag || 'data-scope';
+    this.tag = tag || "data-scope";
   };
 
   TemplateFinder.prototype.find = function (id)
@@ -1997,7 +2081,7 @@
     this.html = html;
     this.tag = tag || null;
 
-    Object.defineProperty(this, 'html', { value: html } );
+    Object.defineProperty(this, "html", { value: html } );
   };
 
   Template.prototype.clone = function ()
@@ -2020,14 +2104,14 @@
   TemplateInstance.prototype.find = function (scope)
   {
     if(this.prefix === null) return $();
-    return this.node.find('[' + this.tag + '=' + scope + ']');
+    return this.node.find("[" + this.tag + "=" + scope + "]");
   };
 
 
   var Css = {
-    highlight: 'hh-highlight',
-    enabled: 'hh-enabled',
-    disabled: 'hh-disabled'
+    highlight: "hh-highlight",
+    enabled: "hh-enabled",
+    disabled: "hh-disabled"
   };
 
   var defaults = {
@@ -2038,7 +2122,8 @@
     maxHighlight: 1,
     delays: {
       toggleEntities: 250
-    }
+    },
+    debug: true
   };
 
 
