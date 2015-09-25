@@ -158,6 +158,8 @@
     elSearch.focus();
   }
 
+  /* TODO: the following is a nasty hack which was quickly written as a proof
+   * of concept and is thus NOT meant to be used in real applications. */
   function highlight_(start, end)
   {
     var hit,
