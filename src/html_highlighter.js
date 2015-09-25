@@ -78,8 +78,8 @@
    * the query set already exists, its contents and highlights are first
    * destroyed and new one created.</p>
    *
-   * <p>Note that, at this point in time, only string queries are
-   * supported.</p>
+   * <p>Note that, at this point in time, only string queries and XPath
+   * representations are supported.</p>
    *
    * @param {string} name - Name of the query set.
    * @param {string[]} queries - Array containing individual queries to
@@ -96,6 +96,19 @@
     return this;
   };
 
+  /**
+   * <p>Append one or more queries to an existing query set.  If the query set
+   * doesn't yet exist, an exception is thrown.</p>
+   *
+   * <p>In addition, the query set <strong>must</strong> have enough reserved
+   * space available to contain the new queries.  All queries not fitting in
+   * the container are suppressed.</p>
+   *
+   * @param {string} name - Name of the query set.
+   * @param {string[]} queries - Array containing individual queries to
+   * highlight.
+   * @param {bool} enabled - If explicitly <code>true</code>, query set is
+   * also enabled. */
   Main.prototype.append = function (name, queries, enabled /* = false */)
   {
     var self = this;
@@ -296,6 +309,16 @@
 
   /* Private interface
    * ----------------- */
+  /**
+   * <p>Add or append queries to a query set, either enabled or disabled.</p>
+   *
+   * @param {Object} q - query set descriptor.
+   * @param {Array} queries - array containing the queries to add or append.
+   * @param {boolean} enabled - highlights are enabled if <code>true</code>;
+   * this is the default state.
+   *
+   * @returns {number} number of highlights added.
+   * */
   Main.prototype.add_queries_ = function (q, queries, enabled)
   {
     var count = 0,
