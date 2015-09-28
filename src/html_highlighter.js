@@ -19,10 +19,6 @@
 
 } )(/** @lends <global> */ function (window, $, undefined) {
 
-  /** Constant that sets the debug state for methods that don't have access to
-   * the `options` descriptor and thus can't query the `debug` attribute. */
-  var DEBUG = true;
-
   /**
    * Main class of the HTML Highlighter module, which exposes an API enabling
    * clients to control all the features supported related to highlighting and
@@ -62,6 +58,12 @@
     console.info("HTML highlighter instantiated");
   };
 
+  /** Static attribute that sets the debug state for methods that don't have
+   * access to the `options` descriptor and thus can't query the `debug`
+   * attribute. */
+  Main.debug = false;
+
+
   /**
    * <p>Refreshes the internal representation of the text.</p>
    *
@@ -70,7 +72,7 @@
   Main.prototype.refresh = function ()
   {
     this.content = new TextContent(this.options.container.get(0));
-    if(this.options.debug === true) this.content.assert_();
+    if(Main.debug === true) this.content.assert_();
   };
 
   /**
@@ -483,7 +485,7 @@
       this.stats.highlight = 0;
 
     this.ui.update();
-    if(this.options.debug === true) this.assert_();
+    if(Main.debug === true) this.assert_();
   };
 
   Main.prototype.deferred_append_ = function (name, queries, enabled)
@@ -495,7 +497,7 @@
 
     this.add_queries_(this.queries[name], queries, enabled === true);
     this.ui.update();
-    if(this.options.debug === true) this.assert_();
+    if(Main.debug === true) this.assert_();
   };
 
   Main.prototype.deferred_remove_ = function (name)
@@ -766,7 +768,7 @@
 
     /* From global state since we don't have access to the `options`
      * descriptor. */
-    if(DEBUG) this.assert_();
+    if(Main.debug) this.assert_();
 
     /* Remove old node. */
     old.parentNode.removeChild(old);
