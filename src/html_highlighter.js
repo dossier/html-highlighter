@@ -327,7 +327,10 @@
         content = this.content,
         markers = this.highlights,
         highlighter = new RangeHighlighter(
-          q.id_highlight, q.id + q.length, enabled
+          q.id_highlight,
+          q.id + q.length,
+          enabled,
+          this.options.cssClasses.highlight
         ),
         reserve = q.reserve > 0 ? q.reserve - q.length : null;
 
@@ -1099,11 +1102,12 @@
    * @param {number} id - The individual id to apply to the highlight.
    * @param {bool} enabled - If explicitly <code>false</code>, highlights are
    * created but not shown. */
-  var RangeHighlighter = function (count, id, enabled)
+  var RangeHighlighter = function (count, id, enabled, cssClass)
   {
     var classes = [ Css.highlight,
                     Css.highlight + "-" + count ];
 
+    if(cssClass)          classes.push(cssClass);
     if(enabled === false) classes.push(Css.disabled);
     classes = classes.join(" ");
 
@@ -2125,7 +2129,9 @@
     delays: {
       toggleEntities: 250
     },
-    debug: true
+    cssClasses: {
+      highlight: null
+    }
   };
 
 
