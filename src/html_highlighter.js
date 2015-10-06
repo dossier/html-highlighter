@@ -314,6 +314,7 @@
   /**
    * <p>Add or append queries to a query set, either enabled or disabled.</p>
    *
+   * @param {string} name - the name of the query.
    * @param {Object} q - query set descriptor.
    * @param {Array} queries - array containing the queries to add or append.
    * @param {boolean} enabled - highlights are enabled if <code>true</code>;
@@ -321,18 +322,19 @@
    *
    * @returns {number} number of highlights added.
    * */
-  Main.prototype.add_queries_ = function (q, queries, enabled)
+  Main.prototype.add_queries_ = function (name, q, queries, enabled)
   {
     var count = 0,
         content = this.content,
         markers = this.highlights,
-        highlighter = new RangeHighlighter(
-          q.id_highlight,
-          q.id + q.length,
-          enabled,
-          this.options.cssClasses.highlight
-        ),
-        reserve = q.reserve > 0 ? q.reserve - q.length : null;
+        csscl = null,
+        reserve = q.reserve > 0 ? q.reserve - q.length : null,
+        highlighter;
+
+    if(this.options.useQueryAsClass) csscl = Css.highlight + "-" + name;
+    highlighter = new RangeHighlighter(
+      q.id_highlight, q.id + q.length, enabled, csscl
+    );
 
     /* For each query, perform a lookup in the internal text representation and
      * highlight each hit.  The global offset of each highlight is recorded in
@@ -467,7 +469,7 @@
           length: 0
         };
 
-    var count = this.add_queries_(q, queries, enabled);
+    var count = this.add_queries_(name, q, queries, enabled);
     if(reserve !== null) {
       if(reserve > count) {
         this.lastId = reserve;
@@ -498,7 +500,7 @@
     else if(!(name in this.queries))
       throw "Invalid or query set not yet created";
 
-    this.add_queries_(this.queries[name], queries, enabled === true);
+    this.add_queries_(name, this.queries[name], queries, enabled === true);
     this.ui.update();
     if(Main.debug === true) this.assert_();
   };
@@ -766,7 +768,7 @@
         offset: marker.offset + end - start + 1,
         node: $(document.createTextNode(text.substr(end + 1)))
           .insertAfter(marker.node).get(0)
-      } );
+      });
     }
 
     /* From global state since we don't have access to the `options`
@@ -2129,9 +2131,7 @@
     delays: {
       toggleEntities: 250
     },
-    cssClasses: {
-      highlight: null
-    }
+    useQueryAsClass: false
   };
 
 
