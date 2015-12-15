@@ -309,12 +309,25 @@
     return true;
   };
 
+  /**
+   * <p>Return the last id of a query set.</p>
+   *
+   * @param {string} name - the name of the query set.
+   * @returns {number} the last id or <code>-1</code> if query set empty.
+   * */
+  Main.prototype.lastIdOf = function (name)
+  {
+    var q = this.get_(name),
+        l = q.length;
+    return l > 0 ? q.id + l - 1 : -1;
+  };
+
   /* Private interface
    * ----------------- */
   /**
    * <p>Add or append queries to a query set, either enabled or disabled.</p>
    *
-   * @param {string} name - the name of the query.
+   * @param {string} name - the name of the query set.
    * @param {Object} q - query set descriptor.
    * @param {Array} queries - array containing the queries to add or append.
    * @param {boolean} enabled - highlights are enabled if <code>true</code>;
