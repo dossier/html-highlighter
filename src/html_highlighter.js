@@ -429,6 +429,7 @@
     }
 
     delete this.queries[name];
+    window.document.body.normalize();
   };
 
   /**
