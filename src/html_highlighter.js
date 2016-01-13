@@ -1051,8 +1051,8 @@
     Finder.call(this, content);
 
     if(!is_obj(subject)
-       || subject.start.offset < 1
-       || subject.end.offset < 1) {
+       || subject.start.offset < 0
+       || subject.end.offset < 0) {
       throw "Invalid or no XPath object specified";
     }
 
@@ -1081,8 +1081,10 @@
 
     /* Save global character offset and relative start and end offsets in
      * descriptor. */
-    this.results.push( { start: start.offset + subject.start.offset - 1,
-                         end: end.offset + subject.end.offset - 1 } );
+    this.results.push({
+      start: start.offset + subject.start.offset,
+      end: end.offset + subject.end.offset
+    });
   };
 
   XpathFinder.prototype = Object.create(Finder.prototype);
