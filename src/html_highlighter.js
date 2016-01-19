@@ -1066,7 +1066,12 @@
      * now (messages will have been output).*/
     if(start === null) return;
     end = xpath.elementAt(subject.end.xpath);
-    if(end === null) return;
+
+    if(end === null) {
+      return;
+    } else if(--end <= start) {
+      throw "Invalid end offset: " + start + ":" + end;
+    }
 
     /* Retrieve global character offset of the text node. */
     start = content.find(start); end = content.find(end);
