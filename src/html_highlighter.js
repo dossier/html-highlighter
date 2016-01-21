@@ -1051,8 +1051,8 @@
     Finder.call(this, content);
 
     if(!is_obj(subject)
-       || subject.start.offset < 1
-       || subject.end.offset < 1) {
+       || subject.start.offset < 0
+       || subject.end.offset < 0) {
       throw "Invalid or no XPath object specified";
     }
 
@@ -1066,6 +1066,7 @@
      * now (messages will have been output).*/
     if(start === null) return;
     end = xpath.elementAt(subject.end.xpath);
+
     if(end === null) return;
 
     /* Retrieve global character offset of the text node. */
@@ -1073,16 +1074,20 @@
     if(start < 0 || end < 0) {
       console.error("Unable to derive global offsets: %d:%d", start, end);
       return;
-    } else if(start > end)
-      throw "Invalid XPath representation: start > end";
+    }
 
     /* Retrieve offset markers. */
-    start = content.at(start); end = content.at(end);
+    start = content.at(start).offset + subject.start.offset;
+    end = content.at(end).offset + subject.end.offset - 1;
+
+/*     console.log("DEBUG start = ", start, "end = ", end, subject); */
+
+    if(start === end) throw "Invalid XPath representation: start == end";
+    else if(start > end) throw "Invalid XPath representation: start > end";
 
     /* Save global character offset and relative start and end offsets in
      * descriptor. */
-    this.results.push( { start: start.offset + subject.start.offset - 1,
-                         end: end.offset + subject.end.offset - 1 } );
+    this.results.push({start: start, end: end});
   };
 
   XpathFinder.prototype = Object.create(Finder.prototype);
