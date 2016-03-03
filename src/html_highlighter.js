@@ -1271,7 +1271,7 @@
         descr = {
           start: {
             xpath: computor.xpathOf(start),
-            offset: this.start.offset + computor.offset(start) + 1
+            offset: this.start.offset + computor.offset(start)
           },
           end: {
             xpath: computor.xpathOf(end),
@@ -1795,7 +1795,7 @@
      *
      * @returns {DOMElement} The next text node or <code>null</code> if none
      * found. */
-    this.next = function ()
+    this.next = function()
     {
       if(current.nodeType !== 3)
         throw "Invalid node type: not text";
