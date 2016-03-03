@@ -738,201 +738,201 @@
           highlight('wrapElement');
         });
 
-/*         it('highlights three query sets from XPath representations with noise', function() { */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_VIBER); */
+        it('highlights three query sets from XPath representations with noise', function() {
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_VIBER);
 
-/*           highlight('standard'); */
-/*           highlight('wrapElement'); */
-/*           highlight('multiElement'); */
-/*         }); */
+          highlight('standard');
+          highlight('wrapElement');
+          highlight('multiElement');
+        });
 
-/*         it('highlights four query sets from XPath representations with noise', function() { */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_VIBER); */
+        it('highlights four query sets from XPath representations with noise', function() {
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_VIBER);
 
-/*           highlight('standard'); */
-/*           highlight('wrapElement'); */
-/*           highlight('multiElement'); */
-/*           highlight('bottomup'); */
-/*         }); */
-/*       }); */
-
-/*       describe('Duplicate and noise', function() { */
-/*         beforeEach('initialise state', function() { */
-/*           init(); */
-/*         }); */
-
-/*         it('highlights one query set from XPath representation with noise', function() { */
-/*           hl.add('test-the', [ 'the' ]).apply(); */
-/*           assertUi(); */
-/*           highlight('standard'); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + 1); */
-
-/*           hl.add('test-the-2', [ 'the' ]).apply(); */
-/*           assertUi(); */
-/*           highlight('standard', 'standard-2'); */
-/*           assert.strictEqual(hl.stats.total, (COUNT_THE + 1) << 1); */
-/*         }); */
-
-/*         it('highlights two query sets from XPath representations with noise', function() { */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           highlight('standard'); */
-/*           highlight('wrapElement'); */
-/*           assert.strictEqual(hl.stats.total, COUNT_VIBER + 2); */
-
-/*           hl.add('test-viber-2', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-
-/*           highlight('standard', 'standard-2'); */
-/*           highlight('wrapElement', 'wrapElement-2'); */
-/*           assert.strictEqual(hl.stats.total, (COUNT_VIBER + 2) << 1); */
-/*         }); */
-
-/*         it('highlights three query sets from XPath representations with noise', function() { */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           highlight('standard'); */
-/*           highlight('wrapElement'); */
-/*           highlight('multiElement'); */
-/*           assert.strictEqual(hl.stats.total, COUNT_VIBER + 3); */
-
-/*           hl.add('test-viber-2', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           highlight('standard', 'standard-2'); */
-/*           highlight('wrapElement', 'wrapElement-2'); */
-/*           highlight('multiElement', 'multiElement-2'); */
-/*           assert.strictEqual(hl.stats.total, (COUNT_VIBER + 3) << 1); */
-/*         }); */
-
-/*         it('highlights four query sets from XPath representations with noise', function() { */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           highlight('standard'); */
-/*           highlight('wrapElement'); */
-/*           highlight('multiElement'); */
-/*           highlight('bottomup'); */
-/*           assert.strictEqual(hl.stats.total, COUNT_VIBER + 4); */
-
-/*           hl.add('test-viber-2', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           highlight('standard', 'standard-2'); */
-/*           highlight('wrapElement', 'wrapElement-2'); */
-/*           highlight('multiElement', 'multiElement-2'); */
-/*           highlight('bottomup', 'bottomup-2'); */
-/*           assert.strictEqual(hl.stats.total, (COUNT_VIBER + 4) << 1); */
-/*         }); */
+          highlight('standard');
+          highlight('wrapElement');
+          highlight('multiElement');
+          highlight('bottomup');
+        });
       });
 
-/*       describe('Dense noise', function() { */
-/*         beforeEach('initialise state', function() { */
-/*           init(); */
-/*         }); */
+      describe('Duplicate and noise', function() {
+        beforeEach('initialise state', function() {
+          init();
+        });
 
-/*         it('highlights one query set from XPath representation after dense query set add', function() */
-/*         { */
-/*           hl.add('test-the', [ 'the' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE); */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER); */
-/*           hl.add('test-a', [ 'a' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A); */
+        it('highlights one query set from XPath representation with noise', function() {
+          hl.add('test-the', [ 'the' ]).apply();
+          assertUi();
+          highlight('standard');
+          assert.strictEqual(hl.stats.total, COUNT_THE + 1);
 
-/*           highlight('standard'); */
-/*         }); */
+          hl.add('test-the-2', [ 'the' ]).apply();
+          assertUi();
+          highlight('standard', 'standard-2');
+          assert.strictEqual(hl.stats.total, (COUNT_THE + 1) << 1);
+        });
 
-/*         it('highlights two query sets from XPath representation after dense query set add', function() */
-/*         { */
-/*           hl.add('test-the', [ 'the' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE); */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER); */
-/*           hl.add('test-a', [ 'a' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A); */
+        it('highlights two query sets from XPath representations with noise', function() {
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          highlight('standard');
+          highlight('wrapElement');
+          assert.strictEqual(hl.stats.total, COUNT_VIBER + 2);
 
-/*           highlight('standard'); */
-/*           highlight('wrapElement'); */
-/*         }); */
+          hl.add('test-viber-2', [ 'viber' ]).apply();
+          assertUi();
 
-/*         it('highlights three query sets from XPath representation after dense query set add', function() */
-/*         { */
-/*           hl.add('test-the', [ 'the' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE); */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER); */
-/*           hl.add('test-a', [ 'a' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A); */
+          highlight('standard', 'standard-2');
+          highlight('wrapElement', 'wrapElement-2');
+          assert.strictEqual(hl.stats.total, (COUNT_VIBER + 2) << 1);
+        });
 
-/*           highlight('standard'); */
-/*           highlight('wrapElement'); */
-/*           highlight('multiElement'); */
-/*         }); */
+        it('highlights three query sets from XPath representations with noise', function() {
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          highlight('standard');
+          highlight('wrapElement');
+          highlight('multiElement');
+          assert.strictEqual(hl.stats.total, COUNT_VIBER + 3);
 
-/*         it('highlights four query sets from XPath representation after dense query set add', function() */
-/*         { */
-/*           hl.add('test-the', [ 'the' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE); */
-/*           hl.add('test-viber', [ 'viber' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER); */
-/*           hl.add('test-a', [ 'a' ]).apply(); */
-/*           assertUi(); */
-/*           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A); */
+          hl.add('test-viber-2', [ 'viber' ]).apply();
+          assertUi();
+          highlight('standard', 'standard-2');
+          highlight('wrapElement', 'wrapElement-2');
+          highlight('multiElement', 'multiElement-2');
+          assert.strictEqual(hl.stats.total, (COUNT_VIBER + 3) << 1);
+        });
 
-/*           highlight('standard'); */
-/*           highlight('wrapElement'); */
-/*           highlight('multiElement'); */
-/*           highlight('bottomup'); */
-/*         }); */
-/*       }); */
+        it('highlights four query sets from XPath representations with noise', function() {
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          highlight('standard');
+          highlight('wrapElement');
+          highlight('multiElement');
+          highlight('bottomup');
+          assert.strictEqual(hl.stats.total, COUNT_VIBER + 4);
 
-/*       describe('Special character handling', function() { */
-/*         it('creates a highlight encompassing an ampersand', function() { */
-/*           init(1); */
-/*           highlight("wampersand-n"); */
+          hl.add('test-viber-2', [ 'viber' ]).apply();
+          assertUi();
+          highlight('standard', 'standard-2');
+          highlight('wrapElement', 'wrapElement-2');
+          highlight('multiElement', 'multiElement-2');
+          highlight('bottomup', 'bottomup-2');
+          assert.strictEqual(hl.stats.total, (COUNT_VIBER + 4) << 1);
+        });
+      });
 
-/*           init(2); */
-/*           highlight("wampersand-&"); */
+      describe('Dense noise', function() {
+        beforeEach('initialise state', function() {
+          init();
+        });
 
-/*           init(3); */
-/*           highlight("wampersand-&"); */
-/*         }); */
+        it('highlights one query set from XPath representation after dense query set add', function()
+        {
+          hl.add('test-the', [ 'the' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE);
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+          hl.add('test-a', [ 'a' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
-/*         it('creates a highlight starting at an ampersand', function() { */
-/*           init(1); */
-/*           highlight("sampersand-n"); */
+          highlight('standard');
+        });
 
-/*           init(2); */
-/*           highlight("sampersand-&"); */
+        it('highlights two query sets from XPath representation after dense query set add', function()
+        {
+          hl.add('test-the', [ 'the' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE);
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+          hl.add('test-a', [ 'a' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
-/*           init(3); */
-/*           highlight("sampersand-&"); */
-/*         }); */
+          highlight('standard');
+          highlight('wrapElement');
+        });
 
-/*         it('creates a highlight ending at an ampersand', function() { */
-/*           init(1); */
-/*           highlight("eampersand-n"); */
+        it('highlights three query sets from XPath representation after dense query set add', function()
+        {
+          hl.add('test-the', [ 'the' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE);
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+          hl.add('test-a', [ 'a' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
-/*           init(2); */
-/*           highlight("eampersand-&"); */
+          highlight('standard');
+          highlight('wrapElement');
+          highlight('multiElement');
+        });
 
-/*           init(3); */
-/*           highlight("eampersand-&"); */
-/*         }); */
-/*       }); */
+        it('highlights four query sets from XPath representation after dense query set add', function()
+        {
+          hl.add('test-the', [ 'the' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE);
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+          hl.add('test-a', [ 'a' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
+
+          highlight('standard');
+          highlight('wrapElement');
+          highlight('multiElement');
+          highlight('bottomup');
+        });
+      });
+
+      describe('Special character handling', function() {
+        it('creates a highlight encompassing an ampersand', function() {
+          init(1);
+          highlight("wampersand-n");
+
+          init(2);
+          highlight("wampersand-&");
+
+          init(3);
+          highlight("wampersand-&");
+        });
+
+        it('creates a highlight starting at an ampersand', function() {
+          init(1);
+          highlight("sampersand-n");
+
+          init(2);
+          highlight("sampersand-&");
+
+          init(3);
+          highlight("sampersand-&");
+        });
+
+        it('creates a highlight ending at an ampersand', function() {
+          init(1);
+          highlight("eampersand-n");
+
+          init(2);
+          highlight("eampersand-&");
+
+          init(3);
+          highlight("eampersand-&");
+        });
+      });
     });
   });
 }, window);
