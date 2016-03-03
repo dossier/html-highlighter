@@ -7,17 +7,17 @@
  */
 
 
-(function (factory, window) {
+(function(factory, window) {
 
   if(typeof window.define === "function" && window.define.amd) {
     window.define([ "jquery" ], function($) {
       return factory(window, $);
-    } );
+    });
   } else {
     window.HtmlHighlighter = factory(window, $);
   }
 
-} )(/** @lends <global> */ function (window, $, undefined) {
+})(/** @lends <global> */ function(window, $, undefined) {
 
   /**
    * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -26,7 +26,7 @@
    * @class
    * @param {Object} options - Map containing options
    * */
-  var Main = function (options)
+  var Main = function(options)
   {
     /* Merge default options. */
     options = $.extend(true, $.extend(true, {}, defaults), options);
@@ -69,7 +69,7 @@
    *
    * <p>Should only be invoked when the HTML structure mutates.</p>
    */
-  Main.prototype.refresh = function ()
+  Main.prototype.refresh = function()
   {
     this.content = new TextContent(this.options.container.get(0));
     if(Main.debug === true) this.content.assert_();
@@ -88,13 +88,13 @@
    * highlight.
    * @param {bool} enabled - If explicitly <code>true</code>, query set is
    * also enabled. */
-  Main.prototype.add = function (
+  Main.prototype.add = function(
     name, queries, enabled /* = false */, reserve /* = null */)
   {
     var self = this;
-    this.transaction.push( function () {
+    this.transaction.push(function() {
       self.deferred_add_(name, queries, enabled !== false, reserve);
-    } );
+    });
     return this;
   };
 
@@ -111,12 +111,12 @@
    * highlight.
    * @param {bool} enabled - If explicitly <code>true</code>, query set is
    * also enabled. */
-  Main.prototype.append = function (name, queries, enabled /* = false */)
+  Main.prototype.append = function(name, queries, enabled /* = false */)
   {
     var self = this;
-    this.transaction.push( function () {
+    this.transaction.push(function() {
       self.deferred_append_(name, queries, enabled !== false);
-    } );
+    });
     return this;
   };
 
@@ -126,10 +126,10 @@
    * <p>An exception is thrown if the query set does not exist.</p>
    *
    * @param {string} name - Name of the query set to remove. */
-  Main.prototype.remove = function (name)
+  Main.prototype.remove = function(name)
   {
     var self = this;
-    this.transaction.push( function () { self.deferred_remove_(name); } );
+    this.transaction.push(function() { self.deferred_remove_(name); });
     return this;
   };
 
@@ -140,10 +140,10 @@
    * set is currently already enabled, nothing is done.</p>
    *
    * @param {string} name - Name of the query set to enable. */
-  Main.prototype.enable = function (name)
+  Main.prototype.enable = function(name)
   {
     var self = this;
-    this.transaction.push( function () { self.deferred_enable_(name); } );
+    this.transaction.push(function() { self.deferred_enable_(name); });
     return this;
   };
 
@@ -154,20 +154,20 @@
    * set is currently already disabled, nothing is done.</p>
    *
    * @param {string} name - Name of the query set to disable. */
-  Main.prototype.disable = function (name)
+  Main.prototype.disable = function(name)
   {
     var self = this;
-    this.transaction.push( function () { self.deferred_disable_(name); } );
+    this.transaction.push(function() { self.deferred_disable_(name); });
     return this;
   };
 
   /**
    * Remove <strong>all</strong> query sets.
    * */
-  Main.prototype.clear = function ()
+  Main.prototype.clear = function()
   {
     var self = this;
-    this.transaction.push( function () { self.deferred_clear_(); } );
+    this.transaction.push(function() { self.deferred_clear_(); });
     return this;
   };
 
@@ -177,17 +177,17 @@
    * <p>Note that transactions are <strong>not</strong> atomic.  One failure
    * does not lead to a transaction rollback or even interruption of
    * execution; the transaction is applied regardless.</p> */
-  Main.prototype.apply = function ()
+  Main.prototype.apply = function()
   {
     if(this.transaction.length === 0) {
       console.info("Nothing to apply: transaction queue empty");
       return;
     }
 
-    this.transaction.forEach(function (action) {
+    this.transaction.forEach(function(action) {
       try      { action(); }
       catch(x) { console.error("Failed to apply action: %s", x); }
-    } );
+    });
 
     this.transaction = [ ];
   };
@@ -199,7 +199,7 @@
    * query.  If the current query set is the last in the collection and thus it
    * is not possible to move to the next query set, the first query set is made
    * active instead, thus ensuring that the cursor always rolls over.</p> */
-  Main.prototype.next = function ()
+  Main.prototype.next = function()
   {
     /* Do not worry about overflow; just increment it. */
     this.cursor.set(this.cursor.index + 1);
@@ -213,7 +213,7 @@
    * and thus it is not possible to move to the previous query set, the last
    * query set is made active instead, thus ensuring that the cursor always
    * rolls over.</p> */
-  Main.prototype.prev = function ()
+  Main.prototype.prev = function()
   {
     if(this.stats.total <= 0) return;
     this.cursor.set((this.cursor.index < 1
@@ -228,18 +228,32 @@
    *
    * @returns {Range|null} The current selected text range or <code>null</code>
    * if it could not be computed. */
-  Main.prototype.getSelectedRange = function ()
+  Main.prototype.getSelectedRange = function()
   {
     var sel = window.getSelection(), len;
 
-    /* Note: assigning `len´ in conditional below so as to simplify code;
-     * would require additional lines of code otherwise. */
-    if(!(sel && sel.anchorNode && (len = sel.toString().length) > 0))
+    if(!(sel && sel.anchorNode)) {
       return null;
-    else if(sel.anchorNode.nodeType !== 3 || sel.focusNode.nodeType !== 3) {
+    } else if(sel.anchorNode.nodeType !== 3 || sel.focusNode.nodeType !== 3) {
       console.info("Selection anchor or focus node(s) not text: ignoring");
       return null;
     }
+
+    /* Account for selections where the start and end elements are the same
+     * *and* whitespace exists longer than one character.  For instance, The
+     * element `<p>a     b</p>` is shown as `a b` by browsers, where the
+     * whitespace is rendered collapsed.  This means that in this particular
+     * case, it is not possible to simply retrieve the length of the
+     * selection's text and use that as the selection's end offset as it would
+     * be invalid.  The way to avoid calculating an invalid end offset is by
+     * looking at the anchor and focus (start and end) offsets.  Strangely, if
+     * the selection spans more than one element, one may simply use the length
+     * of the selected text regardless of the occurrence of whitespace in
+     * between. */
+    len = sel.anchorNode === sel.focusNode
+      ? sel.focusOffset - sel.anchorOffset
+      : sel.toString().length;
+    if(len <= 0) return null;
 
     /* Determine start and end indices in text offset markers array. */
     var start = this.content.find(sel.anchorNode),
@@ -281,14 +295,14 @@
    *
    * <p>Only the Chrome and Firefox implementations are supported.</p>
    * */
-  Main.prototype.clearSelectedRange = function ()
+  Main.prototype.clearSelectedRange = function()
   {
     /* From: http://stackoverflow.com/a/3169849/3001914
      * Note that we don't support IE at all. */
-    if (window.getSelection) {
-      if (window.getSelection().empty)                    /* Chrome */
+    if(window.getSelection) {
+      if(window.getSelection().empty)                    /* Chrome */
         window.getSelection().empty();
-      else if (window.getSelection().removeAllRanges)     /* Firefox */
+      else if(window.getSelection().removeAllRanges)     /* Firefox */
         window.getSelection().removeAllRanges();
     }
   };
@@ -299,7 +313,7 @@
    *
    * @returns {boolean} <code>false</code> if no query sets currently
    * contained; <code>true</code> otherwise. */
-  Main.prototype.empty = function ()
+  Main.prototype.empty = function()
   {
     for(var k in this.queries) {
       if(this.queries[k].length > 0)
@@ -315,7 +329,7 @@
    * @param {string} name - the name of the query set.
    * @returns {number} the last id or <code>-1</code> if query set empty.
    * */
-  Main.prototype.lastIdOf = function (name)
+  Main.prototype.lastIdOf = function(name)
   {
     var q = this.get_(name),
         l = q.length;
@@ -335,7 +349,7 @@
    *
    * @returns {number} number of highlights added.
    * */
-  Main.prototype.add_queries_ = function (name, q, queries, enabled)
+  Main.prototype.add_queries_ = function(name, q, queries, enabled)
   {
     var count = 0,
         content = this.content,
@@ -353,7 +367,7 @@
      * highlight each hit.  The global offset of each highlight is recorded in
      * the `this.highlights´ array.  The offset is used by the `Cursor´ class
      * to compute the next/previous highlight to show. */
-    queries.forEach(function (i) {
+    queries.forEach(function(i) {
       var hit, finder;
 
       try {
@@ -397,7 +411,7 @@
           console.error("exception: ", x);
         }
       }
-    } );
+    });
 
     q.length += count;
     if(enabled) this.stats.total += count;
@@ -411,7 +425,7 @@
    * @access private
    *
    * @param {string} name - The name of the query set to remove. */
-  Main.prototype.remove_ = function (name)
+  Main.prototype.remove_ = function(name)
   {
     var i, l, q = this.get_(name),
         unhighlighter = new RangeUnhighlighter(),
@@ -429,7 +443,14 @@
     }
 
     delete this.queries[name];
-    window.document.body.normalize();
+
+    /* TODO: Unfortunately, using the built-in `normalize` `HTMLElement` method
+     * to normalise text nodes means we have to refresh the offsets of the text
+     * nodes, which may not be desirable.  There must be a better way. */
+    if(this.options.normalise) {
+      this.options.container.get(0).normalize();
+      this.refresh();
+    }
   };
 
   /**
@@ -438,14 +459,14 @@
    * <p>Throws an exception if the query set does not exist.</p>
    *
    * @param {string} name - The name of the query set to retrieve. */
-  Main.prototype.get_ = function (name)
+  Main.prototype.get_ = function(name)
   {
     var q = this.queries[name];
     if(q === undefined) throw "Query set non-existent";
     return q;
   };
 
-  Main.prototype.assert_ = function ()
+  Main.prototype.assert_ = function()
   {
     var c = 0, l = 0, k;
 
@@ -453,18 +474,18 @@
       l += this.queries[k].length;
 
     k = 0;
-    this.highlights.forEach(function (i) {
+    this.highlights.forEach(function(i) {
       if(i.offset < c || i.index >= i.query.length)
         throw "Invalid state: highlight out of position";
 
       c = i.offset;
       ++k;
-    } );
+    });
 
     if(k !== l) throw "Invalid state: length mismatch";
   };
 
-  Main.prototype.deferred_add_ = function (name, queries, enabled, reserve)
+  Main.prototype.deferred_add_ = function(name, queries, enabled, reserve)
   {
     if(!is_arr(queries))
       throw "Invalid or no queries array specified";
@@ -507,7 +528,7 @@
     if(Main.debug === true) this.assert_();
   };
 
-  Main.prototype.deferred_append_ = function (name, queries, enabled)
+  Main.prototype.deferred_append_ = function(name, queries, enabled)
   {
     if(!is_arr(queries))
       throw "Invalid or no queries array specified";
@@ -519,7 +540,7 @@
     if(Main.debug === true) this.assert_();
   };
 
-  Main.prototype.deferred_remove_ = function (name)
+  Main.prototype.deferred_remove_ = function(name)
   {
     this.remove_(name);
 
@@ -527,7 +548,7 @@
     this.ui.update();
   };
 
-  Main.prototype.deferred_enable_ = function (name)
+  Main.prototype.deferred_enable_ = function(name)
   {
     var q = this.get_(name);
     if(q.enabled || q.id === null) return;
@@ -540,7 +561,7 @@
     this.cursor.clear();
   };
 
-  Main.prototype.deferred_disable_ = function (name)
+  Main.prototype.deferred_disable_ = function(name)
   {
     var q = this.get_(name);
     if(!q.enabled || q.id === null) return;
@@ -553,7 +574,7 @@
     this.cursor.clear();
   };
 
-  Main.prototype.deferred_clear_ = function ()
+  Main.prototype.deferred_clear_ = function()
   {
     for(var k in this.queries)
       this.remove_(k);
@@ -571,7 +592,7 @@
    * @class
    * @param {Object} owner - Reference to the owning instance.
    * */
-  var Cursor = function (owner)
+  var Cursor = function(owner)
   {
     this.owner = owner;
     this.index = -1;
@@ -583,7 +604,7 @@
    * @param {boolean} [update=true] - Boolean flag that, when
    * <strong>not</strong> <code>false</code>, results in the UI state being
    * updated. */
-  Cursor.prototype.clear = function (update /* = true */)
+  Cursor.prototype.clear = function(update /* = true */)
   {
     this.clear_();
 
@@ -595,7 +616,7 @@
    * <p>Set cursor to query referenced by absolute query index.</p>
    *
    * @param {integer} index - Virtual cursor index */
-  Cursor.prototype.set = function (index)
+  Cursor.prototype.set = function(index)
   {
     var owner = this.owner,
         markers = this.owner.highlights;
@@ -608,11 +629,11 @@
     var count = index,
         ndx = null;
 
-    markers.some(function (m, i) {
+    markers.some(function(m, i) {
       if(!m.query.enabled)   return false;
       else if(count === 0) { ndx = i; return true; }
       --count; return false;
-    } );
+    });
 
     /* If index overflown, set to first highlight. */
     if(ndx === null) {
@@ -645,7 +666,7 @@
    * exist.</p>
    * @access private
    * */
-  Cursor.prototype.clear_ = function ()
+  Cursor.prototype.clear_ = function()
   {
     this.clearActive_();
     this.index = -1;
@@ -656,7 +677,7 @@
    * highlight is the element or elements at the current cursor position.</p>
    * @access private
    * */
-  Cursor.prototype.clearActive_ = function ()
+  Cursor.prototype.clearActive_ = function()
   {
     $("." + Css.highlight + "." + Css.enabled).removeClass(Css.enabled);
   };
@@ -669,10 +690,10 @@
    * @param {DOMElement|jQuery} root - Reference to a DOM element or jQuery
    * instance.  If a jQuery instance is given, its first element is used.
    * */
-  var TextContent = function (root)
+  var TextContent = function(root)
   {
     Object.defineProperty(this,
-      "root", { value: is_$(root) ? root.get(0) : root } );
+      "root", { value: is_$(root) ? root.get(0) : root });
 
     this.text = this.markers = null;
     this.refresh();
@@ -697,7 +718,7 @@
    * <p>Should only be invoked when the HTML structure mutates, e.g. a new
    * document is loaded.</p>
    * */
-  TextContent.prototype.refresh = function ()
+  TextContent.prototype.refresh = function()
   {
     this.text = "";
     this.markers = [ ];
@@ -736,7 +757,7 @@
    * truncate.
    * @param {number} start - Offset where to start truncation.
    * @param {number} end - Offset where truncation ends. */
-  TextContent.prototype.truncate = function (marker, start, end)
+  TextContent.prototype.truncate = function(marker, start, end)
   {
     var index = this.indexOf(marker.offset),
         text = marker.node.nodeValue,
@@ -804,7 +825,7 @@
    *
    * @param {number} offset - The offset to look up.
    * @returns {number} The marker index that contains <code>offset</code>. */
-  TextContent.prototype.indexOf = function (offset)
+  TextContent.prototype.indexOf = function(offset)
   {
     var mid,
         markers = this.markers,
@@ -838,7 +859,7 @@
    *
    * @returns {number} The marker index of <code>element</code> or
    * <code>-1</code> if not found. */
-  TextContent.prototype.find = function (element, start)
+  TextContent.prototype.find = function(element, start)
   {
     if(element.nodeType !== 3)
       return -1;
@@ -861,7 +882,7 @@
    *
    * @param {number} index - Marker index.
    * @returns {Object} The offset marker descriptor. */
-  TextContent.prototype.at = function (index)
+  TextContent.prototype.at = function(index)
   {
     if(index < 0 || index >= this.markers.length)
       throw "Invalid marker index";
@@ -876,7 +897,7 @@
    * @access private
    *
    * @param {DOMElement} node - The node to visit. */
-  TextContent.prototype.visit_ = function (node, offset)
+  TextContent.prototype.visit_ = function(node, offset)
   {
     /* Only interested in text nodes. */
     if(node.nodeType === 3) {
@@ -885,7 +906,7 @@
 
       /* Save reference to text node and store global offset in the markers
        * array, in addition to . */
-      this.markers.push( { node: node, offset: offset } );
+      this.markers.push({ node: node, offset: offset });
       this.text += content;
       return offset + length;
     }
@@ -904,7 +925,7 @@
   /**
    * <p>Debug method for asserting that the current textual representation if
    * valid, in particular that the offset markers are all contiguous.</p> */
-  TextContent.prototype.assert_ = function ()
+  TextContent.prototype.assert_ = function()
   {
     var offset = 0;
 
@@ -931,9 +952,9 @@
    * holding a text representation of the document.
    * @param {*} subject - subject to find; can be of any type.
    * */
-  var Finder = function (content, subject)
+  var Finder = function(content, subject)
   {
-    Object.defineProperty(this, "content", { value: content } );
+    Object.defineProperty(this, "content", { value: content });
 
     this.results = [ ];
     this.current = 0;
@@ -948,7 +969,7 @@
    * holding a text representation of the document.
    * @param {*} subject - subject to find; can be of any type.
    * */
-  Finder.construct = function (content, subject)
+  Finder.construct = function(content, subject)
   {
     return is_obj(subject)
       ? new XpathFinder(content, subject)
@@ -972,7 +993,7 @@
    *
    * @param {number} offset - Text offset
    * @returns {Object} Range descriptor. */
-  Finder.prototype.getAt_ = function (offset)
+  Finder.prototype.getAt_ = function(offset)
   {
     var index = this.content.indexOf(offset);
     if(index === -1)
@@ -990,7 +1011,7 @@
    * @param {TextContent} content - Reference to <code>TextContent</code>
    * instance.
    * @param {string} subject - Subject string to match. */
-  var TextFinder = function (content, subject)
+  var TextFinder = function(content, subject)
   {
     /* Construct base class. */
     Finder.call(this, content);
@@ -1001,7 +1022,7 @@
                         "gi");
 
     while((match = re.exec(this.content.text)) !== null)
-      this.results.push( { length: match[0].length, index: match.index } );
+      this.results.push({ length: match[0].length, index: match.index });
   };
 
   TextFinder.prototype = Object.create(Finder.prototype);
@@ -1011,7 +1032,7 @@
    *
    * @returns {Range|false} Returns a <code>Range</code> if a match is
    * available, or <code>false</code> if no more matches are available. */
-  TextFinder.prototype.next = function ()
+  TextFinder.prototype.next = function()
   {
     if(this.current >= this.results.length)
       return false;
@@ -1045,7 +1066,7 @@
    * instance.
    * @param {string} subject - Descriptor containing an XPath representation
    * and start and end offsets. */
-  var XpathFinder = function (content, subject)
+  var XpathFinder = function(content, subject)
   {
     /* Construct base class. */
     Finder.call(this, content);
@@ -1097,7 +1118,7 @@
    *
    * @returns {Range|false} Returns a <code>Range</code> if a match is
    * available, or <code>false</code> if no more matches are available. */
-  XpathFinder.prototype.next = function ()
+  XpathFinder.prototype.next = function()
   {
     if(this.current >= this.results.length)
       return false;
@@ -1123,7 +1144,7 @@
    * @param {number} id - The individual id to apply to the highlight.
    * @param {bool} enabled - If explicitly <code>false</code>, highlights are
    * created but not shown. */
-  var RangeHighlighter = function (count, id, enabled, cssClass)
+  var RangeHighlighter = function(count, id, enabled, cssClass)
   {
     var classes = [ Css.highlight,
                     Css.highlight + "-" + count ];
@@ -1137,7 +1158,7 @@
      *
      * @param {Range} range - Range instance to apply highlighting to.
      * @returns {number} Unique highlight id. */
-    this.do = function (range) {
+    this.do = function(range) {
       range.surround(classes + " " + Css.highlight + "-id-" + id);
       return id++;
     };
@@ -1148,20 +1169,20 @@
    * <p>Convenience class for removing highlighting.</p>
    * @class
    * */
-  var RangeUnhighlighter = function ()
+  var RangeUnhighlighter = function()
   {
     /**
      * <p>Remove highlighting given by its id.</p>
      *
      * @param {number} id - Id of the highlight to remove. */
-    this.undo = function (id) {
+    this.undo = function(id) {
       var $coll = $("." + Css.highlight + "-id-" + id);
-      $coll.each(function () {
+      $coll.each(function() {
         var $el = $(this);
 
         $el.contents().insertBefore($el);
         $el.remove();
-      } );
+      });
     };
   };
 
@@ -1173,7 +1194,7 @@
    * @param {Object} start - descriptor of start of range.
    * @param {Object} end - descriptor of end of range.
    * */
-  var Range = function (content, start, end)
+  var Range = function(content, start, end)
   {
     this.content = content;
 
@@ -1185,7 +1206,7 @@
     Object.defineProperties(this, {
       start: { value: start },
       end:   { value: end   }
-    } );
+    });
   };
 
   /**
@@ -1195,7 +1216,7 @@
    * @param {number} offset - Global offset.
    *
    * @returns {Object} Range descriptor. */
-  Range.descriptorAbs = function (marker, offset)
+  Range.descriptorAbs = function(marker, offset)
   {
     var descriptor = { marker: marker };
     descriptor.offset = offset - marker.offset;
@@ -1210,7 +1231,7 @@
    * @param {number} offset - Relative offset from start of text node.
    *
    * @returns {Object} Range descriptor. */
-  Range.descriptorRel = function (marker, offset)
+  Range.descriptorRel = function(marker, offset)
   {
     var descriptor = { marker: marker };
     descriptor.offset = offset;
@@ -1222,7 +1243,7 @@
    * <code>span</code> tag and applying a particular CSS class.</p>
    *
    * @param {string} className - The CSS class name to apply. */
-  Range.prototype.surround = function (className)
+  Range.prototype.surround = function(className)
   {
     /* Optimised case: highlighting does not span multiple nodes. */
     if(this.start.marker.node === this.end.marker.node) {
@@ -1249,14 +1270,14 @@
      * if applicable.  Highlighting for the start and end nodes may require
      * text node truncation but not for the nodes in between. */
     this.surround_(this.start, this.start.offset, null, className);
-    coll.forEach(function (n) { self.surround_whole_(n, className); } );
+    coll.forEach(function(n) { self.surround_whole_(n, className); });
     this.surround_(this.end, 0, this.end.offset, className);
   };
 
   /**
    * <p>Compute the XPath representation of the active range.</p>
    * @returns {string} XPath representation of active range. */
-  Range.prototype.computeXpath = function ()
+  Range.prototype.computeXpath = function()
   {
     var start = this.start.marker.node,
         end = this.end.marker.node,
@@ -1264,7 +1285,7 @@
         descr = {
           start: {
             xpath: computor.xpathOf(start),
-            offset: this.start.offset + computor.offset(start) + 1
+            offset: this.start.offset + computor.offset(start)
           },
           end: {
             xpath: computor.xpathOf(end),
@@ -1278,7 +1299,7 @@
   /**
    * <p>Compute the length of the active range.</p>
    * @returns {number} Number of characters. */
-  Range.prototype.length = function ()
+  Range.prototype.length = function()
   {
     /* Optimised case: range does not span multiple nodes. */
     if(this.start.marker.node === this.end.marker.node)
@@ -1311,7 +1332,7 @@
    * @param {number} end - End offset.
    * @param {string} className - CSS class name to apply.
    * */
-  Range.prototype.surround_ = function (descr, start, end, className)
+  Range.prototype.surround_ = function(descr, start, end, className)
   {
     this.content.truncate(
       descr.marker, start,
@@ -1329,7 +1350,7 @@
    * @param {DOMElement} node - Text node to apply highlighting to.
    * @param {string} className - CSS class name to apply.
    * */
-  Range.prototype.surround_whole_ = function (node, className)
+  Range.prototype.surround_whole_ = function(node, className)
   {
     $("<span/>")
       .addClass(className)
@@ -1345,7 +1366,7 @@
    * root node.</p>
    * @class
    * @param {DOMElement} [root=null] - Root DOM node. */
-  var TextNodeXpath = function (root)
+  var TextNodeXpath = function(root)
   {
     this.root = root || null;
     if(is_$(this.root)) this.root = this.root.get(0);
@@ -1363,7 +1384,7 @@
    *
    * @param {DOMElement} node - Text node to compute XPath representation of.
    * @returns {string} XPath representation. */
-  TextNodeXpath.prototype.xpathOf = function (node)
+  TextNodeXpath.prototype.xpathOf = function(node)
   {
     /* Note: no checks required since `indexOfText_´ throws exception if node
      * invalid: null or not like text. */
@@ -1400,7 +1421,7 @@
    * @param {string} xpath - String containing XPath representation.
    * @returns {DOMElement} The element referenced by the XPath string.
    * */
-  TextNodeXpath.prototype.elementAt = function (xpath)
+  TextNodeXpath.prototype.elementAt = function(xpath)
   {
     var part, index,
         cur = this.root,          /* start from the root node */
@@ -1458,7 +1479,7 @@
    * pre-highlight, that is -- of the above would be:</p>
    *
    * <pre><code>#text + STRONG</code></pre> */
-  TextNodeXpath.prototype.offset = function (node)
+  TextNodeXpath.prototype.offset = function(node)
   {
     var offset = 0;
 
@@ -1501,7 +1522,7 @@
    * container
    * @returns {integer} Combined length of text nodes.
    * */
-  TextNodeXpath.prototype.length_ = function (node)
+  TextNodeXpath.prototype.length_ = function(node)
   {
     if(node.nodeType === 3)
       return node.nodeValue.length;
@@ -1527,7 +1548,7 @@
    * @param {DOMElement} node - text node.
    * @returns {DOMElement} First highlight container of text node, if
    * applicable. */
-  TextNodeXpath.prototype.skip_ = function (node)
+  TextNodeXpath.prototype.skip_ = function(node)
   {
     /* Don't do anything if node isn't of text type. */
     if(node.nodeType === 3) {
@@ -1549,7 +1570,7 @@
    *
    * @param {DOMElement} node - DOM element to check
    * @returns {boolean} <code>true</code> if it is a highlight container. */
-  TextNodeXpath.prototype.isHighlight_ = function (node)
+  TextNodeXpath.prototype.isHighlight_ = function(node)
   {
     /* NOTE: this is potentially problematic if the document uses class names
      * that contain or are equal to `Css.highlight´. */
@@ -1566,7 +1587,7 @@
    * @access private
    * @param {DOMElement} node - DOM element to calculate index of.
    * @returns {number} Index of node plus one. */
-  TextNodeXpath.prototype.indexOfElement_ = function (node)
+  TextNodeXpath.prototype.indexOfElement_ = function(node)
   {
     var index = 1,
         name = node.nodeName.toLowerCase();
@@ -1574,7 +1595,7 @@
     if(node === null || this.isLikeText_(node))
       throw "No node specified or node of text type";
 
-    while( (node = node.previousSibling) !== null) {
+    while((node = node.previousSibling) !== null) {
       /* Don't count contiguous text nodes or highlight containers as being
        * separate nodes.  IOW, contiguous text nodes or highlight containers
        * are treated as ONE element. */
@@ -1608,7 +1629,7 @@
    * @access private
    * @param {DOMElement} node - DOM element to calculate index of.
    * @returns {number} Index of node plus one. */
-  TextNodeXpath.prototype.indexOfText_ = function (node)
+  TextNodeXpath.prototype.indexOfText_ = function(node)
   {
     var index = 1,
         wast = true;
@@ -1617,7 +1638,7 @@
       throw "No node specified or not of text type";
 
     node = this.skip_(node);
-    while( (node = node.previousSibling) !== null) {
+    while((node = node.previousSibling) !== null) {
       /* Don't count contiguous text nodes or highlight containers as being
        * separate nodes.  IOW, contiguous text nodes or highlight containers
        * are treated as ONE element. */
@@ -1637,7 +1658,7 @@
    *
    * @param {DOMElement} node - node to check
    * @returns */
-  TextNodeXpath.prototype.isLikeText_ = function (node)
+  TextNodeXpath.prototype.isLikeText_ = function(node)
   {
     return node.nodeType === 3 || this.isHighlight_(node);
   };
@@ -1659,7 +1680,7 @@
    * @param {string} part - An XPath representation part; e.g. "div[2]",
    * "text()[3]" or "p"
    * @returns {Object} Object containing tag and index */
-  TextNodeXpath.prototype.xpathPart_ = function (part)
+  TextNodeXpath.prototype.xpathPart_ = function(part)
   {
     var index;
 
@@ -1693,7 +1714,7 @@
    * @param {integer} index - child index of the node sought
    *
    * @returns {DOMElement} The nth element of <code>node</code> */
-  TextNodeXpath.prototype.nthElementOf_ = function (parent, tag, index)
+  TextNodeXpath.prototype.nthElementOf_ = function(parent, tag, index)
   {
     var node, ch = parent.children;
 
@@ -1719,7 +1740,7 @@
    * @param {DOMElement} parent - node whose children to search
    * @param {string} tag - the tag name of the node sought
    * @param {integer} index - child index of the node sought */
-  TextNodeXpath.prototype.nthTextOf_ = function (parent, index)
+  TextNodeXpath.prototype.nthTextOf_ = function(parent, index)
   {
     var node,
         ch = parent.childNodes,
@@ -1773,14 +1794,14 @@
    * @param {DOMElement} [root=null] - The root node where to stop visiting the
    * DOM.
    * */
-  var TextNodeVisitor = function (node, root)
+  var TextNodeVisitor = function(node, root)
   {
     /* Attributes */
     var current = node;
 
     /* Getters */
     Object.defineProperty(
-      this, "current", { get: function () { return current; } });
+      this, "current", { get: function() { return current; } });
 
 
     /**
@@ -1788,7 +1809,7 @@
      *
      * @returns {DOMElement} The next text node or <code>null</code> if none
      * found. */
-    this.next = function ()
+    this.next = function()
     {
       if(current.nodeType !== 3)
         throw "Invalid node type: not text";
@@ -1805,7 +1826,7 @@
      * @param {DOMElement} node current node.
      * @returns {DOMElement} next node or <code>null</code> if none
      * available or the root node was reached. */
-    function nextNode_ (node)
+    function nextNode_(node)
     {
       /* Abort if invalid or root node; otherwise attempt to advance to sibling
        * node. */
@@ -1846,17 +1867,17 @@
    * @param {Main} owner - reference to owning <code>Main</code> instance
    * @param {Object} options - map containing options
    * */
-  var Ui = function (owner, options)
+  var Ui = function(owner, options)
   {
     this.owner = owner;
 
     if(!is_$(options.widget)) {
       console.warn("HTML highlighter UI unavailable");
-      Object.defineProperty(this, "options", { value: false } );
+      Object.defineProperty(this, "options", { value: false });
       return;
     }
 
-    Object.defineProperty(this, "options", { value: options } );
+    Object.defineProperty(this, "options", { value: options });
 
     var self = this,
         finder = new NodeFinder("data-hh-scope", "", options.widget);
@@ -1879,7 +1900,7 @@
 
     this.timeouts = { };
 
-    this.nodes.expander.click(function () {
+    this.nodes.expander.click(function() {
       var el = self.nodes.entities;
 
       el.toggleClass(Css.enabled);
@@ -1890,7 +1911,7 @@
       }
 
       if(el.hasClass(Css.enabled)) {
-        self.timeouts.entities = window.setTimeout(function () {
+        self.timeouts.entities = window.setTimeout(function() {
           el.css("overflow-y", "auto");
           self.timeouts.entities = null;
         }, self.options.delays.toggleEntities);
@@ -1900,16 +1921,16 @@
         el.css("overflow-y", "hidden");
         self.nodes.expander.removeClass(Css.enabled);
       }
-    } );
+    });
 
-    this.nodes.entities.click(function (ev) {
+    this.nodes.entities.click(function(ev) {
       var $node = $(ev.target);
       if($node.data("hh-scope") === "remove")
         self.owner.remove(self.getName_($node)).apply();
-    } );
+    });
 
-    this.nodes.next.click(function () { self.owner.next(); } );
-    this.nodes.prev.click(function () { self.owner.prev(); } );
+    this.nodes.next.click(function() { self.owner.next(); });
+    this.nodes.prev.click(function() { self.owner.prev(); });
 
     /* Initial empty state. */
     this.setEmpty_();
@@ -1918,18 +1939,20 @@
     console.info("HTML highlighter UI instantiated");
   };
 
-  Ui.prototype.update = function (full)
+  Ui.prototype.update = function(full)
   {
     if(!this.options) return false;
 
-    this.nodes.statsCurrent.html( this.owner.cursor.index >= 0
-                                  ? this.owner.cursor.index + 1
-                                  : "-");
+    this.nodes.statsCurrent.html(
+      this.owner.cursor.index >= 0
+        ? this.owner.cursor.index + 1
+        : "-"
+    );
     this.nodes.statsTotal.html(this.owner.stats.total);
 
-    if(full === false || this.templates.entityRow === null)
+    if(full === false || this.templates.entityRow === null) {
       return;
-    else if(is_obj_empty(this.owner.queries)) {
+    } else if(is_obj_empty(this.owner.queries)) {
       this.setEmpty_();
       return;
     }
@@ -1950,7 +1973,7 @@
       $elu.append($eli.get());
     }
 
-    $elu.click(function (ev) {
+    $elu.click(function(ev) {
       var $node = $(ev.target);
       if($node.data("hh-scope") === "enable") {
         if($node.prop("checked"))
@@ -1960,19 +1983,19 @@
 
         self.owner.apply();
       }
-    } );
+    });
 
     this.nodes.entities.children().remove();
     this.nodes.entities.append($elu);
   };
 
-  Ui.prototype.getName_ = function ($node)
+  Ui.prototype.getName_ = function($node)
   {
     return $node.parentsUntil("ul").last()
       .find('[data-hh-scope="name"]').text();
   };
 
-  Ui.prototype.setEmpty_ = function ()
+  Ui.prototype.setEmpty_ = function()
   {
     this.nodes.entities.children().remove();
     if(this.templates.entityEmpty !== null)
@@ -1981,18 +2004,18 @@
 
 
   /* Helper methods */
-  var absm_noti = function ( ) { throw "Abstract method not implemented"; };
+  var absm_noti = function() { throw "Abstract method not implemented"; };
 
-  var is_$ = function (el) { return el instanceof $; };
-  var is_fn = function (r) { return typeof r === 'function'; };
-  var is_arr = function (r) { return r instanceof Array; };
-  var is_str = function (r)
+  var is_$ = function(el) { return el instanceof $; };
+  var is_fn = function(r) { return typeof r === 'function'; };
+  var is_arr = function(r) { return r instanceof Array; };
+  var is_str = function(r)
   { return typeof r === "string" || r instanceof String; };
 
-  var is_obj = function (r) { return r !== null && typeof r === "object"; };
-  var like_obj = function (r) { return r instanceof Object; };
+  var is_obj = function(r) { return r !== null && typeof r === "object"; };
+  var like_obj = function(r) { return r instanceof Object; };
 
-  var is_obj_empty = function (x)
+  var is_obj_empty = function(x)
   {
     if(!like_obj(x))
       throw "Reference not provided or not an object";
@@ -2005,7 +2028,7 @@
     return true;
   };
 
-  var inview = function (el)
+  var inview = function(el)
   {
     var $window = $(window),
         docTop = $window.scrollTop(),
@@ -2013,10 +2036,10 @@
         top = el.offset().top,
         bottom = top + el.height();
 
-    return ((bottom <= docBottom) && (top >= docTop));
+    return((bottom <= docBottom) && (top >= docTop));
   };
 
-  var scrollIntoView = function (el, c)
+  var scrollIntoView = function(el, c)
   {
     var container = c === undefined ? $(window) : c,
         containerTop = container.scrollTop(),
@@ -2024,9 +2047,9 @@
         elemTop = el.offset().top,
         elemBottom = elemTop + el.height();
 
-    if (elemTop < containerTop)
+    if(elemTop < containerTop)
       container.off().scrollTop(elemTop);
-    else if (elemBottom > containerBottom)
+    else if(elemBottom > containerBottom)
       container.off().scrollTop(elemBottom - container.height());
   };
 
@@ -2034,7 +2057,7 @@
   /**
    * @class
    * */
-  var NodeFinder = function (tag, prefix, root)
+  var NodeFinder = function(tag, prefix, root)
   {
     this.tag_ = tag;
     this.prefix_ = [ "[", tag, '="',
@@ -2050,7 +2073,7 @@
 
     get root() { return this.root_;  },
 
-    find: function (scope, parent /* = prefix */ )
+    find: function(scope, parent /* = prefix */ )
     {
       var p;
 
@@ -2058,10 +2081,10 @@
       else if(is_str(parent)) p = this.find(parent);
       else                    p = this.root_;
 
-      return p.find( [ this.prefix_, scope, '"]' ].join(""));
+      return p.find([ this.prefix_, scope, '"]' ].join(""));
     },
 
-    withroot: function (newRoot, callback)
+    withroot: function(newRoot, callback)
     {
       if(!is_fn(callback))
         throw "Invalid or no callback function specified";
@@ -2078,18 +2101,18 @@
   /**
    * @class
    * */
-  var TemplateFinder = function (type, tag)
+  var TemplateFinder = function(type, tag)
   {
     this.scripts = Array.prototype.slice.call(
       document.getElementsByTagName("script"), 0)
-      .filter(function (i) {
+      .filter(function(i) {
         return i.type === type;
-      } );
+      });
 
     this.tag = tag || "data-scope";
   };
 
-  TemplateFinder.prototype.find = function (id)
+  TemplateFinder.prototype.find = function(id)
   {
     for(var i = 0, l = this.scripts.length; i < l; ++i) {
       if(this.scripts[i].id === id)
@@ -2103,15 +2126,15 @@
   /**
    * @class
    * */
-  var Template = function (html, tag)
+  var Template = function(html, tag)
   {
     this.html = html;
     this.tag = tag || null;
 
-    Object.defineProperty(this, "html", { value: html } );
+    Object.defineProperty(this, "html", { value: html });
   };
 
-  Template.prototype.clone = function ()
+  Template.prototype.clone = function()
   {
     return new TemplateInstance($(this.html), this.tag);
   };
@@ -2120,15 +2143,15 @@
   /**
    * @class
    * */
-  var TemplateInstance = function (node, tag)
+  var TemplateInstance = function(node, tag)
   {
     this.node = node;
     this.tag = tag || null;
   };
 
-  TemplateInstance.prototype.get = function () { return this.node; };
+  TemplateInstance.prototype.get = function() { return this.node; };
 
-  TemplateInstance.prototype.find = function (scope)
+  TemplateInstance.prototype.find = function(scope)
   {
     if(this.prefix === null) return $();
     return this.node.find("[" + this.tag + "=" + scope + "]");
@@ -2150,7 +2173,8 @@
     delays: {
       toggleEntities: 250
     },
-    useQueryAsClass: false
+    useQueryAsClass: false,
+    normalise: true
   };
 
 

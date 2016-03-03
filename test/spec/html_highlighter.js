@@ -7,13 +7,13 @@
  */
 
 
-(function (factory, window) {
+(function(factory, window) {
   var d = [ 'jquery', 'html_highlighter', 'data1', 'data2', 'data3', 'data4' ];
-  window.define(d, function () {
+  window.define(d, function() {
     return factory(window, arguments[0], arguments[1],
                    Array.prototype.splice.call(arguments, 2));
-  } );
-})( function (window, $, hh, data, undefined) {
+  });
+})(function(window, $, hh, data, undefined) {
   /* Module-related & convenience references. */
   var assert = chai.assert,
       expect = chai.expect;
@@ -40,14 +40,14 @@
         + " response, “no sensitive user data was exposed and Viber’s databases"
         + " were not ‘hacked’.”",
       xpath: {
-        end: { offset: 260, xpath: "/p[3]/text()[1]" },
-        start: { offset: 1, xpath: "/p[3]/a/text()[1]" }
+        start: { offset: 0, xpath: "/p[3]/a/text()[1]" },
+        end: { offset: 260, xpath: "/p[3]/text()[1]" }
       }
     },
     wrapElement: {
       text: "the Viber support page, though",
       xpath: {
-        start: { xpath: "/p[2]/text()[1]", offset: 48 },
+        start: { xpath: "/p[2]/text()[1]", offset: 47 },
         end:   { xpath: "/p[2]/text()[2]:8", offset: 8 }
       }
     },
@@ -63,21 +63,21 @@
         + " with over 200 million users globally.Update — Viber has followed up"
         + " with more details",
       xpath: {
-        start: { xpath: "/p[10]/text()[1]",         offset: 338 },
+        start: { xpath: "/p[10]/text()[1]",         offset: 337 },
         end:   { xpath: "/p[13]/strong/text()[1]:", offset: 48  }
       }
     },
     bottomup: {
       text: " support page, though it",
       xpath: {
-        start: { xpath: "/p[2]/a[2]/text()", offset: 6  },
+        start: { xpath: "/p[2]/a[2]/text()", offset: 5  },
         end:   { xpath: "/p[2]/text()[2]",   offset: 11 }
       }
     },
     uppercase: {
       text: "Spot originally",
       xpath: {
-        start: { xpath: "/P[2]/A/TEXT()[1]", offset: 6  },
+        start: { xpath: "/P[2]/A/TEXT()[1]", offset: 5  },
         end:   { xpath: "/P[2]/TEXT()[1]",   offset: 11 }
       }
     },
@@ -85,14 +85,14 @@
       text: "Army (a pro-government group of computer hackers aligned with"
         + " Syrian President Bashar al-Assad) & the world cried foul",
       xpath: {
-        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 19  },
+        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 18  },
         end:   { xpath: "/p[1]/text()[4]",         offset: 114 }
       }
     },
     "sampersand-&": {
       text: "& the world cried foul",
       xpath: {
-        start: { xpath: "/p[1]/text()[4]", offset: 93  },
+        start: { xpath: "/p[1]/text()[4]", offset: 92  },
         end:   { xpath: "/p[1]/text()[4]", offset: 114 }
       }
     },
@@ -100,7 +100,7 @@
       text: "Army (a pro-government group of computer hackers aligned with"
         + " Syrian President Bashar al-Assad) &",
       xpath: {
-        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 19  },
+        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 18  },
         end:   { xpath: "/p[1]/text()[4]",         offset: 93 }
       }
     },
@@ -108,14 +108,14 @@
       text: "Army (a pro-government group of computer hackers aligned with"
         + " Syrian President Bashar al-Assad) n the world cried foul",
       xpath: {
-        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 19  },
+        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 18  },
         end:   { xpath: "/p[1]/text()[4]",         offset: 114 }
       }
     },
     "sampersand-n": {
       text: "n the world cried foul",
       xpath: {
-        start: { xpath: "/p[1]/text()[4]", offset: 93  },
+        start: { xpath: "/p[1]/text()[4]", offset: 92  },
         end:   { xpath: "/p[1]/text()[4]", offset: 114 }
       }
     },
@@ -123,14 +123,14 @@
       text: "Army (a pro-government group of computer hackers aligned with"
         + " Syrian President Bashar al-Assad) n",
       xpath: {
-        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 19  },
+        start: { xpath: "/p[1]/code[1]/text()[1]", offset: 18  },
         end:   { xpath: "/p[1]/text()[4]",         offset: 93 }
       }
     }
   };
 
   /* Functions */
-  var options = function ()
+  var options = function()
   {
     return {
       container: $document,
@@ -139,14 +139,14 @@
     };
   };
 
-  var init = function (ndx)
+  var init = function(ndx)
   {
     $document.html(data[ndx || 0]);
     hl = new hh.HtmlHighlighter(options());
     assertUi();
   };
 
-  var assertUi = function ()
+  var assertUi = function()
   {
     if(hl.stats.queries === 0)
       assert.strictEqual(hl.stats.total, 0, 'no hits since no queries exist');
@@ -171,13 +171,13 @@
     else        assertDisables();
   };
 
-  var assertClear = function ()
+  var assertClear = function()
   {
     assert.strictEqual($document.find('.hh-highlight').length, 0,
                       'there are no highlights');
   };
 
-  var assertEnables = function ()
+  var assertEnables = function()
   {
     assert.strictEqual(
       dedup($document.find('.hh-highlight:not(.hh-disabled)')).length,
@@ -186,7 +186,7 @@
     );
   };
 
-  var assertDisables = function ()
+  var assertDisables = function()
   {
     assert.strictEqual(
       $document.find('.hh-highlight.hh-disabled').length, 0,
@@ -194,7 +194,7 @@
     );
   };
 
-  var assertSelectionRange = function (range)
+  var assertSelectionRange = function(range)
   {
     assert.isNotNull(range, 'have selection range');
     assert.isObject(range);
@@ -210,7 +210,7 @@
     assert.deepProperty(xpath, 'end.offset', 'xpath has valid structure');
   };
 
-  var assertCursor = function (id, text)
+  var assertCursor = function(id, text)
   {
     var enabled = $('.hh-highlight.hh-enabled');
     assert.isAbove(enabled.length, 0, 'there is an active highlight');
@@ -220,12 +220,12 @@
     assert.strictEqual(enabled.eq(0).text(), text);
   };
 
-  var highlightId = function (cl)
+  var highlightId = function(cl)
   {
     return cl.className.match(/hh-highlight-id-(\d+)/)[1];
   };
 
-  var dedup = function (arr)
+  var dedup = function(arr)
   {
     var seen = { },
         result = [ ];
@@ -242,18 +242,18 @@
     return result;
   };
 
-  var cursor = function ()
+  var cursor = function()
   {
     var v = $cursor.text();
     return v === '-' ? 0 : parseInt(v);
   };
 
-  var total = function ()
+  var total = function()
   {
     return parseInt($total.text());
   };
 
-  var select = function (sn, so, en, eo)
+  var select = function(sn, so, en, eo)
   {
     var result,
         range = window.document.createRange(),
@@ -276,7 +276,7 @@
     return result;
   };
 
-  var firstTextOf = function (node)
+  var firstTextOf = function(node)
   {
     if(node.nodeType === 3) return node;
 
@@ -288,7 +288,7 @@
     return null;
   };
 
-  var lastTextOf = function (node)
+  var lastTextOf = function(node)
   {
     if(node.nodeType === 3) return node;
 
@@ -300,7 +300,7 @@
     return null;
   };
 
-  var lengthOf = function (node)
+  var lengthOf = function(node)
   {
     if(node.nodeType === 3) return node.nodeValue.length;
 
@@ -311,7 +311,7 @@
     return length;
   };
 
-  var textOf = function (node)
+  var textOf = function(node)
   {
     if(node.nodeType === 3) return node.nodeValue;
 
@@ -322,7 +322,7 @@
     return text;
   };
 
-  var selectStandard = function ()
+  var selectStandard = function()
   {
     var result,
         p = $document.find('p:eq(2)').get(0),
@@ -338,23 +338,23 @@
 
     expect(result.computeXpath())
       .to.deep.equal({ end: { offset: 260, xpath: "/p[3]/text()[1]" },
-                       start: { offset: 1, xpath: "/p[3]/a[1]/text()[1]" } });
+                       start: { offset: 0, xpath: "/p[3]/a[1]/text()[1]" } });
     return result;
   };
 
-  var highlight = function (name, qsetname)
+  var highlight = function(name, qsetname)
   {
     if(qsetname === undefined) qsetname = name;
-    hl.add('test-' + qsetname, [ tests[name].xpath  ] ).apply();
+    hl.add('test-' + qsetname, [tests[name].xpath]).apply();
     assertHighlight(hl.lastId - 1, tests[name].text);
   };
 
-  var assertHighlight = function (id, text)
+  var assertHighlight = function(id, text)
   {
     var l = 0, t = '';
-    $('.hh-highlight-id-' + id).each(function () {
+    $('.hh-highlight-id-' + id).each(function() {
       l += lengthOf(this); t += textOf(this);
-    } );
+    });
 
     assert.strictEqual(text, t, 'expected highlight text');
     assert.strictEqual(text.length, l, 'expected highlight length');
@@ -365,155 +365,175 @@
   /* Test specifications */
   describe('HTML Highlighter', function() {
 
-    describe('General', function () {
-      beforeEach('initialise state', function () {
+    describe('General', function() {
+      beforeEach('initialise state', function() {
         init();
         assert.strictEqual(total(), 0);
         assert.strictEqual(cursor(), 0);
-      } );
+      });
 
-      it('initialises', function () { } );
+      it('initialises', function() { });
 
-      it('resets UI state after second initialisation', function () {
+      it('resets UI state after second initialisation', function() {
         assert.strictEqual($cursor.text(), '-', 'no valid cursor');
         assert.strictEqual($total.text(), '0', 'no query sets');
-      } );
+      });
 
-      it('adds a query set with a single mention', function () {
+      it('adds a query set with a single mention', function() {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
-      } );
+      });
 
-      it('adds a query set with multiple mentions', function () {
+      it('adds a query set with multiple mentions', function() {
         var id = hl.lastId;
         hl.add('test-the-viber', [ 'the', 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
         assert.strictEqual(hl.lastId, COUNT_THE + COUNT_VIBER + id);
-      } );
+      });
 
-      it('does not allow duplicate query sets - I', function () {
+      it('does not allow duplicate query sets - I', function() {
+        hl.add('test-the', [ 'the' ])
+          .add('test-the', ["the"])
+          .apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
+      });
+
+      it('does not allow duplicate query sets - II', function() {
+        hl.add('test-the', [ 'the' ]).apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE);
+
+        hl.add('test-the', [ 'the' ]).apply();
+        assertUi();
+        assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
+      });
+
+      it('does not allow duplicate query sets - III', function() {
         hl.add('test-the', [ 'the' ])
           .add('test-the', [ 'the' ])
           .apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
-      } );
-
-      it('does not allow duplicate query sets - II', function () {
-        hl.add('test-the', [ 'the' ]).apply();
-        assertUi();
-        assert.strictEqual(hl.stats.total, COUNT_THE);
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
-      } );
+        assert.strictEqual(hl.stats.queries, 1);
+      });
 
-      it('does not allow duplicate query sets - III', function () {
-        hl.add('test-the', [ 'the' ])
-          .add('test-the', [ 'the' ])
-          .apply();
-        assertUi();
-        assert.strictEqual(hl.stats.total, COUNT_THE);
-
-        hl.add('test-the', [ 'the' ]).apply();
-        assertUi();
-        assert.strictEqual(hl.stats.total, COUNT_THE);
-      } );
-
-      it('removes query set when only one exists', function () {
+      it('removes query set when only one exists', function() {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
         hl.remove('test-the').apply();
         assertUi();
         assert.strictEqual(hl.stats.total, 0);
+        assert.strictEqual(hl.stats.queries, 0);
         assertClear();
-      } );
+      });
 
-      it('removes correct query set when multiple queries exist', function () {
+      it('removes correct query set when multiple queries exist', function() {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
         hl.remove('test-the').apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_VIBER);
-      } );
+        assert.strictEqual(hl.stats.queries, 1);
+      });
 
-      it('removes all query sets when multiple queries exist', function () {
+      it('removes all query sets when multiple queries exist', function() {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
-        hl.remove('test-the').apply()
+        hl.remove('test-the').apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 1);
 
-        hl.remove('test-viber').apply()
+        hl.remove('test-viber').apply();
         assertUi();
         assert.strictEqual(hl.stats.total, 0);
+        assert.strictEqual(hl.stats.queries, 0);
         assertClear();
-      } );
+      });
 
-      it('clears state when only one query set exists', function () {
+      it('clears state when only one query set exists', function() {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.clear().apply();
         assertUi();
         assert.strictEqual(hl.stats.total, 0);
+        assert.strictEqual(hl.stats.queries, 0);
         assertClear();
-      } );
+      });
 
-      it('clears state when multiple query sets exist', function () {
+      it('clears state when multiple query sets exist', function() {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
         hl.clear().apply();
         assertUi();
         assert.strictEqual(hl.stats.total, 0);
+        assert.strictEqual(hl.stats.queries, 0);
         assertClear();
-      } );
+      });
 
-      it('moves cursor to next element', function () {
+      it('moves cursor to next element', function() {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
         assert.strictEqual(cursor(), 0);
         hl.next();
         assert.strictEqual(cursor(), 1);
-      } );
+      });
 
-      it('moves cursor to previous element', function () {
+      it('moves cursor to previous element', function() {
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
         assert.strictEqual(cursor(), 0);
         hl.next();
@@ -522,18 +542,20 @@
         assert.strictEqual(cursor(), 2);
         hl.prev();
         assert.strictEqual(cursor(), 1);
-      } );
+      });
 
-      it('moves cursor to last element', function () {
+      it('moves cursor to last element', function() {
         var id = hl.lastId;
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
         for(var i = 0; i < COUNT_THE + COUNT_VIBER; ++i) {
           assert.strictEqual(cursor(), i);
@@ -542,18 +564,20 @@
 
         assert.strictEqual(cursor(), COUNT_THE + COUNT_VIBER);
 //        assertCursor(COUNT_THE + COUNT_VIBER, 'Viber');
-      } );
+      });
 
-      it('cursor rolls over to first element from last', function () {
+      it('cursor rolls over to first element from last', function() {
         var id = hl.lastId;
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
         for(var i = 0; i < COUNT_THE + COUNT_VIBER + 1; ++i) {
           assert.strictEqual(cursor(), i);
@@ -561,34 +585,38 @@
         }
 
         assert.strictEqual(cursor(), 1);
-      } );
+      });
 
-      it('cursor rolls over to last element from first', function () {
+      it('cursor rolls over to last element from first', function() {
         var id = hl.lastId;
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
         assert.strictEqual(cursor(), 0);
         hl.prev();
         assert.strictEqual(cursor(), COUNT_THE + COUNT_VIBER);
-      } );
+      });
 
-      it('cursor rolls over to last element from first and back', function () {
+      it('cursor rolls over to last element from first and back', function() {
         var id = hl.lastId;
 
         hl.add('test-the', [ 'the' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
+        assert.strictEqual(hl.stats.queries, 1);
 
         hl.add('test-viber', [ 'viber' ]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+        assert.strictEqual(hl.stats.queries, 2);
 
         assert.strictEqual(cursor(), 0);
         hl.prev();
@@ -596,10 +624,10 @@
 
         hl.next();
         assert.strictEqual(cursor(), 1);
-      } );
-    } );
+      });
+    });
 
-    describe('Text selection', function () {
+    describe('Text selection', function() {
       beforeEach('initialise state', function() {
         init();
       });
@@ -639,78 +667,78 @@
       });
     });
 
-    describe('XPath', function () {
-      describe ('Basic', function () {
+    describe('XPath', function() {
+      describe('Basic', function() {
         beforeEach('initialise state', function() {
           init();
-        } );
+        });
 
-        it('can cope with XPath representations in uppercase', function () {
+        it('can cope with XPath representations in uppercase', function() {
           highlight('uppercase');
-        } );
+        });
 
-        it('highlights the "standard" query set from XPath representation', function () {
+        it('highlights the "standard" query set from XPath representation', function() {
           highlight('standard');
-        } );
+        });
 
-        it('highlights the "wrapElement" query set from XPath representation', function () {
+        it('highlights the "wrapElement" query set from XPath representation', function() {
           highlight('wrapElement');
-        } );
+        });
 
-        it('highlights the "multiElement" query set from XPath representation', function () {
+        it('highlights the "multiElement" query set from XPath representation', function() {
           highlight('multiElement');
-        } );
+        });
 
-        it('highlights the "bottomup" query set from XPath representation', function () {
+        it('highlights the "bottomup" query set from XPath representation', function() {
           highlight('bottomup');
-        } );
+        });
 
-        it('highlights one query set from XPath representation', function () {
+        it('highlights one query set from XPath representation', function() {
           highlight('standard');
-        } );
+        });
 
-        it('highlights two query sets from XPath representations', function () {
+        it('highlights two query sets from XPath representations', function() {
           highlight('standard');
           highlight('wrapElement');
-        } );
+        });
 
-        it('highlights three query sets from XPath representations', function () {
+        it('highlights three query sets from XPath representations', function() {
           highlight('standard');
           highlight('wrapElement');
           highlight('multiElement');
-        } );
+        });
 
-        it('highlights four query sets from XPath representations', function () {
+        it('highlights four query sets from XPath representations', function() {
           highlight('standard');
           highlight('wrapElement');
           highlight('multiElement');
           highlight('bottomup');
-        } );
-      } );
+        });
+      });
 
-      describe('Low noise', function () {
-        beforeEach('initialise state', function () {
+      describe('Low noise', function() {
+        beforeEach('initialise state', function() {
           init();
-        } );
+        });
 
-        it('highlights query set from XPath representation with noise', function () {
+        it('highlights query set from XPath representation with noise', function() {
           hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE);
 
           highlight('standard');
-        } );
+        });
 
-        it('highlights two query sets from XPath representations with noise', function () {
+        it('highlights two query sets from XPath representations with noise', function() {
           hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_THE);
 
           highlight('standard');
           highlight('wrapElement');
-        } );
+        });
 
-        it('highlights three query sets from XPath representations with noise', function () {
+        it('highlights three query sets from XPath representations with noise', function() {
           hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_VIBER);
@@ -718,9 +746,9 @@
           highlight('standard');
           highlight('wrapElement');
           highlight('multiElement');
-        } );
+        });
 
-        it('highlights four query sets from XPath representations with noise', function () {
+        it('highlights four query sets from XPath representations with noise', function() {
           hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           assert.strictEqual(hl.stats.total, COUNT_VIBER);
@@ -729,15 +757,15 @@
           highlight('wrapElement');
           highlight('multiElement');
           highlight('bottomup');
-        } );
-      } );
+        });
+      });
 
-      describe('Duplicate and noise', function () {
-        beforeEach('initialise state', function () {
+      describe('Duplicate and noise', function() {
+        beforeEach('initialise state', function() {
           init();
-        } );
+        });
 
-        it('highlights one query set from XPath representation with noise', function () {
+        it('highlights one query set from XPath representation with noise', function() {
           hl.add('test-the', [ 'the' ]).apply();
           assertUi();
           highlight('standard');
@@ -747,9 +775,9 @@
           assertUi();
           highlight('standard', 'standard-2');
           assert.strictEqual(hl.stats.total, (COUNT_THE + 1) << 1);
-        } );
+        });
 
-        it('highlights two query sets from XPath representations with noise', function () {
+        it('highlights two query sets from XPath representations with noise', function() {
           hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           highlight('standard');
@@ -762,9 +790,9 @@
           highlight('standard', 'standard-2');
           highlight('wrapElement', 'wrapElement-2');
           assert.strictEqual(hl.stats.total, (COUNT_VIBER + 2) << 1);
-        } );
+        });
 
-        it('highlights three query sets from XPath representations with noise', function () {
+        it('highlights three query sets from XPath representations with noise', function() {
           hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           highlight('standard');
@@ -778,9 +806,9 @@
           highlight('wrapElement', 'wrapElement-2');
           highlight('multiElement', 'multiElement-2');
           assert.strictEqual(hl.stats.total, (COUNT_VIBER + 3) << 1);
-        } );
+        });
 
-        it('highlights four query sets from XPath representations with noise', function () {
+        it('highlights four query sets from XPath representations with noise', function() {
           hl.add('test-viber', [ 'viber' ]).apply();
           assertUi();
           highlight('standard');
@@ -796,15 +824,15 @@
           highlight('multiElement', 'multiElement-2');
           highlight('bottomup', 'bottomup-2');
           assert.strictEqual(hl.stats.total, (COUNT_VIBER + 4) << 1);
-        } );
-      } );
+        });
+      });
 
-      describe('Dense noise', function () {
-        beforeEach('initialise state', function () {
+      describe('Dense noise', function() {
+        beforeEach('initialise state', function() {
           init();
-        } );
+        });
 
-        it('highlights one query set from XPath representation after dense query set add', function ()
+        it('highlights one query set from XPath representation after dense query set add', function()
         {
           hl.add('test-the', [ 'the' ]).apply();
           assertUi();
@@ -817,9 +845,9 @@
           assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER + COUNT_A);
 
           highlight('standard');
-        } );
+        });
 
-        it('highlights two query sets from XPath representation after dense query set add', function ()
+        it('highlights two query sets from XPath representation after dense query set add', function()
         {
           hl.add('test-the', [ 'the' ]).apply();
           assertUi();
@@ -833,9 +861,9 @@
 
           highlight('standard');
           highlight('wrapElement');
-        } );
+        });
 
-        it('highlights three query sets from XPath representation after dense query set add', function ()
+        it('highlights three query sets from XPath representation after dense query set add', function()
         {
           hl.add('test-the', [ 'the' ]).apply();
           assertUi();
@@ -850,9 +878,9 @@
           highlight('standard');
           highlight('wrapElement');
           highlight('multiElement');
-        } );
+        });
 
-        it('highlights four query sets from XPath representation after dense query set add', function ()
+        it('highlights four query sets from XPath representation after dense query set add', function()
         {
           hl.add('test-the', [ 'the' ]).apply();
           assertUi();
@@ -868,11 +896,11 @@
           highlight('wrapElement');
           highlight('multiElement');
           highlight('bottomup');
-        } );
-      } );
+        });
+      });
 
-      describe('Special character handling', function () {
-        it('creates a highlight encompassing an ampersand', function () {
+      describe('Special character handling', function() {
+        it('creates a highlight encompassing an ampersand', function() {
           init(1);
           highlight("wampersand-n");
 
@@ -881,9 +909,9 @@
 
           init(3);
           highlight("wampersand-&");
-        } );
+        });
 
-        it('creates a highlight starting at an ampersand', function () {
+        it('creates a highlight starting at an ampersand', function() {
           init(1);
           highlight("sampersand-n");
 
@@ -892,9 +920,9 @@
 
           init(3);
           highlight("sampersand-&");
-        } );
+        });
 
-        it('creates a highlight ending at an ampersand', function () {
+        it('creates a highlight ending at an ampersand', function() {
           init(1);
           highlight("eampersand-n");
 
@@ -903,8 +931,8 @@
 
           init(3);
           highlight("eampersand-&");
-        } );
-      } );
-    } );
-  } );
+        });
+      });
+    });
+  });
 }, window);
