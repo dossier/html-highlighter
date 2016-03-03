@@ -232,14 +232,28 @@
   {
     var sel = window.getSelection(), len;
 
-    /* Note: assigning `len´ in conditional below so as to simplify code;
-     * would require additional lines of code otherwise. */
-    if(!(sel && sel.anchorNode && (len = sel.toString().length) > 0))
+    if(!(sel && sel.anchorNode)) {
       return null;
-    else if(sel.anchorNode.nodeType !== 3 || sel.focusNode.nodeType !== 3) {
+    } else if(sel.anchorNode.nodeType !== 3 || sel.focusNode.nodeType !== 3) {
       console.info("Selection anchor or focus node(s) not text: ignoring");
       return null;
     }
+
+    /* Account for selections where the start and end elements are the same
+     * *and* whitespace exists longer than one character.  For instance, The
+     * element `<p>a     b</p>` is shown as `a b` by browsers, where the
+     * whitespace is rendered collapsed.  This means that in this particular
+     * case, it is not possible to simply retrieve the length of the
+     * selection's text and use that as the selection's end offset as it would
+     * be invalid.  The way to avoid calculating an invalid end offset is by
+     * looking at the anchor and focus (start and end) offsets.  Strangely, if
+     * the selection spans more than one element, one may simply use the length
+     * of the selected text regardless of the occurrence of whitespace in
+     * between. */
+    len = sel.anchorNode === sel.focusNode
+      ? sel.focusOffset - sel.anchorOffset
+      : sel.toString().length;
+    if(len <= 0) return null;
 
     /* Determine start and end indices in text offset markers array. */
     var start = this.content.find(sel.anchorNode),
