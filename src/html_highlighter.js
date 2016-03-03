@@ -429,7 +429,14 @@
     }
 
     delete this.queries[name];
-    window.document.body.normalize();
+
+    /* TODO: Unfortunately, using the built-in `normalize` `HTMLElement` method
+     * to normalise text nodes means we have to refresh the offsets of the text
+     * nodes, which may not be desirable.  There must be a better way. */
+    if(this.options.normalise) {
+      this.options.container.get(0).normalize();
+      this.refresh();
+    }
   };
 
   /**
