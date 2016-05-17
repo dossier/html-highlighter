@@ -507,6 +507,14 @@
         assert.strictEqual(hl.stats.queries, 0);
         assertClear();
       });
+    });
+
+    describe("Cursor movement", function() {
+      beforeEach('initialise state', function() {
+        init();
+        assert.strictEqual(total(), 0);
+        assert.strictEqual(cursor(), 0);
+      });
 
       it('moves cursor to next element', function() {
         hl.add('test-the', [ 'the' ]).apply();
@@ -624,6 +632,140 @@
 
         hl.next();
         assert.strictEqual(cursor(), 1);
+      });
+
+      describe('Iterable queries', function() {
+        beforeEach('initialise state', function() {
+          init();
+          assert.strictEqual(total(), 0);
+          assert.strictEqual(cursor(), 0);
+
+          hl.add('test-the', [ 'the' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE);
+          assert.strictEqual(hl.stats.queries, 1);
+
+          hl.add('test-viber', [ 'viber' ]).apply();
+          assertUi();
+          assert.strictEqual(hl.stats.total, COUNT_THE + COUNT_VIBER);
+          assert.strictEqual(hl.stats.queries, 2);
+        });
+
+        it('allows setting of iterable queries', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+        });
+
+        it('resets the cursor position', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(cursor(), 0);
+          hl.next();
+          assert.strictEqual(cursor(), 1);
+
+          hl.setIterableQueries('test-viber');
+          assert.strictEqual(cursor(), 0);
+        });
+
+        it('allows setting of iterable queries multiple times', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          hl.setIterableQueries('test-viber');
+          assert.strictEqual(hl.cursor.total, COUNT_VIBER);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          hl.setIterableQueries(['test-the', 'test-viber']);
+          assert.strictEqual(hl.cursor.total, COUNT_THE + COUNT_VIBER);
+          assert.strictEqual(total(), hl.cursor.total);
+        });
+
+        it('allows unsetting of iterable queries', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          hl.setIterableQueries('test-viber');
+          assert.strictEqual(hl.cursor.total, COUNT_VIBER);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          hl.setIterableQueries(null);
+          assert.strictEqual(hl.cursor.total, COUNT_THE + COUNT_VIBER);
+          assert.strictEqual(total(), hl.cursor.total);
+        });
+
+        it('moves cursor to next element', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          assert.strictEqual(cursor(), 0);
+          hl.next();
+          assert.strictEqual(cursor(), 1);
+        });
+
+        it('moves cursor to previous element', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          assert.strictEqual(cursor(), 0);
+          hl.next();
+          assert.strictEqual(cursor(), 1);
+          hl.next();
+          assert.strictEqual(cursor(), 2);
+          hl.prev();
+          assert.strictEqual(cursor(), 1);
+        });
+
+        it('moves cursor to last element', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          for(var i = 0; i < COUNT_THE; ++i) {
+            assert.strictEqual(cursor(), i);
+            hl.next();
+          }
+
+          assert.strictEqual(cursor(), COUNT_THE);
+        });
+
+        it('cursor rolls over to first element from last', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          for(var i = 0; i < COUNT_THE + 1; ++i) {
+            assert.strictEqual(cursor(), i);
+            hl.next();
+          }
+
+          assert.strictEqual(cursor(), 1);
+        });
+
+        it('cursor rolls over to last element from first', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          assert.strictEqual(cursor(), 0);
+          hl.prev();
+          assert.strictEqual(cursor(), COUNT_THE);
+        });
+
+        it('cursor rolls over to last element from first and back', function() {
+          hl.setIterableQueries('test-the');
+          assert.strictEqual(hl.cursor.total, COUNT_THE);
+          assert.strictEqual(total(), hl.cursor.total);
+
+          assert.strictEqual(cursor(), 0);
+          hl.prev();
+          assert.strictEqual(cursor(), COUNT_THE);
+
+          hl.next();
+          assert.strictEqual(cursor(), 1);
+        });
       });
     });
 

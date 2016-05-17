@@ -197,7 +197,10 @@
    * and <code>next</code> methods are invoked.  If <code>null</code>, all
    * queries will be visited. */
   Main.prototype.setIterableQueries = function(queries)
-  { this.cursor.setIterableQueries(queries); };
+  {
+    this.cursor.setIterableQueries(queries);
+    this.ui.update(false);
+  };
 
   /**
    * <p>Move cursor position to the next query in the active query set.  If the
@@ -210,6 +213,7 @@
   {
     /* Do not worry about overflow; just increment it. */
     this.cursor.set(this.cursor.index + 1, false);
+    this.ui.update(false);
   };
 
   /**
@@ -224,9 +228,10 @@
   {
     if(this.stats.total <= 0) return;
     this.cursor.set(
-      (this.cursor.index < 1 ? this.stats.total : this.cursor.index) - 1,
+      (this.cursor.index < 1 ? this.cursor.total : this.cursor.index) - 1,
       false
     );
+    this.ui.update(false);
   };
 
   /**
@@ -502,9 +507,7 @@
     if(typeof reserve !== "number" || reserve < 1) reserve = null;
 
     /* Remove query set if it exists. */
-    if(name in this.queries)
-      this.deferred_remove_(name);
-    }
+    if(name in this.queries) this.deferred_remove_(name);
 
     var q = this.queries[name] = {
       name: name,
@@ -534,6 +537,7 @@
     if(this.stats.highlight >= this.options.maxHighlight)
       this.stats.highlight = 0;
 
+    this.cursor.clear();
     this.ui.update();
     if(Main.debug === true) this.assert_();
   };
@@ -546,6 +550,7 @@
       throw "Invalid or query set not yet created";
 
     this.add_queries_(name, this.queries[name], queries, enabled === true);
+    this.cursor.clear();
     this.ui.update();
     if(Main.debug === true) this.assert_();
   };
@@ -553,8 +558,7 @@
   Main.prototype.deferred_remove_ = function(name)
   {
     this.remove_(name);
-
-    this.cursor.clear(false);
+    this.cursor.clear();
     this.ui.update();
   };
 
@@ -569,6 +573,7 @@
     q.enabled = true;
     this.stats.total += q.length;
     this.cursor.clear();
+    this.ui.update(false);
   };
 
   Main.prototype.deferred_disable_ = function(name)
@@ -582,6 +587,7 @@
     q.enabled = false;
     this.stats.total -= q.length;
     this.cursor.clear();
+    this.ui.update(false);
   };
 
   Main.prototype.deferred_clear_ = function()
@@ -592,7 +598,7 @@
     if(!is_obj_empty(this.queries))
       throw "Query set object not empty";
 
-    this.cursor.clear(false);
+    this.cursor.clear();
     this.ui.update();
   };
 
@@ -607,23 +613,67 @@
     this.owner = owner;
     this.index = -1;
     this.iterableQueries = null;
+    this.total = 0;
+    this.setIterableQueries(null);
   };
 
   /**
-   * <p>Clear the current cursor state.</p>
-   *
-   * @param {boolean} [update=true] - Boolean flag that, when
-   * <strong>not</strong> <code>false</code>, results in the UI state being
-   * updated. */
-  Cursor.prototype.clear = function(update /* = true */)
+   * <p>Clear the current cursor state and recalculate number of total
+   * iterable highlights.</p> */
+  Cursor.prototype.clear = function()
   {
-    this.clear_();
-    if(update !== false) this.owner.ui.update(false);
-    this.iterableQueries = null;
+    this.clearActive_();
+    this.index = -1;
+    this.update();
   };
 
+  /**
+   * <p>Set or clear the query sets that the cursor can move through.<p>
+   *
+   * <p>When one or more query sets are specified, cursor movement is
+   * restricted to the specified query sets.  When setting the cursor offset,
+   * the offset will then apply within the context of the active iterable
+   * query sets.<p>
+   *
+   * <p>The restriction can be lifted at any time by passing <code>null</code>
+   * to the method.</p>
+   *
+   * @param {(Array|string)} queries - An array (or string) containing the
+   * query set names. */
   Cursor.prototype.setIterableQueries = function(queries)
-  { this.iterableQueries = queries.slice(); };
+  {
+    if(queries === null) {
+      this.iterableQueries = null;
+    } else {
+      this.iterableQueries = is_arr(queries) ? queries.slice() : [queries];
+    }
+
+    this.clear();
+  };
+
+  /**
+   * <p>Update the total of iterable highlights.<p>
+   * <p>Does <strong>not</strong> update the UI state.  The caller is
+   * responsible for doing so.</p>. */
+  Cursor.prototype.update = function()
+  {
+    var iterable = this.iterableQueries;
+    if(iterable === null) {
+      this.total = this.owner.stats.total;
+      return;
+    } else if(iterable.length === 0) {
+      this.total = 0;
+      return;
+    }
+
+    var markers = this.owner.highlights,
+        total = 0;
+    for(var i = markers.length - 1; i >= 0; --i) {
+      if(iterable.indexOf(markers[i].query.name) >= 0) ++total;
+    }
+
+    this.total = total;
+  };
 
   /**
    * <p>Set cursor to query referenced by absolute query index.</p>
@@ -635,7 +685,7 @@
         markers = this.owner.highlights;
 
     if(index < 0) {
-      throw new Error("Invalid cursor index specified");
+      throw new Error("Invalid cursor index specified: " + index);
     } else if(owner.stats.total <= 0) {
       return;
     }
@@ -645,16 +695,14 @@
         iterable = this.iterableQueries;
 
     markers.some(function(m, i) {
-      if(count === 0) {
-        ndx = i;
-        return true;
-      }
-
       var q = m.query;
       if(!q.enabled) {
         return false;
       } else if(iterable !== null && iterable.indexOf(q.name) < 0) {
         return false;
+      } else if(count === 0) {
+        ndx = i;
+        return true;
       }
 
      --count;
@@ -682,22 +730,10 @@
       scrollIntoView($el, owner.options.scrollNode);
 
     this.index = index;
-    owner.ui.update(false);
   };
 
   /* Private interface
    * ----------------- */
-  /**
-   * <p>Clear the active cursor by making it inactive if no query sets
-   * exist.</p>
-   * @access private
-   * */
-  Cursor.prototype.clear_ = function()
-  {
-    this.clearActive_();
-    this.index = -1;
-  };
-
   /**
    * <p>Clear the currently active cursor highlight.  The active cursor
    * highlight is the element or elements at the current cursor position.</p>
@@ -1889,6 +1925,7 @@
   /**
    * <p>Class responsible for updating the user interface widget, if one is
    * supplied.</p>
+   *
    * @class
    * @param {Main} owner - reference to owning <code>Main</code> instance
    * @param {Object} options - map containing options
@@ -1965,6 +2002,17 @@
     console.info("HTML highlighter UI instantiated");
   };
 
+  /**
+   * <p>Update the UI state.</p>
+   *
+   * <p>Does a full or partial update of the UI state.  A full update is done if
+   * <code>full</code> is either unspecified (<code>undefined</code>) or
+   * <code>true</code>, and consists of refreshing the query set list as well
+   * as the cursor position and total.  A partial update merely refreshes
+   * the cursor position and total.</p>
+   *
+   * @param {boolean} full - specifies whether to do a full update
+   * */
   Ui.prototype.update = function(full)
   {
     if(!this.options) return false;
@@ -1974,7 +2022,7 @@
         ? this.owner.cursor.index + 1
         : "-"
     );
-    this.nodes.statsTotal.html(this.owner.stats.total);
+    this.nodes.statsTotal.html(this.owner.cursor.total);
 
     if(full === false || this.templates.entityRow === null) {
       return;
