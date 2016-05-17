@@ -193,6 +193,13 @@
   };
 
   /**
+   * <p>Set the queries that the cursor will visit when the <code>prev</code>
+   * and <code>next</code> methods are invoked.  If <code>null</code>, all
+   * queries will be visited. */
+  Main.prototype.setIterableQueries = function(queries)
+  { this.cursor.setIterableQueries(queries); };
+
+  /**
    * <p>Move cursor position to the next query in the active query set.  If the
    * cursor moves past the last query in the active query set, the active query
    * set moves to the next available one and the cursor position to its first
@@ -202,7 +209,7 @@
   Main.prototype.next = function()
   {
     /* Do not worry about overflow; just increment it. */
-    this.cursor.set(this.cursor.index + 1);
+    this.cursor.set(this.cursor.index + 1, false);
   };
 
   /**
@@ -216,9 +223,10 @@
   Main.prototype.prev = function()
   {
     if(this.stats.total <= 0) return;
-    this.cursor.set((this.cursor.index < 1
-                     ? this.stats.total
-                     : this.cursor.index) - 1);
+    this.cursor.set(
+      (this.cursor.index < 1 ? this.stats.total : this.cursor.index) - 1,
+      false
+    );
   };
 
   /**
@@ -496,13 +504,15 @@
     /* Remove query set if it exists. */
     if(name in this.queries)
       this.deferred_remove_(name);
+    }
 
     var q = this.queries[name] = {
-          enabled: enabled,
-          id_highlight: this.stats.highlight,
-          id: this.lastId,
-          length: 0
-        };
+      name: name,
+      enabled: enabled,
+      id_highlight: this.stats.highlight,
+      id: this.lastId,
+      length: 0
+    };
 
     var count = this.add_queries_(name, q, queries, enabled);
     if(reserve !== null) {
@@ -596,6 +606,7 @@
   {
     this.owner = owner;
     this.index = -1;
+    this.iterableQueries = null;
   };
 
   /**
@@ -607,37 +618,52 @@
   Cursor.prototype.clear = function(update /* = true */)
   {
     this.clear_();
-
-    if(update !== false)
-      this.owner.ui.update(false);
+    if(update !== false) this.owner.ui.update(false);
+    this.iterableQueries = null;
   };
+
+  Cursor.prototype.setIterableQueries = function(queries)
+  { this.iterableQueries = queries.slice(); };
 
   /**
    * <p>Set cursor to query referenced by absolute query index.</p>
    *
    * @param {integer} index - Virtual cursor index */
-  Cursor.prototype.set = function(index)
+  Cursor.prototype.set = function(index, dontRecurse)
   {
     var owner = this.owner,
         markers = this.owner.highlights;
 
-    if(index < 0)
-      throw "Invalid cursor index specified";
-    else if(owner.stats.total <= 0)
+    if(index < 0) {
+      throw new Error("Invalid cursor index specified");
+    } else if(owner.stats.total <= 0) {
       return;
+    }
 
     var count = index,
-        ndx = null;
+        ndx = null,
+        iterable = this.iterableQueries;
 
     markers.some(function(m, i) {
-      if(!m.query.enabled)   return false;
-      else if(count === 0) { ndx = i; return true; }
-      --count; return false;
+      if(count === 0) {
+        ndx = i;
+        return true;
+      }
+
+      var q = m.query;
+      if(!q.enabled) {
+        return false;
+      } else if(iterable !== null && iterable.indexOf(q.name) < 0) {
+        return false;
+      }
+
+     --count;
+      return false;
     });
 
     /* If index overflown, set to first highlight. */
     if(ndx === null) {
-      this.set(0);
+      if(!dontRecurse) this.set(0, true);
       return;
     }
 
