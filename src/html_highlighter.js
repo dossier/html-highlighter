@@ -32,9 +32,9 @@
     options = $.extend(true, $.extend(true, {}, defaults), options);
 
     /* Mutable properties. */
-    this.transaction = [ ];
-    this.queries = { };
-    this.highlights = [ ];
+    this.transaction = [];
+    this.queries = {};
+    this.highlights = [];
     this.lastId = 0;
     this.stats = {
       queries: 0,
@@ -42,16 +42,17 @@
       highlight: 0
     };
 
-    if(!options.container)
+    if(!options.container) {
       options.container = $(window.document.body);
-    else if(options.container instanceof HTMLElement)
+    } else if(options.container instanceof HTMLElement) {
       options.container = $(options.container);
+    }
 
     /* Define instance immutable properties. */
-    Object.defineProperty(this, "options", { value: options               });
-    Object.defineProperty(this, "cursor",  { value: new Cursor(this)      });
-    Object.defineProperty(this, "ui",      { value: new Ui(this, options) });
-    Object.defineProperty(this, "stats",   { value: this.stats            });
+    Object.defineProperty(this, "options", {value: options              });
+    Object.defineProperty(this, "cursor",  {value: new Cursor(this)     });
+    Object.defineProperty(this, "ui",      {value: new Ui(this, options)});
+    Object.defineProperty(this, "stats",   {value: this.stats           });
 
     /* Start by refreshing the internal document's text representation. */
     this.refresh();
@@ -91,10 +92,9 @@
   Main.prototype.add = function(
     name, queries, enabled /* = false */, reserve /* = null */)
   {
-    var self = this;
     this.transaction.push(function() {
-      self.deferred_add_(name, queries, enabled !== false, reserve);
-    });
+      this.deferred_add_(name, queries, enabled !== false, reserve);
+    }.bind(this));
     return this;
   };
 
@@ -113,10 +113,9 @@
    * also enabled. */
   Main.prototype.append = function(name, queries, enabled /* = false */)
   {
-    var self = this;
     this.transaction.push(function() {
-      self.deferred_append_(name, queries, enabled !== false);
-    });
+      this.deferred_append_(name, queries, enabled !== false);
+    }.bind(this));
     return this;
   };
 
@@ -128,8 +127,9 @@
    * @param {string} name - Name of the query set to remove. */
   Main.prototype.remove = function(name)
   {
-    var self = this;
-    this.transaction.push(function() { self.deferred_remove_(name); });
+    this.transaction.push(function() {
+      this.deferred_remove_(name);
+    }.bind(this));
     return this;
   };
 
@@ -142,8 +142,9 @@
    * @param {string} name - Name of the query set to enable. */
   Main.prototype.enable = function(name)
   {
-    var self = this;
-    this.transaction.push(function() { self.deferred_enable_(name); });
+    this.transaction.push(function() {
+      this.deferred_enable_(name);
+    }.bind(this));
     return this;
   };
 
@@ -156,8 +157,9 @@
    * @param {string} name - Name of the query set to disable. */
   Main.prototype.disable = function(name)
   {
-    var self = this;
-    this.transaction.push(function() { self.deferred_disable_(name); });
+    this.transaction.push(function() {
+      this.deferred_disable_(name);
+    }.bind(this));
     return this;
   };
 
@@ -166,8 +168,9 @@
    * */
   Main.prototype.clear = function()
   {
-    var self = this;
-    this.transaction.push(function() { self.deferred_clear_(); });
+    this.transaction.push(function() {
+      this.deferred_clear_();
+    }.bind(this));
     return this;
   };
 
@@ -189,7 +192,17 @@
       catch(x) { console.error("Failed to apply action: %s", x); }
     });
 
-    this.transaction = [ ];
+    this.transaction = [];
+  };
+
+  /**
+   * <p>Set the queries that the cursor will visit when the <code>prev</code>
+   * and <code>next</code> methods are invoked.  If <code>null</code>, all
+   * queries will be visited. */
+  Main.prototype.setIterableQueries = function(queries)
+  {
+    this.cursor.setIterableQueries(queries);
+    this.ui.update(false);
   };
 
   /**
@@ -202,7 +215,8 @@
   Main.prototype.next = function()
   {
     /* Do not worry about overflow; just increment it. */
-    this.cursor.set(this.cursor.index + 1);
+    this.cursor.set(this.cursor.index + 1, false);
+    this.ui.update(false);
   };
 
   /**
@@ -216,9 +230,11 @@
   Main.prototype.prev = function()
   {
     if(this.stats.total <= 0) return;
-    this.cursor.set((this.cursor.index < 1
-                     ? this.stats.total
-                     : this.cursor.index) - 1);
+    this.cursor.set(
+      (this.cursor.index < 1 ? this.cursor.total : this.cursor.index) - 1,
+      false
+    );
+    this.ui.update(false);
   };
 
   /**
@@ -274,8 +290,9 @@
       if(sel.focusNode === sel.anchorNode) {
         end = $.extend(true, { }, start);
         end.offset = start.offset + len - 1;
-      } else
+      } else {
         end = Range.descriptorRel(this.content.at(end), sel.focusOffset - 1);
+      }
     } else {
       var mi = start;
       start = Range.descriptorRel(this.content.at(end), sel.focusOffset);
@@ -283,8 +300,9 @@
       if(sel.focusNode === sel.anchorNode) {
         end = $.extend(true, { }, start);
         end.offset = end.offset + len - 1;
-      } else
+      } else {
         end = Range.descriptorRel(this.content.at(mi), sel.anchorOffset - 1);
+      }
     }
 
     return new Range(this.content, start, end);
@@ -300,10 +318,11 @@
     /* From: http://stackoverflow.com/a/3169849/3001914
      * Note that we don't support IE at all. */
     if(window.getSelection) {
-      if(window.getSelection().empty)                    /* Chrome */
+      if(window.getSelection().empty) {                   /* Chrome */
         window.getSelection().empty();
-      else if(window.getSelection().removeAllRanges)     /* Firefox */
+      } else if(window.getSelection().removeAllRanges) {  /* Firefox */
         window.getSelection().removeAllRanges();
+      }
     }
   };
 
@@ -316,8 +335,7 @@
   Main.prototype.empty = function()
   {
     for(var k in this.queries) {
-      if(this.queries[k].length > 0)
-        return false;
+      if(this.queries[k].length > 0) return false;
     }
 
     return true;
@@ -434,8 +452,9 @@
     --this.stats.queries;
     this.stats.total -= q.length;
 
-    for(i = q.id, l = i + q.length; i < l; ++i)
+    for(i = q.id, l = i + q.length; i < l; ++i) {
       unhighlighter.undo(i);
+    }
 
     for(i = 0; i < markers.length;) {
       if(markers[i].query === q) markers.splice(i, 1);
@@ -462,7 +481,7 @@
   Main.prototype.get_ = function(name)
   {
     var q = this.queries[name];
-    if(q === undefined) throw "Query set non-existent";
+    if(q === undefined) throw new Error("Query set non-existent");
     return q;
   };
 
@@ -470,39 +489,39 @@
   {
     var c = 0, l = 0, k;
 
-    for(k in this.queries)
-      l += this.queries[k].length;
+    for(k in this.queries) l += this.queries[k].length;
 
     k = 0;
     this.highlights.forEach(function(i) {
       if(i.offset < c || i.index >= i.query.length)
-        throw "Invalid state: highlight out of position";
+        throw new Error("Invalid state: highlight out of position");
 
       c = i.offset;
       ++k;
     });
 
-    if(k !== l) throw "Invalid state: length mismatch";
+    if(k !== l) throw new Error("Invalid state: length mismatch");
   };
 
   Main.prototype.deferred_add_ = function(name, queries, enabled, reserve)
   {
-    if(!is_arr(queries))
-      throw "Invalid or no queries array specified";
+    if(!is_arr(queries)) {
+      throw new Error("Invalid or no queries array specified");
+    }
 
     enabled = enabled === true;
     if(typeof reserve !== "number" || reserve < 1) reserve = null;
 
     /* Remove query set if it exists. */
-    if(name in this.queries)
-      this.deferred_remove_(name);
+    if(name in this.queries) this.deferred_remove_(name);
 
     var q = this.queries[name] = {
-          enabled: enabled,
-          id_highlight: this.stats.highlight,
-          id: this.lastId,
-          length: 0
-        };
+      name: name,
+      enabled: enabled,
+      id_highlight: this.stats.highlight,
+      id: this.lastId,
+      length: 0
+    };
 
     var count = this.add_queries_(name, q, queries, enabled);
     if(reserve !== null) {
@@ -513,29 +532,34 @@
         console.error("Invalid or insufficient reserve specified");
         q.reserve = count;
       }
-    } else
+    } else {
       this.lastId += count;
+    }
 
     /* Update global statistics. */
     ++this.stats.queries;
 
     /* Ensure CSS highlight class rolls over on overflow. */
     ++this.stats.highlight;
-    if(this.stats.highlight >= this.options.maxHighlight)
+    if(this.stats.highlight >= this.options.maxHighlight) {
       this.stats.highlight = 0;
+    }
 
+    this.cursor.clear();
     this.ui.update();
     if(Main.debug === true) this.assert_();
   };
 
   Main.prototype.deferred_append_ = function(name, queries, enabled)
   {
-    if(!is_arr(queries))
-      throw "Invalid or no queries array specified";
-    else if(!(name in this.queries))
-      throw "Invalid or query set not yet created";
+    if(!is_arr(queries)) {
+      throw new Error("Invalid or no queries array specified");
+    } else if(!(name in this.queries)) {
+      throw new Error("Invalid or query set not yet created");
+    }
 
     this.add_queries_(name, this.queries[name], queries, enabled === true);
+    this.cursor.clear();
     this.ui.update();
     if(Main.debug === true) this.assert_();
   };
@@ -543,8 +567,7 @@
   Main.prototype.deferred_remove_ = function(name)
   {
     this.remove_(name);
-
-    this.cursor.clear(false);
+    this.cursor.clear();
     this.ui.update();
   };
 
@@ -553,12 +576,14 @@
     var q = this.get_(name);
     if(q.enabled || q.id === null) return;
 
-    for(var i = q.id, l = i + q.length; i < l; ++i)
+    for(var i = q.id, l = i + q.length; i < l; ++i) {
       $("." + Css.highlight + "-id-" + i).removeClass(Css.disabled);
+    }
 
     q.enabled = true;
     this.stats.total += q.length;
     this.cursor.clear();
+    this.ui.update(false);
   };
 
   Main.prototype.deferred_disable_ = function(name)
@@ -566,23 +591,25 @@
     var q = this.get_(name);
     if(!q.enabled || q.id === null) return;
 
-    for(var i = q.id, l = i + q.length; i < l; ++i)
+    for(var i = q.id, l = i + q.length; i < l; ++i) {
       $("." + Css.highlight + "-id-" + i).addClass(Css.disabled);
+    }
 
     q.enabled = false;
     this.stats.total -= q.length;
     this.cursor.clear();
+    this.ui.update(false);
   };
 
   Main.prototype.deferred_clear_ = function()
   {
-    for(var k in this.queries)
-      this.remove_(k);
+    for(var k in this.queries) this.remove_(k);
 
-    if(!is_obj_empty(this.queries))
-      throw "Query set object not empty";
+    if(!is_obj_empty(this.queries)) {
+      throw new Error("Query set object not empty");
+    }
 
-    this.cursor.clear(false);
+    this.cursor.clear();
     this.ui.update();
   };
 
@@ -596,48 +623,106 @@
   {
     this.owner = owner;
     this.index = -1;
+    this.iterableQueries = null;
+    this.total = 0;
+    this.setIterableQueries(null);
   };
 
   /**
-   * <p>Clear the current cursor state.</p>
-   *
-   * @param {boolean} [update=true] - Boolean flag that, when
-   * <strong>not</strong> <code>false</code>, results in the UI state being
-   * updated. */
-  Cursor.prototype.clear = function(update /* = true */)
+   * <p>Clear the current cursor state and recalculate number of total
+   * iterable highlights.</p> */
+  Cursor.prototype.clear = function()
   {
-    this.clear_();
+    this.clearActive_();
+    this.index = -1;
+    this.update();
+  };
 
-    if(update !== false)
-      this.owner.ui.update(false);
+  /**
+   * <p>Set or clear the query sets that the cursor can move through.<p>
+   *
+   * <p>When one or more query sets are specified, cursor movement is
+   * restricted to the specified query sets.  When setting the cursor offset,
+   * the offset will then apply within the context of the active iterable
+   * query sets.<p>
+   *
+   * <p>The restriction can be lifted at any time by passing <code>null</code>
+   * to the method.</p>
+   *
+   * @param {(Array|string)} queries - An array (or string) containing the
+   * query set names. */
+  Cursor.prototype.setIterableQueries = function(queries)
+  {
+    if(queries === null) {
+      this.iterableQueries = null;
+    } else {
+      this.iterableQueries = is_arr(queries) ? queries.slice() : [queries];
+    }
+
+    this.clear();
+  };
+
+  /**
+   * <p>Update the total of iterable highlights.<p>
+   * <p>Does <strong>not</strong> update the UI state.  The caller is
+   * responsible for doing so.</p>. */
+  Cursor.prototype.update = function()
+  {
+    var iterable = this.iterableQueries;
+    if(iterable === null) {
+      this.total = this.owner.stats.total;
+      return;
+    } else if(iterable.length === 0) {
+      this.total = 0;
+      return;
+    }
+
+    var markers = this.owner.highlights,
+        total = 0;
+    for(var i = markers.length - 1; i >= 0; --i) {
+      if(iterable.indexOf(markers[i].query.name) >= 0) ++total;
+    }
+
+    this.total = total;
   };
 
   /**
    * <p>Set cursor to query referenced by absolute query index.</p>
    *
    * @param {integer} index - Virtual cursor index */
-  Cursor.prototype.set = function(index)
+  Cursor.prototype.set = function(index, dontRecurse)
   {
     var owner = this.owner,
         markers = this.owner.highlights;
 
-    if(index < 0)
-      throw "Invalid cursor index specified";
-    else if(owner.stats.total <= 0)
+    if(index < 0) {
+      throw new Error("Invalid cursor index specified: " + index);
+    } else if(owner.stats.total <= 0) {
       return;
+    }
 
     var count = index,
-        ndx = null;
+        ndx = null,
+        iterable = this.iterableQueries;
 
     markers.some(function(m, i) {
-      if(!m.query.enabled)   return false;
-      else if(count === 0) { ndx = i; return true; }
-      --count; return false;
+      var q = m.query;
+      if(!q.enabled) {
+        return false;
+      } else if(iterable !== null && iterable.indexOf(q.name) < 0) {
+        return false;
+      } else if(count === 0) {
+        ndx = i;
+        return true;
+      }
+
+     --count;
+      return false;
     });
 
     /* If index overflown, set to first highlight. */
     if(ndx === null) {
-      this.set(0);
+      if(!dontRecurse) this.set(0, true);
       return;
     }
 
@@ -650,28 +735,17 @@
           .eq(0);
 
     /* Scroll viewport if element not visible. */
-    if(typeof owner.options.scrollTo !== "undefined")
+    if(typeof owner.options.scrollTo !== "undefined") {
       owner.options.scrollTo($el);
-    else if(!inview($el))
+    } else if(!inview($el)) {
       scrollIntoView($el, owner.options.scrollNode);
+    }
 
     this.index = index;
-    owner.ui.update(false);
   };
 
   /* Private interface
    * ----------------- */
-  /**
-   * <p>Clear the active cursor by making it inactive if no query sets
-   * exist.</p>
-   * @access private
-   * */
-  Cursor.prototype.clear_ = function()
-  {
-    this.clearActive_();
-    this.index = -1;
-  };
-
   /**
    * <p>Clear the currently active cursor highlight.  The active cursor
    * highlight is the element or elements at the current cursor position.</p>
@@ -692,8 +766,9 @@
    * */
   var TextContent = function(root)
   {
-    Object.defineProperty(this,
-      "root", { value: is_$(root) ? root.get(0) : root });
+    Object.defineProperty(
+      this, "root", { value: is_$(root) ? root.get(0) : root }
+    );
 
     this.text = this.markers = null;
     this.refresh();
@@ -729,8 +804,9 @@
     /* Sanity check. */
     if(this.markers.length !== 0) {
       marker = marker[marker.length - 1];
-      if(offset - marker.node.nodeValue.length != marker.offset)
-        throw "Invalid state detected: offset mismatch";
+      if(offset - marker.node.nodeValue.length != marker.offset) {
+        throw new Error("Invalid state detected: offset mismatch");
+      }
     }
   };
 
@@ -764,8 +840,9 @@
         old = marker.node;      /* The old text node. */
 
     /* Sanity checks */
-    if(start < 0 || end < 0 || end >= text.length)
-      throw "Invalid truncation parameters";
+    if(start < 0 || end < 0 || end >= text.length) {
+      throw new Error("Invalid truncation parameters");
+    }
 
     /* Chars 0..start - 1 */
     if(start > 0) {
@@ -787,15 +864,16 @@
      * the required [start..end] substring.  We do need to update the node's
      * offset though. */
     marker.offset += start;
-    marker.node = $(document.createTextNode(
-      text.substr(start, end - start + 1)))
-      .insertBefore(marker.node)
-      .get(0);
+    marker.node = $(
+      document.createTextNode(text.substr(start, end - start + 1))
+    ).insertBefore(marker.node)
+     .get(0);
 
     /* Chars end + 1..length */
     if(end !== text.length - 1) {
-      if(index >= this.markers.length)
-        throw "Detected invalid index";
+      if(index >= this.markers.length) {
+        throw new Error("Detected invalid index");
+      }
 
       /* We're again creating a new text node out of the old text node and thus
        * need to add a new entry to the markers array. */
@@ -835,16 +913,15 @@
     while(min < max) {
       mid = Math.floor((min + max) / 2);
 
-      if(markers[mid].offset < offset)
-        min = mid + 1;
-      else
-        max = mid;
+      if(markers[mid].offset < offset) min = mid + 1;
+      else                             max = mid;
     }
 
-    if(markers[min].offset <= offset)
+    if(markers[min].offset <= offset) {
       return min;
-    else if(min === 0)
-      throw 'Invalid offset of text content state';
+    } else if(min === 0) {
+      throw new Error("Invalid offset of text content state");
+    }
 
     return min - 1;
   };
@@ -861,15 +938,11 @@
    * <code>-1</code> if not found. */
   TextContent.prototype.find = function(element, start)
   {
-    if(element.nodeType !== 3)
-      return -1;
+    if(element.nodeType !== 3) return -1;
 
     for(var i = start === undefined ? 0 : start,
             l = this.markers.length; i < l; ++i)
-    {
-      if(this.markers[i].node === element)
-        return i;
-    }
+    { if(this.markers[i].node === element) return i; }
 
     return -1;
   };
@@ -884,8 +957,9 @@
    * @returns {Object} The offset marker descriptor. */
   TextContent.prototype.at = function(index)
   {
-    if(index < 0 || index >= this.markers.length)
-      throw "Invalid marker index";
+    if(index < 0 || index >= this.markers.length) {
+      throw new Error("Invalid marker index");
+    }
 
     return this.markers[index];
   };
@@ -915,8 +989,9 @@
      * any. */
     var ch = node.childNodes;
     if(ch.length > 0) {
-      for(var i = 0, l = ch.length; i < l; ++i)
+      for(var i = 0, l = ch.length; i < l; ++i) {
         offset = this.visit_(ch[i], offset);
+      }
     }
 
     return offset;
@@ -936,7 +1011,7 @@
       if(marker.offset !== offset) {
         console.error("Invalid offset: %d@ %d:%d ->",
                       i, marker.offset, offset, marker);
-        throw "Invalid offset";
+        throw new Error("Invalid offset");
       }
 
       offset += marker.node.nodeValue.length;
@@ -996,8 +1071,9 @@
   Finder.prototype.getAt_ = function(offset)
   {
     var index = this.content.indexOf(offset);
-    if(index === -1)
-      throw "Failed to retrieve marker for offset: " + offset;
+    if(index === -1) {
+      throw new Error("Failed to retrieve marker for offset: " + offset);
+    }
 
     return Range.descriptorAbs(this.content.at(index), offset);
   };
@@ -1021,8 +1097,9 @@
         re = new RegExp(subject.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"),
                         "gi");
 
-    while((match = re.exec(this.content.text)) !== null)
+    while((match = re.exec(this.content.text)) !== null) {
       this.results.push({ length: match[0].length, index: match.index });
+    }
   };
 
   TextFinder.prototype = Object.create(Finder.prototype);
@@ -1034,8 +1111,7 @@
    * available, or <code>false</code> if no more matches are available. */
   TextFinder.prototype.next = function()
   {
-    if(this.current >= this.results.length)
-      return false;
+    if(this.current >= this.results.length) return false;
 
     var end, range,
         match = this.results[this.current],
@@ -1047,11 +1123,12 @@
     if(start.offset + length <= start.marker.node.nodeValue.length) {
       end = $.extend({ }, start);
       end.offset = start.offset + length - 1;
-    } else
+    } else {
       end = this.getAt_(match.index + length - 1);
+    }
 
     range = new Range(this.content, start, end);
-    ++ this.current;
+    ++this.current;
 
     return range;
   };
@@ -1074,7 +1151,7 @@
     if(!is_obj(subject)
        || subject.start.offset < 0
        || subject.end.offset < 0) {
-      throw "Invalid or no XPath object specified";
+      throw new Error("Invalid or no XPath object specified");
     }
 
     /* Compute text node start and end elements that the XPath representation
@@ -1103,8 +1180,11 @@
 
 /*     console.log("DEBUG start = ", start, "end = ", end, subject); */
 
-    if(start === end) throw "Invalid XPath representation: start == end";
-    else if(start > end) throw "Invalid XPath representation: start > end";
+    if(start === end) {
+      throw new Error("Invalid XPath representation: start == end");
+    } else if(start > end) {
+      throw new Error("Invalid XPath representation: start > end");
+    }
 
     /* Save global character offset and relative start and end offsets in
      * descriptor. */
@@ -1120,19 +1200,19 @@
    * available, or <code>false</code> if no more matches are available. */
   XpathFinder.prototype.next = function()
   {
-    if(this.current >= this.results.length)
-      return false;
+    if(this.current >= this.results.length) return false;
 
     var subject = this.results[this.current];
-
-    ++ this.current;
+    ++this.current;
 
     /* TODO: we don't necessarily need to invoke getAt_ for the end offset.  A
      * check has to be made to ascertain if the end offset falls within the
      * start node. */
-    return new Range(this.content,
-                     this.getAt_(subject.start),
-                     this.getAt_(subject.end));
+    return new Range(
+      this.content,
+      this.getAt_(subject.start),
+      this.getAt_(subject.end)
+    );
   };
 
 
@@ -1146,8 +1226,10 @@
    * created but not shown. */
   var RangeHighlighter = function(count, id, enabled, cssClass)
   {
-    var classes = [ Css.highlight,
-                    Css.highlight + "-" + count ];
+    var classes = [
+      Css.highlight,
+      Css.highlight + "-" + count
+    ];
 
     if(cssClass)          classes.push(cssClass);
     if(enabled === false) classes.push(Css.disabled);
@@ -1199,13 +1281,14 @@
     this.content = content;
 
     /* Sanity check: */
-    if(start.marker.offset + start.offset > end.marker.offset + end.offset)
-      throw "Invalid range: start > end";
+    if(start.marker.offset + start.offset > end.marker.offset + end.offset) {
+      throw new Error("Invalid range: start > end");
+    }
 
     /* Attributes */
     Object.defineProperties(this, {
-      start: { value: start },
-      end:   { value: end   }
+      start: {value: start},
+      end:   {value: end  }
     });
   };
 
@@ -1218,7 +1301,7 @@
    * @returns {Object} Range descriptor. */
   Range.descriptorAbs = function(marker, offset)
   {
-    var descriptor = { marker: marker };
+    var descriptor = {marker: marker};
     descriptor.offset = offset - marker.offset;
     return descriptor;
   };
@@ -1233,7 +1316,7 @@
    * @returns {Object} Range descriptor. */
   Range.descriptorRel = function(marker, offset)
   {
-    var descriptor = { marker: marker };
+    var descriptor = {marker: marker};
     descriptor.offset = offset;
     return descriptor;
   };
@@ -1259,12 +1342,11 @@
         visitor = new TextNodeVisitor(this.start.marker.node,
                                       this.content.root),
         end = this.end.marker.node,
-        coll = [ ];
+        coll = [];
 
     /* TODO: we assume `visitor.next()' will never return null because `end´ is
      * within bounds. */
-    while(visitor.next() != end)
-      coll.push(visitor.current);
+    while(visitor.next() != end) coll.push(visitor.current);
 
     /* Apply highlighting to start and end nodes, and to any nodes in between,
      * if applicable.  Highlighting for the start and end nodes may require
@@ -1302,8 +1384,9 @@
   Range.prototype.length = function()
   {
     /* Optimised case: range does not span multiple nodes. */
-    if(this.start.marker.node === this.end.marker.node)
+    if(this.start.marker.node === this.end.marker.node) {
       return this.end.offset - this.start.offset + 1;
+    }
 
     /* Range spans 2 or more nodes. */
     var visitor = new TextNodeVisitor(this.start.marker.node,
@@ -1314,8 +1397,9 @@
           + this.end.offset + 1;
 
     /* Add (whole) lengths of text nodes in between. */
-    while(visitor.next() != end)
+    while(visitor.next() != end) {
       length += visitor.current.nodeValue.length;
+    }
 
     return length;
   };
@@ -1336,7 +1420,8 @@
   {
     this.content.truncate(
       descr.marker, start,
-      end === null ? descr.marker.node.nodeValue.length - 1 : end);
+      end === null ? descr.marker.node.nodeValue.length - 1 : end
+    );
 
     $("<span/>")
       .addClass(className)
@@ -1405,8 +1490,9 @@
     }
 
     /* This is bad.  Lay off the LSD. */
-    if(node === null)
-      throw "Specified node not within root's subtree";
+    if(node === null) {
+      throw new Error("Specified node not within root's subtree");
+    }
 
     return xpath;
   };
@@ -1429,8 +1515,9 @@
 
     /* At an absolutely minimum, a XPath representation must be of the form:
      * /text(), which results in `parts´ having a length of 2. */
-    if(parts[0].length !== 0 || parts.length < 2)
-      throw "Invalid XPath representation";
+    if(parts[0].length !== 0 || parts.length < 2) {
+      throw new Error("Invalid XPath representation");
+    }
 
     /* Break up the constituent parts of the XPath representation but discard
      * the first element since it'll be empty due to the starting forward
@@ -1483,8 +1570,9 @@
   {
     var offset = 0;
 
-    if(!node || node.nodeType !== 3)
-      throw "Invalid or no text node specified";
+    if(!node || node.nodeType !== 3) {
+      throw new Error("Invalid or no text node specified");
+    }
 
     /* Climb the tree of nested highlight containers in a left to right
      * order, if any, calculating their respective lengths and adding to the
@@ -1492,12 +1580,15 @@
     while(true) {
       while(node.previousSibling === null) {
         node = node.parentNode;
-        if(node === this.root || node === null)
-          throw "Invalid state: expected highlight container or text node";
-        else if(!this.isHighlight_(node))
+        if(node === this.root || node === null) {
+          throw new Error(
+            "Invalid state: expected highlight container or text node"
+          );
+        } else if(!this.isHighlight_(node)) {
           return offset;
-        else if(node.previousSibling !== null)
+        } else if(node.previousSibling !== null) {
           break;
+        }
       }
 
       node = node.previousSibling;
@@ -1524,8 +1615,7 @@
    * */
   TextNodeXpath.prototype.length_ = function(node)
   {
-    if(node.nodeType === 3)
-      return node.nodeValue.length;
+    if(node.nodeType === 3) return node.nodeValue.length;
 
     /* If `node´ isn't of text type, it is *assumed* to be a highlight
      * container.  No checks are made to ensure this is the case.  Caller is
@@ -1535,8 +1625,9 @@
 
     /* We loop recursively through all child nodes because a single highlight
      * container may be parent to multiple highlight containers. */
-    for(var i = 0, l = ch.length; i < l; ++i)
+    for(var i = 0, l = ch.length; i < l; ++i) {
       length += this.length_(ch[i]);
+    }
 
     return length;
   };
@@ -1592,8 +1683,9 @@
     var index = 1,
         name = node.nodeName.toLowerCase();
 
-    if(node === null || this.isLikeText_(node))
-      throw "No node specified or node of text type";
+    if(node === null || this.isLikeText_(node)) {
+      throw new Error("No node specified or node of text type");
+    }
 
     while((node = node.previousSibling) !== null) {
       /* Don't count contiguous text nodes or highlight containers as being
@@ -1634,8 +1726,9 @@
     var index = 1,
         wast = true;
 
-    if(node === null || !this.isLikeText_(node))
-      throw "No node specified or not of text type";
+    if(node === null || !this.isLikeText_(node)) {
+      throw new Error("No node specified or not of text type");
+    }
 
     node = this.skip_(node);
     while((node = node.previousSibling) !== null) {
@@ -1659,9 +1752,7 @@
    * @param {DOMElement} node - node to check
    * @returns */
   TextNodeXpath.prototype.isLikeText_ = function(node)
-  {
-    return node.nodeType === 3 || this.isHighlight_(node);
-  };
+  { return node.nodeType === 3 || this.isHighlight_(node); };
 
   /**
    * <p>Return an object map containing a tag and index of an XPath
@@ -1685,8 +1776,9 @@
     var index;
 
     /* If no index specified: assume first. */
-    if(part.indexOf("[") === -1)
+    if(part.indexOf("[") === -1) {
       return { tag: part.toLowerCase(), index: 0 };
+    }
 
     /* *Attempt* to retrieve element's index.  If an exception is thrown,
      * produce a meaningful error but re-throw since the XPath
@@ -1695,7 +1787,7 @@
       part = part.match(/([^[]+)\[(\d+)\]/);
       index = parseInt(part[2]);
       part = part[1];
-      if(-- index < 0) throw "Invalid index: " + index;
+      if(-- index < 0) throw new Error("Invalid index: " + index);
     } catch(x) {
       console.error("Failed to extract child index: %s", part);
       throw x;    /* Re-throw after dumping inspectable object. */
@@ -1723,8 +1815,9 @@
 
       /* Skip highlight containers since tag could be `span´, the same as
        * highlight containers. */
-      if(this.isHighlight_(node)) continue;
-      else if(node.nodeName.toLowerCase() === tag) {
+      if(this.isHighlight_(node)) {
+        continue;
+      } else if(node.nodeName.toLowerCase() === tag) {
         if(index === 0) return node;
         --index;
       }
@@ -1763,8 +1856,10 @@
         while(this.isHighlight_(node)) {
           ch = node.childNodes;
           if(ch.length === 0 || !this.isLikeText_(ch[0])) {
-            throw "Invalid state: expected text node or highlight container"
-              + " inside container";
+            throw new Error(
+              "Invalid state: expected text node or highlight container" +
+              " inside container"
+            );
           }
 
           node = ch[0];
@@ -1801,7 +1896,8 @@
 
     /* Getters */
     Object.defineProperty(
-      this, "current", { get: function() { return current; } });
+      this, "current", {get: function() { return current; }}
+    );
 
 
     /**
@@ -1811,8 +1907,9 @@
      * found. */
     this.next = function()
     {
-      if(current.nodeType !== 3)
-        throw "Invalid node type: not text";
+      if(current.nodeType !== 3) {
+        throw new Error("Invalid node type: not text");
+      }
 
       return (current = nextText_(nextNode_(current)));
     };
@@ -1830,10 +1927,13 @@
     {
       /* Abort if invalid or root node; otherwise attempt to advance to sibling
        * node. */
-      if(node === null)      throw "Invalid state: outside of root sub-tree";
-      else if(node === root) return null;
-      else if(node.nextSibling !== null)
+      if(node === null) {
+        throw new Error("Invalid state: outside of root sub-tree");
+      } else if(node === root) {
+        return null;
+      } else if(node.nextSibling !== null) {
         return node.nextSibling;
+      }
 
       /* Move up to sibling of parent node. */
       return nextNode_(node.parentNode);
@@ -1848,12 +1948,10 @@
      * available or the root node was reached. */
     function nextText_(node)
     {
-      if(node === root || node.nodeType === 3)
-        return node;
+      if(node === root || node.nodeType === 3) return node;
 
       var ch = node.childNodes;
-      if(ch.length > 0)
-        return nextText_(ch[0]);
+      if(ch.length > 0) return nextText_(ch[0]);
 
       return nextText_(nextNode_(node));
     }
@@ -1863,6 +1961,7 @@
   /**
    * <p>Class responsible for updating the user interface widget, if one is
    * supplied.</p>
+   *
    * @class
    * @param {Main} owner - reference to owning <code>Main</code> instance
    * @param {Object} options - map containing options
@@ -1873,11 +1972,11 @@
 
     if(!is_$(options.widget)) {
       console.warn("HTML highlighter UI unavailable");
-      Object.defineProperty(this, "options", { value: false });
+      Object.defineProperty(this, "options", {value: false});
       return;
     }
 
-    Object.defineProperty(this, "options", { value: options });
+    Object.defineProperty(this, "options", {value: options});
 
     var self = this,
         finder = new NodeFinder("data-hh-scope", "", options.widget);
@@ -1898,11 +1997,10 @@
       entityEmpty: finder.find("entity-empty")
     };
 
-    this.timeouts = { };
+    this.timeouts = {};
 
     this.nodes.expander.click(function() {
       var el = self.nodes.entities;
-
       el.toggleClass(Css.enabled);
 
       if("entities" in self.timeouts) {
@@ -1939,6 +2037,17 @@
     console.info("HTML highlighter UI instantiated");
   };
 
+  /**
+   * <p>Update the UI state.</p>
+   *
+   * <p>Does a full or partial update of the UI state.  A full update is done if
+   * <code>full</code> is either unspecified (<code>undefined</code>) or
+   * <code>true</code>, and consists of refreshing the query set list as well
+   * as the cursor position and total.  A partial update merely refreshes
+   * the cursor position and total.</p>
+   *
+   * @param {boolean} full - specifies whether to do a full update
+   * */
   Ui.prototype.update = function(full)
   {
     if(!this.options) return false;
@@ -1948,7 +2057,7 @@
         ? this.owner.cursor.index + 1
         : "-"
     );
-    this.nodes.statsTotal.html(this.owner.stats.total);
+    this.nodes.statsTotal.html(this.owner.cursor.total);
 
     if(full === false || this.templates.entityRow === null) {
       return;
@@ -1965,8 +2074,7 @@
       var q = this.owner.queries[k],
           $eli = this.templates.entityRow.clone();
 
-      if(q.enabled)
-        $eli.find("enable").prop("checked", true);
+      if(q.enabled) $eli.find("enable").prop("checked", true);
 
       $eli.find("name").text(k);
       $eli.find("count").text(q.length);
@@ -1976,10 +2084,8 @@
     $elu.click(function(ev) {
       var $node = $(ev.target);
       if($node.data("hh-scope") === "enable") {
-        if($node.prop("checked"))
-          self.owner.enable(self.getName_($node));
-        else
-          self.owner.disable(self.getName_($node));
+        if($node.prop("checked")) self.owner.enable(self.getName_($node));
+        else                      self.owner.disable(self.getName_($node));
 
         self.owner.apply();
       }
@@ -1998,13 +2104,15 @@
   Ui.prototype.setEmpty_ = function()
   {
     this.nodes.entities.children().remove();
-    if(this.templates.entityEmpty !== null)
+    if(this.templates.entityEmpty !== null) {
       this.nodes.entities.append(this.templates.entityEmpty.clone().get());
+    }
   };
 
 
   /* Helper methods */
-  var absm_noti = function() { throw "Abstract method not implemented"; };
+  var absm_noti = function()
+  { throw new Error("Abstract method not implemented"); };
 
   var is_$ = function(el) { return el instanceof $; };
   var is_fn = function(r) { return typeof r === 'function'; };
@@ -2017,8 +2125,9 @@
 
   var is_obj_empty = function(x)
   {
-    if(!like_obj(x))
-      throw "Reference not provided or not an object";
+    if(!like_obj(x)) {
+      throw new Error("Reference not provided or not an object");
+    }
 
     for(var k in x) {
       if(x.hasOwnProperty(k))
@@ -2086,8 +2195,9 @@
 
     withroot: function(newRoot, callback)
     {
-      if(!is_fn(callback))
-        throw "Invalid or no callback function specified";
+      if(!is_fn(callback)) {
+        throw new Error("Invalid or no callback function specified");
+      }
 
       var v, t = this.root_;
       this.root_ = newRoot;
