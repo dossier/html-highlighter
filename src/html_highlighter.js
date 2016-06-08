@@ -1087,6 +1087,7 @@
    * @param {TextContent} content - Reference to <code>TextContent</code>
    * instance.
    * @param {string} subject - Subject string to match. */
+  /* FIXME: create a class for matching of regular expression subjects. */
   var TextFinder = function(content, subject)
   {
     /* Construct base class. */
