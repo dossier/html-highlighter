@@ -1046,9 +1046,9 @@
    * */
   Finder.construct = function(content, subject)
   {
-    return is_obj(subject)
-      ? new XpathFinder(content, subject)
-      : new TextFinder(content, subject);
+    return is_str(subject) || subject instanceof RegExp
+         ? new TextFinder(content, subject)
+         : new XpathFinder(content, subject);
   };
 
   /**
@@ -1094,7 +1094,9 @@
 
     /* Build an array containing all hits of `subject´. */
     var match,
-        re = new RegExp(subject.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"),
+        re = subject instanceof RegExp
+           ? subject
+           : new RegExp(subject.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"),
                         "gi");
 
     while((match = re.exec(this.content.text)) !== null) {
