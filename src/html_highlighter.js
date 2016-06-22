@@ -229,7 +229,7 @@
    * rolls over.</p> */
   Main.prototype.prev = function()
   {
-    if(this.stats.total <= 0) return;
+    if(this.cursor.total <= 0) return;
     this.cursor.set(
       (this.cursor.index < 1 ? this.cursor.total : this.cursor.index) - 1,
       false
