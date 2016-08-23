@@ -44,15 +44,15 @@ var tests = {
       + " response, “no sensitive user data was exposed and Viber’s databases"
       + " were not ‘hacked’.”",
     xpath: {
-      start: { offset: 0, xpath: "/p[3]/a/text()[1]" },
-      end: { offset: 260, xpath: "/p[3]/text()[1]" }
+      start: {offset: 0, xpath: "/p[3]/a/text()[1]"},
+      end: {offset: 260, xpath: "/p[3]/text()[1]"}
     }
   },
   wrapElement: {
     text: "the Viber support page, though",
     xpath: {
-      start: { xpath: "/p[2]/text()[1]", offset: 47 },
-      end:   { xpath: "/p[2]/text()[2]:8", offset: 8 }
+      start: {xpath: "/p[2]/text()[1]", offset: 47},
+      end:   {xpath: "/p[2]/text()[2]:8", offset: 8}
     }
   },
   multiElement: {
@@ -67,68 +67,68 @@ var tests = {
       + " with over 200 million users globally.Update — Viber has followed up"
       + " with more details",
     xpath: {
-      start: { xpath: "/p[10]/text()[1]",         offset: 337 },
-      end:   { xpath: "/p[13]/strong/text()[1]:", offset: 48  }
+      start: {xpath: "/p[10]/text()[1]",         offset: 337},
+      end:   {xpath: "/p[13]/strong/text()[1]:", offset: 48}
     }
   },
   bottomup: {
     text: " support page, though it",
     xpath: {
-      start: { xpath: "/p[2]/a[2]/text()", offset: 5  },
-      end:   { xpath: "/p[2]/text()[2]",   offset: 11 }
+      start: {xpath: "/p[2]/a[2]/text()", offset: 5},
+      end:   {xpath: "/p[2]/text()[2]",   offset: 11}
     }
   },
   uppercase: {
     text: "Spot originally",
     xpath: {
-      start: { xpath: "/P[2]/A/TEXT()[1]", offset: 5  },
-      end:   { xpath: "/P[2]/TEXT()[1]",   offset: 11 }
+      start: {xpath: "/P[2]/A/TEXT()[1]", offset: 5},
+      end:   {xpath: "/P[2]/TEXT()[1]",   offset: 11}
     }
   },
   "wampersand-&": {
     text: "Army (a pro-government group of computer hackers aligned with"
       + " Syrian President Bashar al-Assad) & the world cried foul",
     xpath: {
-      start: { xpath: "/p[1]/code[1]/text()[1]", offset: 18  },
-      end:   { xpath: "/p[1]/text()[4]",         offset: 114 }
+      start: {xpath: "/p[1]/code[1]/text()[1]", offset: 18},
+      end:   {xpath: "/p[1]/text()[4]",         offset: 114}
     }
   },
   "sampersand-&": {
     text: "& the world cried foul",
     xpath: {
-      start: { xpath: "/p[1]/text()[4]", offset: 92  },
-      end:   { xpath: "/p[1]/text()[4]", offset: 114 }
+      start: {xpath: "/p[1]/text()[4]", offset: 92},
+      end:   {xpath: "/p[1]/text()[4]", offset: 114}
     }
   },
   "eampersand-&": {
     text: "Army (a pro-government group of computer hackers aligned with"
       + " Syrian President Bashar al-Assad) &",
     xpath: {
-      start: { xpath: "/p[1]/code[1]/text()[1]", offset: 18  },
-      end:   { xpath: "/p[1]/text()[4]",         offset: 93 }
+      start: {xpath: "/p[1]/code[1]/text()[1]", offset: 18},
+      end:   {xpath: "/p[1]/text()[4]",         offset: 93}
     }
   },
   "wampersand-n": {
     text: "Army (a pro-government group of computer hackers aligned with"
       + " Syrian President Bashar al-Assad) n the world cried foul",
     xpath: {
-      start: { xpath: "/p[1]/code[1]/text()[1]", offset: 18  },
-      end:   { xpath: "/p[1]/text()[4]",         offset: 114 }
+      start: {xpath: "/p[1]/code[1]/text()[1]", offset: 18},
+      end:   {xpath: "/p[1]/text()[4]",         offset: 114}
     }
   },
   "sampersand-n": {
     text: "n the world cried foul",
     xpath: {
-      start: { xpath: "/p[1]/text()[4]", offset: 92  },
-      end:   { xpath: "/p[1]/text()[4]", offset: 114 }
+      start: {xpath: "/p[1]/text()[4]", offset: 92},
+      end:   {xpath: "/p[1]/text()[4]", offset: 114}
     }
   },
   "eampersand-n": {
     text: "Army (a pro-government group of computer hackers aligned with"
       + " Syrian President Bashar al-Assad) n",
     xpath: {
-      start: { xpath: "/p[1]/code[1]/text()[1]", offset: 18  },
-      end:   { xpath: "/p[1]/text()[4]",         offset: 93 }
+      start: {xpath: "/p[1]/code[1]/text()[1]", offset: 18},
+      end:   {xpath: "/p[1]/text()[4]",         offset: 93}
     }
   }
 };
@@ -343,8 +343,8 @@ var selectStandard = function()
   assertSelectionRange(result);
 
   expect(result.computeXpath())
-    .to.deep.equal({ end: { offset: 260, xpath: "/p[3]/text()[1]" },
-                     start: { offset: 0, xpath: "/p[3]/a[1]/text()[1]" } });
+    .to.deep.equal({end: {offset: 260, xpath: "/p[3]/text()[1]"},
+                    start: {offset: 0, xpath: "/p[3]/a[1]/text()[1]"}});
   return result;
 };
 
@@ -378,7 +378,7 @@ describe('HTML Highlighter', function() {
       assert.strictEqual(cursor(), 0);
     });
 
-    it('initialises', function() { });
+    it('initialises', function() {});
 
     it('resets UI state after second initialisation', function() {
       assert.strictEqual($cursor.text(), '-', 'no valid cursor');
