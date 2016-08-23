@@ -1,8 +1,8 @@
 module.exports = function(grunt) {
-  var browsers = [ {
+  var browsers = [{
     browserName: "chrome",
     platform: "linux"
-  } ];
+  }];
 
   grunt.initConfig({
     connect: {

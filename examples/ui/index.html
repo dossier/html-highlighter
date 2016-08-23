@@ -8,21 +8,13 @@
 
 	<title>HTML Highlighter – example</title>
 
-	<link rel="stylesheet" href="lib/bootstrap-3.3.2/css/bootstrap.css">
-	<link rel="stylesheet" href="css/theme-default.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" href="theme.css">
 
-	<script src="lib/requirejs-2.1.16/requirejs.js"></script>
-  <script type="text/javascript">
-   require.config( {
-     paths: {
-       'jquery': 'lib/jquery-2.1.3/jquery',
-       'SortingCommon': 'lib/sorting-common/sorting_common'
-     }
-   } );
-
-   /* Now load main. */
-   require( [ 'js/main' ] );
-  </script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	<script src="../../html_highlighter.js"></script>
+  <script src="main.js"></script>
 
   <!-- Template definition -->
   <script type="text/hh-template" id="entity-row">
@@ -43,7 +35,7 @@
   <div class="wrapper-outer header">
     <div class="wrapper-inner">
       <header>
-        <img src="media/images/logo.png">
+        <img src="../media/images/logo.png">
         <span>HTML Highlighter</span>
         <div class="filters">
           <label for="filter-data">Data source</label>

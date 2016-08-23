@@ -10,3 +10,4 @@ out/
 *.zip
 *.xpi
 node_modules
+dist

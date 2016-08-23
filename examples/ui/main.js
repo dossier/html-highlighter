@@ -9,16 +9,16 @@
 
 (function (factory, window) {
 
-  window.require( [ 'jquery', 'src/html_highlighter' ], function ($, hh) {
-    return factory(window, $, hh);
+  require(["html_highlighter"], function (hh) {
+    return factory(window, window.$, hh);
   } );
 
-}(function (window, $, hh, undefined) {
-
+}(function (window, $, hh) {
+console.log($, hh);
   var MAX_HIGHLIGHT = 5;
 
-  var dataBaseUrl = 'data/',
-      dataSources = [ {
+  var dataBaseUrl = '../data/',
+      dataSources = [{
         name: 'Viber hacked',
         url: 'viber_attacked_by_syrian_electronic_army.json'
       }, {
@@ -45,7 +45,7 @@
       }, {
         name: 'One paragraph with nonexistent ampersand',
         url: 'one_paragraph-ampersand_nonexistent.json'
-      } ];
+      }];
 
   var elSelector = $('#filter-data'),
       elDocument = $('#document'),
@@ -71,7 +71,7 @@
 
     elAdd.click(function () {
       var name = elSearch.val();
-      highlighter.add(name, [ name ], true).apply();
+      highlighter.add(name, [name], true).apply();
       elSearch.select().focus();
     } );
 
@@ -132,7 +132,7 @@
       }
 
       var d = dataSources[i];
-      require( [ dataBaseUrl + d.url + '?' ], function (result) {
+      require([dataBaseUrl + d.url + '?'], function (result) {
         /* Note: due to obvious constraints imposed on loading of local system
          * resources (via file://), data source files are required to export the
          * global variable `g_descriptor´. */
@@ -144,7 +144,7 @@
           dataSources.splice(i, 1);
 
         next(i);
-      } );
+      });
     };
 
     next(0);
