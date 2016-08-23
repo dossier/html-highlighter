@@ -54,6 +54,7 @@
   "scripts": {
     "prebuild": "npm install",
     "build": "webpack --progress --color",
+    "start": "webpack-dev-server --progress --color --content-base dist/ --hot --inline --hot --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
     "test": "mocha-webpack --webpack-config webpack.config-test.js \"test/start.js\" -c #grunt test"
   }
 }
