@@ -8,7 +8,7 @@ const env = process.env;
 const isProduction = env.NODE_ENV === "production";
 
 const linters = [
-//  { test: /\.js$/, exclude: /node_modules|examples/, loader: "eslint" }
+  { test: /\.js$/, exclude: /node_modules|examples/, loader: "eslint" }
 ];
 
 const jsLoader = {
