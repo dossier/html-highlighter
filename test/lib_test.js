@@ -1,27 +1,30 @@
 /* global describe, beforeEach, it */
 require("./bootstrap");
 
+/* eslint-disable global-require */
 const chai = require("chai");
-const expect = chai.expect;
-const assert = chai.assert;
-
 const $ = require("jquery");
-const htmlTpl = require("./html/templates.html");
-const htmlUi = require("./html/ui.html");
-$(document.body).append(htmlTpl);
-$(document.body).append(htmlUi);
-
 const hh = require("../src/main.js");
+const html = {
+  tpl: require("./html/templates.html"),
+  ui: require("./html/ui.html")
+};
+
+/* Load json data files. */
 const dataFiles = [
   "viber_attacked_by_syrian_electronic_army-cropped.json",
   "one_paragraph-ampersand_nonexistent.json",
   "one_paragraph-ampersand.json",
   "one_paragraph-ampersand_escaped.json"
 ];
-
-/* eslint-disable global-require */
 const data = dataFiles.map((d) => require("../etc/data/" + d).html);
 /* eslint-enable global-require */
+
+const {expect, assert} = chai;
+
+/* Create UI subtree. */
+$(document.body).append(html.tpl);
+$(document.body).append(html.ui);
 
 /* Constants */
 const COUNT_THE = 46;
