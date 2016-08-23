@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 import {defaults, Css} from "./consts.js";
 import Ui from "./ui/ui.js";
 import TextContent from "./textcontent.js";

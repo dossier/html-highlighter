@@ -27,8 +27,8 @@ class XpathFinder extends Finder
 
     /* Compute text node start and end elements that the XPath representation
      * refers to. */
-    let end,
-        xpath = new TextNodeXpath(this.content.root),
+    let end;
+    let xpath = new TextNodeXpath(this.content.root),
         start = xpath.elementAt(subject.start.xpath);
 
     /* If an element could not be obtained from the XPath representation, abort

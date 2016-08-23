@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 import HtmlHighlighter from "./htmlhighlighter.js";
 import {is_$} from "./util.js";
 
@@ -12,10 +14,7 @@ class TextContent
 {
   constructor(root)
   {
-    Object.defineProperty(
-      this, "root", { value: is_$(root) ? root.get(0) : root }
-    );
-
+    this.root = is_$(root) ? root.get(0) : root;
     this.text = this.markers = null;
     this.refresh();
   }

@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 import TextNodeVisitor from "./textnodevisitor.js";
 import TextNodeXpath from "./textnodexpath.js";
 

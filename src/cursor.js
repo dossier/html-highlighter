@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 import {Css} from "./consts.js";
 import {is_arr, inview, scrollIntoView} from "./util.js";
 

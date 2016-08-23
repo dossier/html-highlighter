@@ -11,3 +11,4 @@ out/
 *.xpi
 node_modules
 dist
+.tmp

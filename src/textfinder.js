@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 import Finder from "./finder.js";
 import Range from "./range.js";
 

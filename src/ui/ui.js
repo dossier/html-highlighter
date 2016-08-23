@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 import {Css} from "../consts.js";
 import TemplateFinder from "./templatefinder.js";
 import NodeFinder from "./nodefinder.js";

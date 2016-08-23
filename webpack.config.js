@@ -2,13 +2,24 @@
 
 const webpack = require("webpack");
 const fs = require("fs");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const env = process.env;
 const isProduction = env.NODE_ENV === "production";
 
 const linters = [
-  { test: /\.js$/, exclude: /node_modules|examples/, loader: "eslint" }
+//  { test: /\.js$/, exclude: /node_modules|examples/, loader: "eslint" }
 ];
+
+const jsLoader = {
+  test: /.js$/,
+  loader: "babel",
+  exclude: /node_modules/,
+  query: {
+    presets: ["es2015"],
+    cacheDirectory: true
+  }
+};
 
 let lib = {
   entry: {html_highlighter: "./src/main.js"},
@@ -21,15 +32,7 @@ let lib = {
   },
   module: {
     preLoaders: linters,
-    loaders: [{
-      test: /.js$/,
-      loader: "babel",
-      exclude: /node_modules/,
-      query: {
-        presets: ["es2015"],
-        cacheDirectory: true
-      }
-    }],
+    loaders: [jsLoader],
     postLoaders: [/* defined if not production; see below */]
   },
   plugins: [
@@ -75,7 +78,39 @@ let examples = {
   }
 };
 
-if (isProduction) {
+let tests = {
+  entry: './test/start.js',
+  output: {
+    path: "./dist",
+    filename: "test.js"
+  },
+  module: {
+    preLoaders: linters,
+    loaders: [
+      jsLoader,
+      { test: /\.json$/, loader: "json" },
+      { test: /\.css$/, loader: "style!css" },
+      { test: /\.html$/, loader: "dom!html" },
+      { test: /\.gif$/, loader: "null" },
+      { test: /\.png$/, loader: "null" },
+      { test: /\.svg$/, loader: "null" }
+    ]
+  },
+  plugins: [
+    new webpack.DefinePlugin({PRODUCTION: isProduction,
+                              BROWSER: true}),
+    new HtmlWebpackPlugin({
+      title: 'HTML Highlighter Tests',
+      filename: 'test.html'
+    })
+  ],
+  devtool: "#inline-source-map",
+  htmlhint: {
+    configFile: '.htmlhintrc'
+  }
+};
+
+if(isProduction) {
 /*   Disabled for now. */
 /*   lib.module.postLoaders.push( */
 /*   { test: /\.js$/, exclude: /node_modules/, */
@@ -94,3 +129,5 @@ if (isProduction) {
 }
 
 module.exports = [lib, examples];
+
+if(!isProduction) module.exports.push(tests);

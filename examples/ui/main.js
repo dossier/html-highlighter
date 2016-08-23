@@ -8,13 +8,17 @@
 
 
 (function (factory, window) {
+  require.config({
+    paths: {
+      text: "https://cdnjs.cloudflare.com/ajax/libs/require-text/2.0.12/text.min",
+      json:"https://cdnjs.cloudflare.com/ajax/libs/requirejs-plugins/1.0.3/json.min"
+    }
+  });
 
-  require(["html_highlighter"], function (hh) {
+  require(["html_highlighter", "text", "json"], function (hh) {
     return factory(window, window.$, hh);
   } );
-
 }(function (window, $, hh) {
-console.log($, hh);
   var MAX_HIGHLIGHT = 5;
 
   var dataBaseUrl = '../data/',
@@ -132,7 +136,9 @@ console.log($, hh);
       }
 
       var d = dataSources[i];
-      require([dataBaseUrl + d.url + '?'], function (result) {
+      require(["json!" + dataBaseUrl + d.url], function (result) {
+        result = result.html;
+
         /* Note: due to obvious constraints imposed on loading of local system
          * resources (via file://), data source files are required to export the
          * global variable `g_descriptor´. */

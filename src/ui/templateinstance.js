@@ -1,4 +1,5 @@
 /* FIXME: refactor and remove. */
+import $ from "jquery";
 
 /**
  * @class

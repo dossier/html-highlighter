@@ -1,3 +1,5 @@
+import $ from "jquery";
+
 import TextFinder from "./textfinder.js";
 import XpathFinder from "./xpathfinder.js";
 
