@@ -48,30 +48,52 @@ let lib = {
 };
 
 let examples = {
+  entry: {
+    monolith: "./examples/monolith/main.js"
+  },
+  output: {
+    path: "./dist/examples",
+    filename: "[name]/[name].js"
+  },
+  module: {
+    loaders: [
+      {
+        test: /.js$/,
+        loader: "babel",
+        exclude: /node_modules/,
+        query: {
+          presets: ["es2015"],
+          cacheDirectory: true
+        }
+      },
+      { test: /\.html$/, loader: "dom!html" },
+      { test: /\.css$/, loader: "style!css" },
+      { test: /\.json$/, loader: "json" },
+      { test: /\.png$/, loader: "ignore" }
+    ]
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      title: "HTML Highlighter -- main example",
+      chunks: ["monolith"],
+      filename: "monolith/index.html"
+    })
+  ],
+  devtool: "#source-map"
+};
+
+let assets = {
   entry: [
-    "./examples/ui/index.html",
-    "./examples/ui/main.js",
-    "./examples/ui/theme.css",
-    "./examples/media/images/logo.png",
-    "./etc/data/viber_attacked_by_syrian_electronic_army.json",
-    "./etc/data/viber_attacked_by_syrian_electronic_army-cropped.json",
-    "./etc/data/ars_technica.json",
-    "./etc/data/simple.json",
-    "./etc/data/spaces.json",
-    "./etc/data/one_paragraph.json",
-    "./etc/data/one_paragraph-ampersand.json",
-    "./etc/data/one_paragraph-ampersand_escaped.json",
-    "./etc/data/one_paragraph-ampersand_nonexistent.json"
+//    "./examples/media/images/logo.png",
   ],
   output: {
     path: "./dist",
-    filename: "examples.js"
+    filename: "assets.js"
   },
   module: {
     loaders: [
       { test: /\.html$/, loader: "file?name=[path][name].[ext]" },
       { test: /\.css$/, loader: "file?name=[path][name].[ext]" },
-      { test: /\.js$/, loader: "file?name=[path][name].[ext]" },
       { test: /\.json$/, loader: "file?name=examples/data/[name].[ext]" },
       { test: /\.png$/, loader: "file?name=[path][name].[ext]" },
     ]
@@ -79,7 +101,7 @@ let examples = {
 };
 
 let tests = {
-  entry: './test/start.js',
+  entry: "./test/start.js",
   output: {
     path: "./dist",
     filename: "test.js"
@@ -100,14 +122,11 @@ let tests = {
     new webpack.DefinePlugin({PRODUCTION: isProduction,
                               BROWSER: true}),
     new HtmlWebpackPlugin({
-      title: 'HTML Highlighter Tests',
-      filename: 'test.html'
+      title: "HTML Highlighter Tests",
+      filename: "test.html"
     })
   ],
-  devtool: "#inline-source-map",
-  htmlhint: {
-    configFile: '.htmlhintrc'
-  }
+  devtool: "#inline-source-map"
 };
 
 if(isProduction) {
@@ -130,5 +149,7 @@ if(isProduction) {
   }));
 }
 
-module.exports = [lib, examples];
-if(!isProduction) module.exports.push(tests);
+let builds = [lib];
+if(!isProduction) builds = builds.concat([examples, assets, tests]);
+
+module.exports = builds;
