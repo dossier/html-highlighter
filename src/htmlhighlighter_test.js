@@ -12,19 +12,20 @@ const html = {
 
 /* Load json data files. */
 const dataFiles = [
-  "viber_attacked_by_syrian_electronic_army-cropped.json",
-  "one_paragraph-ampersand_nonexistent.json",
-  "one_paragraph-ampersand.json",
-  "one_paragraph-ampersand_escaped.json"
+  "viber_attacked_by_syrian_electronic_army-cropped",
+  "one_paragraph-ampersand_nonexistent",
+  "one_paragraph-ampersand",
+  "one_paragraph-ampersand_escaped"
 ];
-const data = dataFiles.map((d) => require("../etc/data/" + d).html);
+const data = dataFiles.map((d) => require(`../etc/data/${d}.json`).html);
 /* eslint-enable global-require */
 
 const {expect, assert} = chai;
 
 /* Create UI subtree. */
-$(document.body).append(html.tpl);
-$(document.body).append(html.ui);
+$(document.body)
+  .append(html.tpl)
+  .append(html.ui);
 
 /* Constants */
 const COUNT_THE = 46;
