@@ -1,20 +1,61 @@
 {
   "name": "html-highlighter",
+  "title": "Html Highlighter",
+  "description": "",
   "version": "0.1.0",
-  "description": "HTML Highlighter",
+  "main": "dist/html_highlighter.min.js",
   "repository": {
     "type": "git",
-    "url": "git@github.com:dossier/html-highlighter.git"
+    "url": "git+https://github.com/dossier/html-highlighter.git"
   },
-  "dependencies": { },
+  "keywords": [
+    "html",
+    "highlighter"
+  ],
+  "author": "Diffeo, Inc.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dossier/html-highlighter.git/issues"
+  },
+  "peerDependencies": {
+    "jquery": ">=2.0.0"
+  },
+  "dependencies": {},
   "devDependencies": {
-    "grunt": "0.4.x",
-    "grunt-cli": "0.1.x",
-    "grunt-saucelabs": "8.x",
-    "grunt-contrib-connect": "0.x",
-    "grunt-contrib-watch": "0.x"
+    "babel-core": "^6.13.2",
+    "babel-eslint": "^6.1.2",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.13.2",
+    "chai": "^3.5.0",
+    "documentation-loader": "^0.1.1-beta",
+    "dom-loader": "^1.0.4",
+    "eslint": "^3.3.1",
+    "eslint-loader": "^1.5.0",
+    "file-loader": "^0.9.0",
+    "grunt": "~1.0.1",
+    "grunt-cli": "~1.2.0",
+    "grunt-contrib-connect": "~1.0.2",
+    "grunt-contrib-watch": "~1.0.0",
+    "grunt-saucelabs": "~9.0.0",
+    "html-loader": "^0.4.3",
+    "html-webpack-plugin": "^2.22.0",
+    "http-server": "^0.9.0",
+    "jquery": "~3.1.0",
+    "jsdom": "^9.4.2",
+    "jsdom-global": "^2.1.0",
+    "json-loader": "^0.5.4",
+    "mocha": "^3.0.2",
+    "mocha-loader": "^0.7.1",
+    "mocha-webpack": "^0.6.0",
+    "source-map-support": "^0.4.2",
+    "webpack": "^1.13.2",
+    "webpack-dev-server": "^1.14.0",
+    "webpack-node-externals": "^1.3.3"
   },
   "scripts": {
-    "test": "grunt test"
+    "prebuild": "npm install",
+    "build": "webpack --progress --color",
+    "start": "webpack-dev-server --progress --color --content-base dist/ --hot --inline --hot --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
+    "test": "mocha-webpack --colors --webpack-config webpack.config-test.js \"test/start.js\""
   }
 }
