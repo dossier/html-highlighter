@@ -121,6 +121,8 @@ if(isProduction) {
 /*     output: "html_highlighter.js.html" */
 /*   } */
 
+  /* Append `.min` suffix after file name, drop duplicate symbols and minify
+   * build artifacts. */
   lib.output.filename = "[name].min.js";
   lib.plugins.push(new webpack.optimize.DedupePlugin());
   lib.plugins.push(new webpack.optimize.UglifyJsPlugin({

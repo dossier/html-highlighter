@@ -12,13 +12,13 @@
     "html",
     "highlighter"
   ],
-  "author": "Diffeo",
+  "author": "Diffeo, Inc.",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/dossier/html-highlighter.git/issues"
   },
   "peerDependencies": {
-    "jquery": "~3.1.0"
+    "jquery": ">=2.0.0"
   },
   "dependencies": {},
   "devDependencies": {
@@ -40,6 +40,7 @@
     "html-loader": "^0.4.3",
     "html-webpack-plugin": "^2.22.0",
     "http-server": "^0.9.0",
+    "jquery": "~3.1.0",
     "jsdom": "^9.4.2",
     "jsdom-global": "^2.1.0",
     "json-loader": "^0.5.4",
@@ -48,7 +49,7 @@
     "mocha-webpack": "^0.6.0",
     "source-map-support": "^0.4.2",
     "webpack": "^1.13.2",
-    "webpack-dev-server": "^1.15.0",
+    "webpack-dev-server": "^1.14.0",
     "webpack-node-externals": "^1.3.3"
   },
   "scripts": {
