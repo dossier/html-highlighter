@@ -4,7 +4,6 @@ var nodeExternals = require("webpack-node-externals");
 module.exports = {
   target: "node",
   externals: [nodeExternals()],
-  entry: './test/start.js',
   module: {
     preLoaders: [
       { test: /\.js$/, exclude: /node_modules/, loader: "eslint" }
