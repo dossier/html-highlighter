@@ -131,5 +131,4 @@ if(isProduction) {
 }
 
 module.exports = [lib, examples];
-
 if(!isProduction) module.exports.push(tests);

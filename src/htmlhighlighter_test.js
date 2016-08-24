@@ -1,13 +1,13 @@
 /* global describe, beforeEach, it */
-require("./bootstrap");
+require("../test/bootstrap");
 
 /* eslint-disable global-require */
 const chai = require("chai");
 const $ = require("jquery");
-const hh = require("../src/main.js");
+const hh = require("./main.js");
 const html = {
-  tpl: require("./html/templates.html"),
-  ui: require("./html/ui.html")
+  tpl: require("../test/html/templates.html"),
+  ui: require("../test/html/ui.html")
 };
 
 /* Load json data files. */
