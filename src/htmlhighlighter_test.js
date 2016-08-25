@@ -209,6 +209,8 @@ var assertSelectionRange = function(range)
   assert.deepProperty(xpath, 'end.offset', 'xpath has valid structure');
 };
 
+/* eslint-disable */
+/* Defined but never used; may prove useful in the future. */
 var assertCursor = function(id, text)
 {
   const enabled = $('.hh-highlight.hh-enabled');
@@ -218,6 +220,7 @@ var assertCursor = function(id, text)
   assert.equal(highlightId(enabled.get(0)), id);
   assert.strictEqual(enabled.eq(0).text(), text);
 };
+/* eslint-enable */
 
 var highlightId = function(cl)
 {

@@ -45,7 +45,7 @@ let lib = {
     new webpack.BannerPlugin(fs.readFileSync("./LICENSE", "utf8"))
   ],
   externals: {
-    "jquery": "jQuery"
+    "jquery": "jquery"
   },
   devtool: "#source-map"
 };
@@ -81,9 +81,6 @@ let examples = {
       filename: "monolith/index.html"
     })
   ],
-  externals: {
-    "jquery": "jQuery"
-  },
   devtool: "#source-map"
 };
 
@@ -126,9 +123,6 @@ let tests = {
       filename: "test.html"
     })
   ],
-  externals: {
-    "jquery": "jQuery"
-  },
   devtool: "#inline-source-map"
 };
 

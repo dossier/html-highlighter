@@ -248,6 +248,8 @@ module.exports = {
     "yoda": [
       "error",
       "never"
-    ]
+    ],
+
+    "import/no-unresolved": ["error", {ignore: ['^jquery$']}]
   }
 };
