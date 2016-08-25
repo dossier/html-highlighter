@@ -5,10 +5,6 @@ require("../test/bootstrap");
 const chai = require("chai");
 const $ = require("jquery");
 const hh = require("./main.js");
-const html = {
-  tpl: require("../test/html/templates.html"),
-  ui: require("../test/html/ui.html")
-};
 
 /* Load json data files. */
 const dataFiles = [
@@ -21,11 +17,6 @@ const data = dataFiles.map((d) => require(`../etc/data/${d}.json`).html);
 /* eslint-enable global-require */
 
 const {expect, assert} = chai;
-
-/* Create UI subtree. */
-$(document.body)
-  .append(html.tpl)
-  .append(html.ui);
 
 /* Constants */
 const COUNT_THE = 46;

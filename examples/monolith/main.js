@@ -1,15 +1,10 @@
 import $ from "jquery";
-import loadCss from "load-css-file";
 import {
   HtmlHighlighter, HtmlXpathFinder, HtmlRangeHighlighter
 } from "../../src/main.js";
 import "./theme.css";
 
 /* eslint-disable global-require */
-const html = {
-  tpl: require("../html/templates.html"),
-  ui: require("../html/ui.html")
-};
 const dataFiles = [
   "viber_attacked_by_syrian_electronic_army",
   "viber_attacked_by_syrian_electronic_army-cropped",
@@ -46,24 +41,20 @@ var count = 0,
 
 function init()
 {
-  $(document.body)
-    .append(html.tpl.childNodes)
-    .append(html.ui.childNodes);
-
-  $selector = $('#filter-data');
-  $document = $('#document');
-  $widgetSelection = $('#widget-selection');
-  $widgetMain = $('#widget-main');
-  $search = $('#search');
-  $add = $('#add');
+  $selector = $("#filter-data");
+  $document = $("#document");
+  $widgetSelection = $("#widget-selection");
+  $widgetMain = $("#widget-main");
+  $search = $("#search");
+  $add = $("#add");
 
   /* Set-up sequence
    * --
    * UI */
   $search.keyup(function () {
-    $add.attr('disabled', $search.val().trim().length === 0);
+    $add.attr("disabled", $search.val().trim().length === 0);
   });
-  $search.val('').trigger('keyup').focus();
+  $search.val("").trigger("keyup").focus();
 
   $add.click(function () {
     var name = $search.val();
@@ -89,24 +80,24 @@ function init()
 
         var range = highlighter.getSelectedRange();
         if(range === null) {
-          $widgetSelection.removeClass('enabled');
+          $widgetSelection.removeClass("enabled");
           return;
         }
 
-        $widgetSelection.find('.offset').text(
+        $widgetSelection.find(".offset").text(
           range.start.marker.offset
-            + '(' + range.start.offset + ')'
-            + ':' + range.end.marker.offset
-            + '(' + range.end.offset + ')');
+            + "(" + range.start.offset + ")"
+            + ":" + range.end.marker.offset
+            + "(" + range.end.offset + ")");
 
         var xpath = range.computeXpath();
-        $widgetSelection.find('.xpath')
-          .text(xpath.start.xpath + ':' + xpath.start.offset
-                + ' - ' + xpath.end.xpath + ':' + xpath.end.offset);
+        $widgetSelection.find(".xpath")
+          .text(xpath.start.xpath + ":" + xpath.start.offset
+                + " - " + xpath.end.xpath + ":" + xpath.end.offset);
 
         highlight_(xpath.start, xpath.end);
         highlighter.clearSelectedRange();
-        $widgetSelection.addClass('enabled');
+        $widgetSelection.addClass("enabled");
       }, 150);
     },
     mousedown: function () {
@@ -115,10 +106,10 @@ function init()
   });
 
   dataSources.forEach((d, i) => {
-    let $opt = $('<option/>').attr('value', i).html(d.name),
+    let $opt = $("<option/>").attr("value", i).html(d.name),
         c = data[i];
 
-    if(typeof c !== 'string' || c.length <= 0) $opt.prop("disabled", true);
+    if(typeof c !== "string" || c.length <= 0) $opt.prop("disabled", true);
     $selector.append($opt);
   });
 
@@ -156,6 +147,4 @@ function highlight_(start, end)
 }
 
 /* Run! */
-loadCss("https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/"
-        + "css/bootstrap.min.css");
 $(init);

@@ -44,6 +44,9 @@ let lib = {
     new webpack.optimize.OccurrenceOrderPlugin(true),
     new webpack.BannerPlugin(fs.readFileSync("./LICENSE", "utf8"))
   ],
+  externals: {
+    "jquery": "jQuery"
+  },
   devtool: "#source-map"
 };
 
@@ -66,7 +69,6 @@ let examples = {
           cacheDirectory: true
         }
       },
-      { test: /\.html$/, loader: "dom!html" },
       { test: /\.css$/, loader: "style!css" },
       { test: /\.json$/, loader: "json" },
       { test: /\.png$/, loader: "ignore" }
@@ -74,17 +76,21 @@ let examples = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: "HTML Highlighter -- main example",
       chunks: ["monolith"],
+      title: "HTML Highlighter -- main example",
+      template: "./examples/monolith/main.html",
       filename: "monolith/index.html"
     })
   ],
+  externals: {
+    "jquery": "jQuery"
+  },
   devtool: "#source-map"
 };
 
 let assets = {
   entry: [
-//    "./examples/media/images/logo.png",
+    "./examples/media/images/logo.png",
   ],
   output: {
     path: "./dist",
@@ -111,11 +117,7 @@ let tests = {
     loaders: [
       jsLoader,
       { test: /\.json$/, loader: "json" },
-      { test: /\.css$/, loader: "style!css" },
-      { test: /\.html$/, loader: "dom!html" },
-      { test: /\.gif$/, loader: "null" },
-      { test: /\.png$/, loader: "null" },
-      { test: /\.svg$/, loader: "null" }
+      { test: /\.css$/, loader: "style!css" }
     ]
   },
   plugins: [
@@ -123,9 +125,13 @@ let tests = {
                               BROWSER: true}),
     new HtmlWebpackPlugin({
       title: "HTML Highlighter Tests",
+      template: "./test/html/index.html",
       filename: "test.html"
     })
   ],
+  externals: {
+    "jquery": "jQuery"
+  },
   devtool: "#inline-source-map"
 };
 
