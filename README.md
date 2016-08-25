@@ -59,7 +59,7 @@ library being built and optimized.  Everything else is omitted.
 $ NODE_ENV=production npm run build
 ```
 
-Note that the `run` script automatically installs dependencies.
+Note that the `build` script automatically installs dependencies.
 
 
 ## Running tests
