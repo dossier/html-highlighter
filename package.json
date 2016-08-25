@@ -2,7 +2,7 @@
   "name": "html-highlighter",
   "title": "Html Highlighter",
   "description": "Highlight and select phrases in HTML pages.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/html_highlighter.min.js",
   "repository": {
     "type": "git",
