@@ -40,7 +40,8 @@
     "html-loader": "^0.4.3",
     "html-webpack-plugin": "^2.22.0",
     "http-server": "^0.9.0",
-    "jquery": "~3.1.0",
+    "ignore-loader": "^0.1.1",
+    "jquery": "^3.1.0",
     "jsdom": "^9.4.2",
     "jsdom-global": "^2.1.0",
     "json-loader": "^0.5.4",
@@ -54,8 +55,8 @@
   },
   "scripts": {
     "prebuild": "npm install",
-    "build": "webpack --progress --color",
-    "start": "webpack-dev-server --progress --color --content-base dist/ --hot --inline --hot --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
+    "build": "webpack --progress --color --display-error-details",
+    "start": "webpack-dev-server --progress --color --display-error-details --content-base dist/ --hot --inline --hot --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
     "test": "mocha-webpack --colors --webpack-config webpack.config-test.js \"test/start.js\""
   }
 }

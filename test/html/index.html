@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>HTML Highlighter Tests</title>
+
+    <script type="text/hh-template" id="entity-row">
+      <li>
+        <input type="checkbox" data-hh-scope="enable">
+        <span class="name" data-hh-scope="name"></span>:
+        <span class="count" data-hh-scope="count"></span>
+        <span class="remove glyphicon glyphicon-remove" data-hh-scope="remove"></span>
+      </li>
+    </script>
+    <script type="text/hh-template" id="entity-empty">
+      <p class="empty">No query sets have been created yet</p>
+    </script>
+  </head>
+  <body>
+    <div id="container" style="display: none">
+      <div id="document"></div>
+      <div id="widget" data-hh-scope="widget">
+        <div id="entities" data-hh-scope="entities"></div>
+        <span data-hh-scope="expand"></span>
+        <span>
+          <span id="stats-current" data-hh-scope="stats-current">-</span>
+          /
+          <span id="stats-total" data-hh-scope="stats-total">-</span>
+        </span>
+        <div role="group" aria-label="Navigation">
+          <button type="button" data-hh-scope="button-next"></button>
+          <button type="button" data-hh-scope="button-prev"></button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

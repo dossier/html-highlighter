@@ -5,26 +5,18 @@ require("../test/bootstrap");
 const chai = require("chai");
 const $ = require("jquery");
 const hh = require("./main.js");
-const html = {
-  tpl: require("../test/html/templates.html"),
-  ui: require("../test/html/ui.html")
-};
 
 /* Load json data files. */
 const dataFiles = [
-  "viber_attacked_by_syrian_electronic_army-cropped.json",
-  "one_paragraph-ampersand_nonexistent.json",
-  "one_paragraph-ampersand.json",
-  "one_paragraph-ampersand_escaped.json"
+  "viber_attacked_by_syrian_electronic_army-cropped",
+  "one_paragraph-ampersand_nonexistent",
+  "one_paragraph-ampersand",
+  "one_paragraph-ampersand_escaped"
 ];
-const data = dataFiles.map((d) => require("../etc/data/" + d).html);
+const data = dataFiles.map((d) => require(`../etc/data/${d}.json`).html);
 /* eslint-enable global-require */
 
 const {expect, assert} = chai;
-
-/* Create UI subtree. */
-$(document.body).append(html.tpl);
-$(document.body).append(html.ui);
 
 /* Constants */
 const COUNT_THE = 46;
@@ -217,6 +209,8 @@ var assertSelectionRange = function(range)
   assert.deepProperty(xpath, 'end.offset', 'xpath has valid structure');
 };
 
+/* eslint-disable */
+/* Defined but never used; may prove useful in the future. */
 var assertCursor = function(id, text)
 {
   const enabled = $('.hh-highlight.hh-enabled');
@@ -226,6 +220,7 @@ var assertCursor = function(id, text)
   assert.equal(highlightId(enabled.get(0)), id);
   assert.strictEqual(enabled.eq(0).text(), text);
 };
+/* eslint-enable */
 
 var highlightId = function(cl)
 {
