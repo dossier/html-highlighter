@@ -70,8 +70,7 @@ let examples = {
         }
       },
       { test: /\.css$/, loader: "style!css" },
-      { test: /\.json$/, loader: "json" },
-      { test: /\.png$/, loader: "ignore" }
+      { test: /\.json$/, loader: "json" }
     ]
   },
   plugins: [
@@ -98,10 +97,8 @@ let assets = {
   },
   module: {
     loaders: [
-      { test: /\.html$/, loader: "file?name=[path][name].[ext]" },
-      { test: /\.css$/, loader: "file?name=[path][name].[ext]" },
       { test: /\.json$/, loader: "file?name=examples/data/[name].[ext]" },
-      { test: /\.png$/, loader: "file?name=[path][name].[ext]" },
+      { test: /\.png$/, loader: "file?name=[path][name].[ext]" }
     ]
   }
 };
