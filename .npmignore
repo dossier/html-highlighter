@@ -1,0 +1,14 @@
+*~
+\#*
+\.\#*
+.emacs.desktop
+.emacs.desktop.lock
+BROWSE
+doc/*.pdf
+.*.swp
+out/
+*.zip
+*.xpi
+node_modules
+.tmp
+*.tgz
