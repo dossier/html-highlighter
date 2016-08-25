@@ -249,7 +249,5 @@ module.exports = {
       "error",
       "never"
     ],
-
-    "import/no-unresolved": ["error", {ignore: ['^jquery$']}]
   }
 };
