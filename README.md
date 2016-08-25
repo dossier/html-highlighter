@@ -40,3 +40,42 @@ example, you can:
     cd html-highlighter
     $BROWSER examples/index.html
 ```
+
+## Building
+
+The command given below creates a development build which is composed of a
+non-minified bundle of the HTML Highlighter library, as well as examples and
+tests.
+
+```sh
+$ npm run build
+```
+
+Creating a **production** build requires setting the `NODE_ENV` environment
+variable to `production`.  This results in *only* the HTML Highlighter
+library being built and optimized.  Everything else is omitted.
+
+```sh
+$ NODE_ENV=production npm run build
+```
+
+Note that the `run` script automatically installs dependencies.
+
+
+## Running tests
+
+Right now tests can only be executed in the browser.  There are two ways of
+doing this:
+
+```sh
+$ webpack --bail && http-server dist
+```
+
+*or*
+
+```sh
+$ webpack-dev-server --bail --inline --hot --content-base=dist
+```
+
+In both cases you then need to point your browser to
+`http://localhost:8080/test.html`.
