@@ -18,7 +18,7 @@ const dataFiles = [
   "viber_attacked_by_syrian_electronic_army-cropped",
   "one_paragraph-ampersand_nonexistent",
   "one_paragraph-ampersand",
-  "one_paragraph-ampersand_escaped"
+  "one_paragraph-ampersand_escaped",
 ];
 const data = dataFiles.map((d) => require(`../etc/data/${d}.json`).html);
 /* eslint-enable global-require */
@@ -47,15 +47,15 @@ var tests = {
       + " were not ‘hacked’.”",
     xpath: {
       start: {offset: 0, xpath: "/p[3]/a/text()[1]"},
-      end: {offset: 260, xpath: "/p[3]/text()[1]"}
-    }
+      end: {offset: 260, xpath: "/p[3]/text()[1]"},
+    },
   },
   wrapElement: {
     text: "the Viber support page, though",
     xpath: {
       start: {xpath: "/p[2]/text()[1]", offset: 47},
-      end:   {xpath: "/p[2]/text()[2]:8", offset: 8}
-    }
+      end:   {xpath: "/p[2]/text()[2]:8", offset: 8},
+    },
   },
   multiElement: {
     text: "dashboard, not a database. Viber also took the opportunity to"
@@ -70,69 +70,69 @@ var tests = {
       + " with more details",
     xpath: {
       start: {xpath: "/p[10]/text()[1]",         offset: 337},
-      end:   {xpath: "/p[13]/strong/text()[1]:", offset: 48}
-    }
+      end:   {xpath: "/p[13]/strong/text()[1]:", offset: 48},
+    },
   },
   bottomup: {
     text: " support page, though it",
     xpath: {
       start: {xpath: "/p[2]/a[2]/text()", offset: 5},
-      end:   {xpath: "/p[2]/text()[2]",   offset: 11}
-    }
+      end:   {xpath: "/p[2]/text()[2]",   offset: 11},
+    },
   },
   uppercase: {
     text: "Spot originally",
     xpath: {
       start: {xpath: "/P[2]/A/TEXT()[1]", offset: 5},
-      end:   {xpath: "/P[2]/TEXT()[1]",   offset: 11}
-    }
+      end:   {xpath: "/P[2]/TEXT()[1]",   offset: 11},
+    },
   },
   "wampersand-&": {
     text: "Army (a pro-government group of computer hackers aligned with"
       + " Syrian President Bashar al-Assad) & the world cried foul",
     xpath: {
       start: {xpath: "/p[1]/code[1]/text()[1]", offset: 18},
-      end:   {xpath: "/p[1]/text()[4]",         offset: 114}
-    }
+      end:   {xpath: "/p[1]/text()[4]",         offset: 114},
+    },
   },
   "sampersand-&": {
     text: "& the world cried foul",
     xpath: {
       start: {xpath: "/p[1]/text()[4]", offset: 92},
-      end:   {xpath: "/p[1]/text()[4]", offset: 114}
-    }
+      end:   {xpath: "/p[1]/text()[4]", offset: 114},
+    },
   },
   "eampersand-&": {
     text: "Army (a pro-government group of computer hackers aligned with"
       + " Syrian President Bashar al-Assad) &",
     xpath: {
       start: {xpath: "/p[1]/code[1]/text()[1]", offset: 18},
-      end:   {xpath: "/p[1]/text()[4]",         offset: 93}
-    }
+      end:   {xpath: "/p[1]/text()[4]",         offset: 93},
+    },
   },
   "wampersand-n": {
     text: "Army (a pro-government group of computer hackers aligned with"
       + " Syrian President Bashar al-Assad) n the world cried foul",
     xpath: {
       start: {xpath: "/p[1]/code[1]/text()[1]", offset: 18},
-      end:   {xpath: "/p[1]/text()[4]",         offset: 114}
-    }
+      end:   {xpath: "/p[1]/text()[4]",         offset: 114},
+    },
   },
   "sampersand-n": {
     text: "n the world cried foul",
     xpath: {
       start: {xpath: "/p[1]/text()[4]", offset: 92},
-      end:   {xpath: "/p[1]/text()[4]", offset: 114}
-    }
+      end:   {xpath: "/p[1]/text()[4]", offset: 114},
+    },
   },
   "eampersand-n": {
     text: "Army (a pro-government group of computer hackers aligned with"
       + " Syrian President Bashar al-Assad) n",
     xpath: {
       start: {xpath: "/p[1]/code[1]/text()[1]", offset: 18},
-      end:   {xpath: "/p[1]/text()[4]",         offset: 93}
-    }
-  }
+      end:   {xpath: "/p[1]/text()[4]",         offset: 93},
+    },
+  },
 };
 
 // Functions
@@ -141,7 +141,7 @@ var options = function()
   return {
     container: $document,
     widget: $("#widget"),
-    maxHighlight: 100
+    maxHighlight: 100,
   };
 };
 
@@ -251,12 +251,12 @@ var dedup = function(arr)
 var cursor = function()
 {
   const v = $cursor.text();
-  return v === "-" ? 0 : parseInt(v);
+  return v === "-" ? 0 : parseInt(v, 10);
 };
 
 var total = function()
 {
-  return parseInt($total.text());
+  return parseInt($total.text(), 10);
 };
 
 var select = function(sn, so, en, eo)
@@ -352,10 +352,11 @@ var selectStandard = function()
   }
 
   assertSelectionRange(result);
-
   expect(result.computeXpath())
-    .to.deep.equal({end: {offset: 260, xpath: "/p[3]/text()[1]"},
-                    start: {offset: 0, xpath: "/p[3]/a[1]/text()[1]"}});
+    .to.deep.equal({
+      end: {offset: 260, xpath: "/p[3]/text()[1]"},
+      start: {offset: 0, xpath: "/p[3]/a[1]/text()[1]"},
+    });
   return result;
 };
 
@@ -381,6 +382,7 @@ var assertHighlight = function(id, text)
 
 // Test specifications
 describe("HTML Highlighter", function() {
+  let is;
 
   describe("General", function() {
     beforeEach("initialise state", function() {
@@ -828,19 +830,23 @@ describe("HTML Highlighter", function() {
         highlight("uppercase");
       });
 
-      it("highlights the 'standard' query set from XPath representation", function() {
+      is = "highlights the 'standard' query set from XPath representation";
+      it(is, function() {
         highlight("standard");
       });
 
-      it("highlights the 'wrapElement' query set from XPath representation", function() {
+      is = "highlights the 'wrapElement' query set from XPath representation";
+      it(is, function() {
         highlight("wrapElement");
       });
 
-      it("highlights the 'multiElement' query set from XPath representation", function() {
+      is = "highlights the 'multiElement' query set from XPath representation";
+      it(is, function() {
         highlight("multiElement");
       });
 
-      it("highlights the 'bottomup' query set from XPath representation", function() {
+      is = "highlights the 'bottomup' query set from XPath representation";
+      it(is, function() {
         highlight("bottomup");
       });
 
@@ -872,7 +878,8 @@ describe("HTML Highlighter", function() {
         init();
       });
 
-      it("highlights query set from XPath representation with noise", function() {
+      is = "highlights query set from XPath representation with noise";
+      it(is, function() {
         hl.add("test-the", ["the"]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
@@ -880,7 +887,8 @@ describe("HTML Highlighter", function() {
         highlight("standard");
       });
 
-      it("highlights two query sets from XPath representations with noise", function() {
+      is = "highlights two query sets from XPath representations with noise";
+      it(is, function() {
         hl.add("test-the", ["the"]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_THE);
@@ -889,7 +897,8 @@ describe("HTML Highlighter", function() {
         highlight("wrapElement");
       });
 
-      it("highlights three query sets from XPath representations with noise", function() {
+      is = "highlights three query sets from XPath representations with noise";
+      it(is, function() {
         hl.add("test-viber", ["viber"]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_VIBER);
@@ -899,7 +908,8 @@ describe("HTML Highlighter", function() {
         highlight("multiElement");
       });
 
-      it("highlights four query sets from XPath representations with noise", function() {
+      is = "highlights four query sets from XPath representations with noise";
+      it(is, function() {
         hl.add("test-viber", ["viber"]).apply();
         assertUi();
         assert.strictEqual(hl.stats.total, COUNT_VIBER);
@@ -916,7 +926,8 @@ describe("HTML Highlighter", function() {
         init();
       });
 
-      it("highlights one query set from XPath representation with noise", function() {
+      is = "highlights one query set from XPath representation with noise";
+      it(is, function() {
         hl.add("test-the", ["the"]).apply();
         assertUi();
         highlight("standard");
@@ -928,7 +939,8 @@ describe("HTML Highlighter", function() {
         assert.strictEqual(hl.stats.total, (COUNT_THE + 1) << 1);
       });
 
-      it("highlights two query sets from XPath representations with noise", function() {
+      is = "highlights two query sets from XPath representations with noise";
+      it(is, function() {
         hl.add("test-viber", ["viber"]).apply();
         assertUi();
         highlight("standard");
@@ -943,7 +955,8 @@ describe("HTML Highlighter", function() {
         assert.strictEqual(hl.stats.total, (COUNT_VIBER + 2) << 1);
       });
 
-      it("highlights three query sets from XPath representations with noise", function() {
+      is = "highlights three query sets from XPath representations with noise";
+      it(is, function() {
         hl.add("test-viber", ["viber"]).apply();
         assertUi();
         highlight("standard");
@@ -959,7 +972,8 @@ describe("HTML Highlighter", function() {
         assert.strictEqual(hl.stats.total, (COUNT_VIBER + 3) << 1);
       });
 
-      it("highlights four query sets from XPath representations with noise", function() {
+      is = "highlights four query sets from XPath representations with noise";
+      it(is, function() {
         hl.add("test-viber", ["viber"]).apply();
         assertUi();
         highlight("standard");
@@ -983,7 +997,9 @@ describe("HTML Highlighter", function() {
         init();
       });
 
-      it("highlights one query set from XPath representation after dense query set add", function()
+      is = "highlights one query set from XPath representation after dense "
+        + "query set add";
+      it(is, function()
          {
         hl.add("test-the", ["the"]).apply();
         assertUi();
@@ -998,7 +1014,9 @@ describe("HTML Highlighter", function() {
         highlight("standard");
       });
 
-      it("highlights two query sets from XPath representation after dense query set add", function()
+      is = "highlights two query sets from XPath representation after dense "
+        + "query set add";
+      it(is, function()
          {
         hl.add("test-the", ["the"]).apply();
         assertUi();
@@ -1014,7 +1032,9 @@ describe("HTML Highlighter", function() {
         highlight("wrapElement");
       });
 
-      it("highlights three query sets from XPath representation after dense query set add", function()
+      is = "highlights three query sets from XPath representation after dense "
+        + "query set add";
+      it(is, function()
          {
         hl.add("test-the", ["the"]).apply();
         assertUi();
@@ -1031,7 +1051,9 @@ describe("HTML Highlighter", function() {
         highlight("multiElement");
       });
 
-      it("highlights four query sets from XPath representation after dense query set add", function()
+      is = "highlights four query sets from XPath representation after dense "
+        + "query set add";
+      it(is, function()
          {
         hl.add("test-the", ["the"]).apply();
         assertUi();

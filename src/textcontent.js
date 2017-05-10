@@ -95,7 +95,7 @@ class TextContent
       this.markers.splice(index, 0, {
         offset: marker.offset,
         node: $(document.createTextNode(text.substr(0, start)))
-          .insertBefore(marker.node).get(0)
+          .insertBefore(marker.node).get(0),
       });
 
       ++index;
@@ -124,7 +124,7 @@ class TextContent
       this.markers.splice(index + 1, 0, {
         offset: marker.offset + end - start + 1,
         node: $(document.createTextNode(text.substr(end + 1)))
-          .insertAfter(marker.node).get(0)
+          .insertAfter(marker.node).get(0),
       });
     }
 
@@ -184,7 +184,7 @@ class TextContent
     if(element.nodeType !== 3) return -1;
 
     for(let i = start === undefined ? 0 : start,
-            l = this.markers.length; i < l; ++i)
+            l = this.markers.length; i < l; ++i) // eslint-disable-line indent
     { if(this.markers[i].node === element) return i; }
 
     return -1;

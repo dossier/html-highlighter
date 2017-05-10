@@ -12,7 +12,7 @@ var RangeHighlighter = function(count, id, enabled, cssClass)
 {
   let classes = [
     Css.highlight,
-    Css.highlight + "-" + count
+    Css.highlight + "-" + count,
   ];
 
   if(cssClass)          classes.push(cssClass);

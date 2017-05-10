@@ -350,7 +350,7 @@ class TextNodeXpath
      * representation is clearly invalid. */
     try {
       part = part.match(/([^[]+)\[(\d+)\]/);
-      index = parseInt(part[2]);
+      index = parseInt(part[2], 10);
       part = part[1];
       if(--index < 0) throw new Error("Invalid index: " + index);
     } catch(x) {

@@ -36,13 +36,13 @@ class Ui
       next: finder.find("button-next"),
       prev: finder.find("button-prev"),
       expander: finder.find("expand"),
-      entities: finder.find("entities")
+      entities: finder.find("entities"),
     };
 
     finder = new TemplateFinder("text/hh-template", "data-hh-scope");
     this.templates = {
       entityRow: finder.find("entity-row"),
-      entityEmpty: finder.find("entity-empty")
+      entityEmpty: finder.find("entity-empty"),
     };
 
     this.timeouts = {};

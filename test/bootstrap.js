@@ -9,7 +9,7 @@ if(!BROWSER) {
   /* eslint-disable global-require */
   var sourceMapSupport = require("source-map-support");
   sourceMapSupport.install({
-    environment: "node"
+    environment: "node",
   });
   /* eslint-enable global-require */
 }

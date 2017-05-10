@@ -23,7 +23,7 @@ class Range
   {
     return {
       marker: marker,
-      offset: offset - marker.offset
+      offset: offset - marker.offset,
     };
   }
 
@@ -39,7 +39,7 @@ class Range
   {
     return {
       marker: marker,
-      offset
+      offset,
     };
   }
 
@@ -55,7 +55,7 @@ class Range
     /* Attributes */
     Object.defineProperties(this, {
       start: {value: start},
-      end:   {value: end  }
+      end:   {value: end},
     });
   }
 
@@ -104,12 +104,12 @@ class Range
     return {
       start: {
         xpath: computor.xpathOf(start),
-        offset: this.start.offset + computor.offset(start)
+        offset: this.start.offset + computor.offset(start),
       },
       end: {
         xpath: computor.xpathOf(end),
-        offset: this.end.offset + computor.offset(end) + 1
-      }
+        offset: this.end.offset + computor.offset(end) + 1,
+      },
     };
   }
 

@@ -31,7 +31,7 @@ class HtmlHighlighter
     this.stats = {
       queries: 0,
       total: 0,
-      highlight: 0
+      highlight: 0,
     };
 
     if(!options.container) {
@@ -471,7 +471,7 @@ class HtmlHighlighter
     let k;
     let c = 0, l = 0;
 
-    Object.keys(this.queries).forEach((k) => l += this.queries[k].length);
+    Object.keys(this.queries).forEach((k) => {l += this.queries[k].length});
 
     k = 0;
     this.highlights.forEach(function(i) {
@@ -502,7 +502,7 @@ class HtmlHighlighter
       enabled: enabled,
       id_highlight: this.stats.highlight,
       id: this.lastId,
-      length: 0
+      length: 0,
     };
 
     const count = this.add_queries_(name, q, queries, enabled);
