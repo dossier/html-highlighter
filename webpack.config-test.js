@@ -1,5 +1,5 @@
-var webpack = require("webpack");
-var nodeExternals = require("webpack-node-externals");
+const webpack = require("webpack");
+const nodeExternals = require("webpack-node-externals");
 
 module.exports = {
   target: "node",
@@ -20,12 +20,14 @@ module.exports = {
       },
       { test: /\.json$/, loader: "json" },
       { test: /\.css$/, loader: "css" },
-      { test: /\.html$/, loader: "dom!html" },
+      { test: /\.html$/, loader: "html" },
     ]
   },
   plugins: [
-    new webpack.DefinePlugin({PRODUCTION: false,
-                              BROWSER: false}),
+    new webpack.DefinePlugin({
+      PRODUCTION: false,
+      BROWSER: false
+    }),
   ],
   devtool: "source-map"
 };

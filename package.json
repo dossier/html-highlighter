@@ -52,6 +52,6 @@
     "prebuild": "npm install",
     "build": "webpack --progress --color --display-error-details",
     "start": "webpack-dev-server --progress --color --display-error-details --content-base dist/ --hot --inline --hot --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
-    "test": "mocha-webpack --colors --webpack-config webpack.config-test.js \"test/start.js\""
+    "test": "mocha-webpack --colors --webpack-config webpack.config-test.js 'test/start.js'"
   }
 }

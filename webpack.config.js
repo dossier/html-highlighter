@@ -1,10 +1,10 @@
-"use strict";
+/* global process */
 
 const webpack = require("webpack");
 const fs = require("fs");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
-const env = process.env;
+const env = process.env;  // eslint-disable-line no-process-env
 const isProduction = env.NODE_ENV === "production";
 
 const linters = [
@@ -21,8 +21,8 @@ const jsLoader = {
   }
 };
 
-let lib = {
-  entry: {html_highlighter: "./src/main.js"},
+const lib = {
+  entry: {htmlhighlighter: "./src/main.js"},
   output: {
     path: "./dist",
     filename: "[name].js",
@@ -35,22 +35,27 @@ let lib = {
     loaders: [jsLoader],
     postLoaders: [/* defined if not production; see below */]
   },
+  externals: {
+    jquery: "jQuery"
+  },
   plugins: [
     new webpack.DefinePlugin({
       PRODUCTION: isProduction,
       BROWSER: true
     }),
+    new webpack.ProvidePlugin({
+      $: "jquery",
+      jQuery: "jquery",
+      "window.jQuery": "jquery"
+    }),
     new webpack.NoErrorsPlugin(),
     new webpack.optimize.OccurrenceOrderPlugin(true),
     new webpack.BannerPlugin(fs.readFileSync("./LICENSE", "utf8"))
   ],
-  externals: {
-    "jquery": "jquery"
-  },
   devtool: "#source-map"
 };
 
-let examples = {
+const examples = {
   entry: {
     monolith: "./examples/monolith/main.js"
   },
@@ -84,7 +89,7 @@ let examples = {
   devtool: "#source-map"
 };
 
-let assets = {
+const assets = {
   entry: [
     "./examples/media/images/logo.png",
   ],
@@ -100,8 +105,8 @@ let assets = {
   }
 };
 
-let tests = {
-  entry: "./test/start.js",
+const tests = {
+  entry: "mocha!./test/start.js",
   output: {
     path: "./dist",
     filename: "test.js"
@@ -110,6 +115,7 @@ let tests = {
     preLoaders: linters,
     loaders: [
       jsLoader,
+      { test: /\.html$/, loader: "raw-loader" },
       { test: /\.json$/, loader: "json" },
       { test: /\.css$/, loader: "style!css" }
     ]
@@ -127,18 +133,20 @@ let tests = {
 };
 
 if(isProduction) {
-/*   Disabled for now. */
-/*   lib.module.postLoaders.push( */
-/*   { test: /\.js$/, exclude: /node_modules/, */
-/*     loader: "documentation" } */
-/*   ); */
-/*   lib.documentation = { */
-/*     format: "html", */
-/*     output: "html_highlighter.js.html" */
-/*   } */
+  // Documentation disabled for now.
+  // --
+  // lib.module.postLoaders.push({
+  //   test: /\.js$/, exclude: /node_modules/,
+  //   loader: "documentation"
+  // });
+  //
+  // lib.documentation = {
+  //   format: "html",
+  //   output: "html_highlighter.js.html"
+  // };
 
-  /* Append `.min` suffix after file name, drop duplicate symbols and minify
-   * build artifacts. */
+  // Append `.min` suffix after file name, drop duplicate symbols and minify
+  // build artifacts.
   lib.output.filename = "[name].min.js";
   lib.plugins.push(new webpack.optimize.DedupePlugin());
   lib.plugins.push(new webpack.optimize.UglifyJsPlugin({
@@ -146,7 +154,4 @@ if(isProduction) {
   }));
 }
 
-let builds = [lib];
-if(!isProduction) builds = builds.concat([examples, assets, tests]);
-
-module.exports = builds;
+module.exports = [lib, examples, assets, tests];
