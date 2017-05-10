@@ -154,4 +154,7 @@ if(isProduction) {
   }));
 }
 
-module.exports = [lib, examples, assets, tests];
+let build = [lib];
+if (!isProduction) build = build.concat([examples, assets, tests]);
+
+module.exports = build;
