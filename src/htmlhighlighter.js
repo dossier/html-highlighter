@@ -48,7 +48,7 @@ class HtmlHighlighter
 
     /* Start by refreshing the internal document's text representation. */
     this.refresh();
-    console.info("HTML highlighter instantiated");
+    // console.info("HTML highlighter instantiated");
   }
 
   /**

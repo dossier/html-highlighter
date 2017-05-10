@@ -83,7 +83,7 @@ class Ui
     this.setEmpty_();
     this.update();
 
-    console.info("HTML highlighter UI instantiated");
+    // console.info("HTML highlighter UI instantiated");
   }
 
   /**
