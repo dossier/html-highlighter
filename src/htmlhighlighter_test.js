@@ -1,12 +1,19 @@
 /* global describe, beforeEach, it */
-require("../test/bootstrap");
+import chai from "chai";
 
-/* eslint-disable global-require */
-const chai = require("chai");
+import bootstrap from "../test/bootstrap";
+import view from "../test/html/index.html";
+bootstrap(view);
+
+// The following modules must be imported via `require` to prevent the jQuery
+// module from being executed before the bootstrap function (above) is
+// executed.  This is because `import` executes modules *before* the importing
+// module is itself parsed and executed.
 const $ = require("jquery");
 const hh = require("./main.js");
 
-/* Load json data files. */
+// Load json data files.
+/* eslint-disable global-require */
 const dataFiles = [
   "viber_attacked_by_syrian_electronic_army-cropped",
   "one_paragraph-ampersand_nonexistent",
