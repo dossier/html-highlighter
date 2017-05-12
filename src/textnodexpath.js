@@ -72,7 +72,7 @@ class TextNodeXpath
     let part;
     let cur = this.root;          /* start from the root node */
 
-    /* At an absolutely minimum, a XPath representation must be of the form:
+    /* At an absolute minimum, a XPath representation must be of the form:
      * /text(), which results in `parts´ having a length of 2. */
     if(parts[0].length !== 0 || parts.length < 2) {
       throw new Error("Invalid XPath representation");
