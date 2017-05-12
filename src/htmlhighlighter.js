@@ -1,3 +1,4 @@
+/* TODO: Remove dependency on jQuery. */
 import $ from "jquery";
 
 import {defaults, Css} from "./consts.js";
