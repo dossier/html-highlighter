@@ -95,6 +95,13 @@ class TextNodeXpath
     }
 
     /* Now process the text element given by `parts[i]`. */
+    part = parts[i].trim();
+    if (part.length === 0) {
+      throw new Error(
+`XPath part cannot be empty. As an example, the form \`//tag\` is not currently
+allowed.  Offending XPath representation: ${xpath}`);
+    }
+
     part = this.xpathPart_(parts[i]);
     cur = part.tag === "text()"
       ? this.nthTextOf_(cur, part.index)
