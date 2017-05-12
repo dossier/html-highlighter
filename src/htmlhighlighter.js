@@ -35,10 +35,14 @@ class HtmlHighlighter
       highlight: 0,
     };
 
-    if(!options.container) {
+    const {container} = options;
+    if(!container) {
       options.container = $(window.document.body);
-    } else if(options.container instanceof HTMLElement) {
-      options.container = $(options.container);
+    } else if(
+      container instanceof HTMLElement
+        || container instanceof HTMLDocument
+    ) {
+      options.container = $(container);
     }
 
     /* Define instance immutable properties. */
