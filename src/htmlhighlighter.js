@@ -324,7 +324,12 @@ class HtmlHighlighter
    * @returns {boolean} <code>false</code> if no query sets currently
    * contained; <code>true</code> otherwise. */
   empty()
-  { return Object.keys(this.queries).some((k) => this.queries[k].length > 0); }
+  {
+    // `some` returns `true` if a query containing highlights is found, so for
+    // the purpose of this method, we need to reverse its value so it returns
+    // `false` in this case.
+    return !Object.keys(this.queries).some((k) => this.queries[k].length > 0);
+  }
 
   /**
    * <p>Return the last id of a query set.</p>
