@@ -11,10 +11,11 @@ import Cursor from "./cursor.js";
 import {is_arr, is_obj_empty, constructFinder} from "./util.js";
 
 /**
+ * @class
  * Main class of the HTML Highlighter module, which exposes an API enabling
  * clients to control all the features supported related to highlighting and
  * text selection.
- * @class
+ *
  * @param {Object} options - Map containing options
  * */
 class HtmlHighlighter
@@ -28,7 +29,15 @@ class HtmlHighlighter
     this.transaction = [];
     this.queries = {};
     this.highlights = [];
+
+    // TODO: rename attribute to something else that makes it clear it refers
+    // to the next highlight id.
     this.lastId = 0;
+
+    // TODO: refactor the following map.  In particular, the `highlight`
+    // attribute BADLY needs to become a class attribute of its own since it
+    // refers to the NEXT query set id.  The way this was devised is just so
+    // wrong on many levels.
     this.stats = {
       queries: 0,
       total: 0,
@@ -507,6 +516,9 @@ class HtmlHighlighter
     /* Remove query set if it exists. */
     if(name in this.queries) this.deferred_remove_(name);
 
+    // TODO: rename `id_highlight` and `id` attributes below.  The former
+    // actually refers to the query set id and the latter to the first
+    // highlight in the query set.  Should have been refactored long ago!
     let q = this.queries[name] = {
       name: name,
       enabled: enabled,
