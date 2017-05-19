@@ -36,8 +36,7 @@ class HtmlHighlighter
 
     // TODO: refactor the following map.  In particular, the `highlight`
     // attribute BADLY needs to become a class attribute of its own since it
-    // refers to the NEXT query set id.  The way this was devised is just so
-    // wrong on many levels.
+    // refers to the NEXT query set id.
     this.stats = {
       queries: 0,
       total: 0,
