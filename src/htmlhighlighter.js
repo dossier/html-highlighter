@@ -164,11 +164,15 @@ class HtmlHighlighter
 
   /**
    * Remove <strong>all</strong> query sets.
+   *
+   * Optionally, the last query set id can be reset.
+   *
+   * @param {boolean} reset - Last query set id is reset, if `true`.
    * */
-  clear()
+  clear(reset)
   {
     this.transaction.push(function() {
-      this.deferred_clear_();
+      this.deferred_clear_(reset);
     }.bind(this));
     return this;
   }
@@ -605,12 +609,17 @@ class HtmlHighlighter
     this.ui.update(false);
   }
 
-  deferred_clear_()
+  deferred_clear_(reset)
   {
     Object.keys(this.queries).forEach((k) => this.remove_(k));
 
     if(!is_obj_empty(this.queries)) {
       throw new Error("Query set object not empty");
+    }
+
+    if (reset) {
+      this.lastId = 0;
+      this.stats.highlight = 0;
     }
 
     this.cursor.clear();
