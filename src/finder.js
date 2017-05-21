@@ -13,11 +13,11 @@ class Finder
 {
   constructor(content)
   {
-      Object.defineProperty(this, "content", {value: content});
+    Object.defineProperty(this, "content", {value: content});
 
-      this.results = [];
-      this.current = 0;
-    }
+    this.results = [];
+    this.current = 0;
+  }
 
   /**
    * <p>Return next available match.  If no more matches available, returns

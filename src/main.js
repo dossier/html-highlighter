@@ -11,5 +11,5 @@ export {
   Ui,
   RangeHighlighter,
   TextFinder,
-  XPathFinder
+  XPathFinder,
 };

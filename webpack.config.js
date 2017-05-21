@@ -1,152 +1,171 @@
-"use strict";
+/* global process */
 
 const webpack = require("webpack");
 const fs = require("fs");
+const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
-const env = process.env;
+const env = process.env;  // eslint-disable-line no-process-env
 const isProduction = env.NODE_ENV === "production";
 
 const linters = [
-  { test: /\.js$/, exclude: /node_modules|examples/, loader: "eslint" }
+  {
+    enforce: "pre",
+    test: /\.js$/,
+    exclude: /node_modules|examples/,
+    loader: "eslint-loader",
+  },
 ];
 
 const jsLoader = {
   test: /.js$/,
-  loader: "babel",
+  loader: "babel-loader",
   exclude: /node_modules/,
   query: {
     presets: ["es2015"],
-    cacheDirectory: true
-  }
+    cacheDirectory: true,
+  },
 };
 
-let lib = {
-  entry: {html_highlighter: "./src/main.js"},
+const lib = {
+  entry: {htmlhighlighter: "./src/main.js"},
   output: {
-    path: "./dist",
+    path: path.join(__dirname, "dist"),
     filename: "[name].js",
     library: "[name]",
     libraryTarget: "umd",
-    umdNamedDefine: true
+    umdNamedDefine: true,
   },
   module: {
-    preLoaders: linters,
-    loaders: [jsLoader],
-    postLoaders: [/* defined if not production; see below */]
+    rules: [jsLoader].concat(linters),
+  },
+  externals: {
+    jquery: "jQuery",
   },
   plugins: [
     new webpack.DefinePlugin({
       PRODUCTION: isProduction,
-      BROWSER: true
+      BROWSER: true,
     }),
-    new webpack.NoErrorsPlugin(),
+    new webpack.ProvidePlugin({
+      $: "jquery",
+      jQuery: "jquery",
+      "window.jQuery": "jquery",
+    }),
+    new webpack.NoEmitOnErrorsPlugin(),
     new webpack.optimize.OccurrenceOrderPlugin(true),
-    new webpack.BannerPlugin(fs.readFileSync("./LICENSE", "utf8"))
+    new webpack.BannerPlugin(fs.readFileSync("./LICENSE", "utf8")),
   ],
-  externals: {
-    "jquery": "jquery"
-  },
-  devtool: "#source-map"
+  devtool: "#source-map",
 };
 
-let examples = {
+const examples = {
   entry: {
-    monolith: "./examples/monolith/main.js"
+    monolith: "./examples/monolith/main.js",
   },
   output: {
-    path: "./dist/examples",
-    filename: "[name]/[name].js"
+    path: path.join(__dirname, "dist/examples"),
+    filename: "[name]/[name].js",
   },
   module: {
-    loaders: [
+    rules: [
       {
         test: /.js$/,
-        loader: "babel",
+        loader: "babel-loader",
         exclude: /node_modules/,
         query: {
           presets: ["es2015"],
-          cacheDirectory: true
-        }
+          cacheDirectory: true,
+        },
       },
-      { test: /\.css$/, loader: "style!css" },
-      { test: /\.json$/, loader: "json" }
-    ]
+      { test: /\.css$/, loader: "style-loader!css-loader" },
+      { test: /\.json$/, loader: "json-loader" },
+    ],
   },
   plugins: [
     new HtmlWebpackPlugin({
       chunks: ["monolith"],
       title: "HTML Highlighter -- main example",
       template: "./examples/monolith/main.html",
-      filename: "monolith/index.html"
-    })
+      filename: "monolith/index.html",
+    }),
   ],
-  devtool: "#source-map"
+  devtool: "#source-map",
 };
 
-let assets = {
+const assets = {
   entry: [
     "./examples/media/images/logo.png",
   ],
   output: {
-    path: "./dist",
-    filename: "assets.js"
+    path: path.join(__dirname, "dist"),
+    filename: "assets.js",
   },
   module: {
-    loaders: [
-      { test: /\.json$/, loader: "file?name=examples/data/[name].[ext]" },
-      { test: /\.png$/, loader: "file?name=[path][name].[ext]" }
-    ]
-  }
+    rules: [
+      {
+        test: /\.json$/,
+        loader: "file-loader?name=examples/data/[name].[ext]",
+      }, {
+        test: /\.png$/,
+        loader: "file-loader?name=[path][name].[ext]",
+      },
+    ],
+  },
 };
 
-let tests = {
-  entry: "./test/start.js",
+const tests = {
+  entry: "mocha-loader!./test/start.js",
   output: {
-    path: "./dist",
-    filename: "test.js"
+    path: path.join(__dirname, "dist"),
+    filename: "test.js",
   },
   module: {
-    preLoaders: linters,
-    loaders: [
+    rules: [
       jsLoader,
-      { test: /\.json$/, loader: "json" },
-      { test: /\.css$/, loader: "style!css" }
-    ]
+      { test: /\.html$/, loader: "html-loader" },
+      { test: /\.json$/, loader: "json-loader" },
+      { test: /\.css$/, loader: "style-loader!css-loader" },
+    ].concat(linters),
   },
   plugins: [
-    new webpack.DefinePlugin({PRODUCTION: isProduction,
-                              BROWSER: true}),
+    new webpack.DefinePlugin({
+      PRODUCTION: isProduction,
+      BROWSER: true,
+    }),
     new HtmlWebpackPlugin({
       title: "HTML Highlighter Tests",
       template: "./test/html/index.html",
-      filename: "test.html"
-    })
+      filename: "test.html",
+    }),
   ],
-  devtool: "#inline-source-map"
+  devtool: "#inline-source-map",
 };
 
 if(isProduction) {
-/*   Disabled for now. */
-/*   lib.module.postLoaders.push( */
-/*   { test: /\.js$/, exclude: /node_modules/, */
-/*     loader: "documentation" } */
-/*   ); */
-/*   lib.documentation = { */
-/*     format: "html", */
-/*     output: "html_highlighter.js.html" */
-/*   } */
+  // Documentation disabled for now.
+  // --
+  // lib.module.rules.push({
+  //   enforce: "post",
+  //   test: /\.js$/,
+  //   exclude: /node_modules/,
+  //   loader: "documentation"
+  // });
+  //
+  // lib.documentation = {
+  //   format: "html",
+  //   output: "html_highlighter.js.html"
+  // };
 
-  /* Append `.min` suffix after file name, drop duplicate symbols and minify
-   * build artifacts. */
+  // Append `.min` suffix after file name, drop duplicate symbols and minify
+  // build artifacts.
   lib.output.filename = "[name].min.js";
-  lib.plugins.push(new webpack.optimize.DedupePlugin());
   lib.plugins.push(new webpack.optimize.UglifyJsPlugin({
-    compress: {warnings: false}
+    compress: {warnings: false},
   }));
 }
 
-let builds = [lib];
-if(!isProduction) builds = builds.concat([examples, assets, tests]);
+let build = [lib];
+if (!isProduction) build = build.concat([examples, assets, tests]);
 
-module.exports = builds;
+module.exports = build;

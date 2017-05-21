@@ -41,7 +41,12 @@ class XpathFinder extends Finder
     /* Retrieve global character offset of the text node. */
     start = content.find(start); end = content.find(end);
     if(start < 0 || end < 0) {
-      console.error("Unable to derive global offsets: %d:%d", start, end);
+      console.error(
+        "Unable to derive global offsets: %d:%d [xpath=%s:%s to end=%s:%s]",
+        start, end,
+        subject.start.xpath, subject.start.offset,
+        subject.end.xpath, subject.end.offset
+      );
       return;
     }
 

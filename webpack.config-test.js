@@ -1,31 +1,38 @@
-var webpack = require("webpack");
-var nodeExternals = require("webpack-node-externals");
+const webpack = require("webpack");
+const nodeExternals = require("webpack-node-externals");
 
 module.exports = {
   target: "node",
   externals: [nodeExternals()],
   module: {
-    preLoaders: [
-      { test: /\.js$/, exclude: /node_modules/, loader: "eslint" }
-    ],
-    loaders: [
+    rules: [
       {
+        enforce: "pre",
+        test: /\.js$/,
+        exclude: /node_modules/,
+        loader: "eslint-loader",
+      }, {
         test: /.js$/,
-        loader: "babel",
+        loader: "babel-loader",
         exclude: /node_modules/,
         query: {
           presets: ["es2015"],
-          cacheDirectory: true
-        }
+          cacheDirectory: true,
+        },
+      }, {
+        test: /\.json$/, loader: "json-loader",
+      }, {
+        test: /\.css$/, loader: "css-loader",
+      }, {
+        test: /\.html$/, loader: "html-loader",
       },
-      { test: /\.json$/, loader: "json" },
-      { test: /\.css$/, loader: "css" },
-      { test: /\.html$/, loader: "dom!html" },
-    ]
+    ],
   },
   plugins: [
-    new webpack.DefinePlugin({PRODUCTION: false,
-                              BROWSER: false}),
+    new webpack.DefinePlugin({
+      PRODUCTION: false,
+      BROWSER: false,
+    }),
   ],
-  devtool: "source-map"
+  devtool: "source-map",
 };

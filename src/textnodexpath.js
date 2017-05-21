@@ -72,7 +72,7 @@ class TextNodeXpath
     let part;
     let cur = this.root;          /* start from the root node */
 
-    /* At an absolutely minimum, a XPath representation must be of the form:
+    /* At an absolute minimum, a XPath representation must be of the form:
      * /text(), which results in `parts´ having a length of 2. */
     if(parts[0].length !== 0 || parts.length < 2) {
       throw new Error("Invalid XPath representation");
@@ -95,6 +95,13 @@ class TextNodeXpath
     }
 
     /* Now process the text element given by `parts[i]`. */
+    part = parts[i].trim();
+    if (part.length === 0) {
+      throw new Error(
+`XPath part cannot be empty. As an example, the form \`//tag\` is not currently
+allowed.  Offending XPath representation: ${xpath}`);
+    }
+
     part = this.xpathPart_(parts[i]);
     cur = part.tag === "text()"
       ? this.nthTextOf_(cur, part.index)
@@ -350,7 +357,7 @@ class TextNodeXpath
      * representation is clearly invalid. */
     try {
       part = part.match(/([^[]+)\[(\d+)\]/);
-      index = parseInt(part[2]);
+      index = parseInt(part[2], 10);
       part = part[1];
       if(--index < 0) throw new Error("Invalid index: " + index);
     } catch(x) {

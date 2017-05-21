@@ -5,14 +5,14 @@ export const defaults = {
   scrollTo: undefined,
   maxHighlight: 1,
   delays: {
-    toggleEntities: 250
+    toggleEntities: 250,
   },
   useQueryAsClass: false,
-  normalise: true
+  normalise: true,
 };
 
 export const Css = {
   highlight: "hh-highlight",
   enabled: "hh-enabled",
-  disabled: "hh-disabled"
+  disabled: "hh-disabled",
 };

@@ -9,7 +9,7 @@ var NodeFinder = function(tag, prefix, root)
   this.tag_ = tag;
   this.prefix_ = [
     "[", tag, '="',
-    prefix && prefix.length > 0 ? prefix + "-" : ""
+    prefix && prefix.length > 0 ? prefix + "-" : "",
   ].join("");
   this.root_ = root;
 };
@@ -44,7 +44,7 @@ NodeFinder.prototype = {
     v = callback.call(this);
     this.root_ = t;
     return v;
-  }
+  },
 };
 
 export default NodeFinder;

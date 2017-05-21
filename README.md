@@ -31,9 +31,8 @@ The HTML Highlighter is a JavaScript module that solves these problems:
 }
 ```
 
-The inline comments and class documentation are sufficient for a
-JavaScript programmer to jump in and start using this.  To see an
-example, you can:
+The inline comments and class documentation are sufficient for a JavaScript
+programmer to jump in and start using this.  To see an example, you can:
 
 ```bash
     git clone git://github.com/dossier/html-highlighter
@@ -45,15 +44,15 @@ example, you can:
 
 The command given below creates a development build which is composed of a
 non-minified bundle of the HTML Highlighter library, as well as examples and
-tests.
+tests.  All build artifacts are placed inside the `dist` directory.
 
 ```sh
 $ npm run build
 ```
 
 Creating a **production** build requires setting the `NODE_ENV` environment
-variable to `production`.  This results in *only* the HTML Highlighter
-library being built and optimized.  Everything else is omitted.
+variable to `production`.  This results in *only* the HTML Highlighter library
+being built, optimized and minimized.  Everything else is omitted.
 
 ```sh
 $ NODE_ENV=production npm run build
@@ -64,8 +63,11 @@ Note that the `build` script automatically installs dependencies.
 
 ## Running tests
 
-Right now tests can only be executed in the browser.  There are two ways of
-doing this:
+Tests can be executed in the browser and terminal.
+
+### Browser
+
+There are two ways of running tests in the browser:
 
 ```sh
 $ webpack --bail && http-server dist
@@ -79,3 +81,16 @@ $ webpack-dev-server --bail --inline --hot --content-base=dist
 
 In both cases you then need to point your browser to
 `http://localhost:8080/test.html`.
+
+### Terminal
+
+Running tests in the terminal can be accomplished by executing the following
+command:
+
+```sh
+$ npm run test
+```
+
+Note that tests relying on the `document.createRange` function are skipped due
+to the fact that jsdom, the virtual DOM environment, does not provide an
+implementation.

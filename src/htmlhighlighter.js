@@ -1,3 +1,4 @@
+/* TODO: Remove dependency on jQuery. */
 import $ from "jquery";
 
 import {defaults, Css} from "./consts.js";
@@ -10,10 +11,11 @@ import Cursor from "./cursor.js";
 import {is_arr, is_obj_empty, constructFinder} from "./util.js";
 
 /**
+ * @class
  * Main class of the HTML Highlighter module, which exposes an API enabling
  * clients to control all the features supported related to highlighting and
  * text selection.
- * @class
+ *
  * @param {Object} options - Map containing options
  * */
 class HtmlHighlighter
@@ -27,17 +29,28 @@ class HtmlHighlighter
     this.transaction = [];
     this.queries = {};
     this.highlights = [];
+
+    // TODO: rename attribute to something else that makes it clear it refers
+    // to the next highlight id.
     this.lastId = 0;
+
+    // TODO: refactor the following map.  In particular, the `highlight`
+    // attribute BADLY needs to become a class attribute of its own since it
+    // refers to the NEXT query set id.
     this.stats = {
       queries: 0,
       total: 0,
-      highlight: 0
+      highlight: 0,
     };
 
-    if(!options.container) {
+    const {container} = options;
+    if(!container) {
       options.container = $(window.document.body);
-    } else if(options.container instanceof HTMLElement) {
-      options.container = $(options.container);
+    } else if(
+      container instanceof HTMLElement
+        || container instanceof HTMLDocument
+    ) {
+      options.container = $(container);
     }
 
     /* Define instance immutable properties. */
@@ -48,7 +61,7 @@ class HtmlHighlighter
 
     /* Start by refreshing the internal document's text representation. */
     this.refresh();
-    console.info("HTML highlighter instantiated");
+    // console.info("HTML highlighter instantiated");
   }
 
   /**
@@ -150,11 +163,15 @@ class HtmlHighlighter
 
   /**
    * Remove <strong>all</strong> query sets.
+   *
+   * Optionally, the last query set id can be reset.
+   *
+   * @param {boolean} reset - Last query set id is reset, if `true`.
    * */
-  clear()
+  clear(reset)
   {
     this.transaction.push(function() {
-      this.deferred_clear_();
+      this.deferred_clear_(reset);
     }.bind(this));
     return this;
   }
@@ -319,7 +336,12 @@ class HtmlHighlighter
    * @returns {boolean} <code>false</code> if no query sets currently
    * contained; <code>true</code> otherwise. */
   empty()
-  { return Object.keys(this.queries).some((k) => this.queries[k].length > 0); }
+  {
+    // `some` returns `true` if a query containing highlights is found, so for
+    // the purpose of this method, we need to reverse its value so it returns
+    // `false` in this case.
+    return !Object.keys(this.queries).some((k) => this.queries[k].length > 0);
+  }
 
   /**
    * <p>Return the last id of a query set.</p>
@@ -471,7 +493,7 @@ class HtmlHighlighter
     let k;
     let c = 0, l = 0;
 
-    Object.keys(this.queries).forEach((k) => l += this.queries[k].length);
+    Object.keys(this.queries).forEach((k) => {l += this.queries[k].length});
 
     k = 0;
     this.highlights.forEach(function(i) {
@@ -497,12 +519,15 @@ class HtmlHighlighter
     /* Remove query set if it exists. */
     if(name in this.queries) this.deferred_remove_(name);
 
+    // TODO: rename `id_highlight` and `id` attributes below.  The former
+    // actually refers to the query set id and the latter to the first
+    // highlight in the query set.  Should have been refactored long ago!
     let q = this.queries[name] = {
       name: name,
       enabled: enabled,
       id_highlight: this.stats.highlight,
       id: this.lastId,
-      length: 0
+      length: 0,
     };
 
     const count = this.add_queries_(name, q, queries, enabled);
@@ -583,12 +608,17 @@ class HtmlHighlighter
     this.ui.update(false);
   }
 
-  deferred_clear_()
+  deferred_clear_(reset)
   {
     Object.keys(this.queries).forEach((k) => this.remove_(k));
 
     if(!is_obj_empty(this.queries)) {
       throw new Error("Query set object not empty");
+    }
+
+    if (reset) {
+      this.lastId = 0;
+      this.stats.highlight = 0;
     }
 
     this.cursor.clear();
