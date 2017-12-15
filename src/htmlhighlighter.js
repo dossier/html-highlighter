@@ -297,13 +297,14 @@ class HtmlHighlighter
         end = Range.descriptorRel(this.content.at(end), sel.focusOffset - 1);
       }
     } else {
+      const prevStart = start;
       start = Range.descriptorRel(this.content.at(end), sel.focusOffset);
 
       if(sel.focusNode === sel.anchorNode) {
         end = $.extend(true, { }, start);
         end.offset = end.offset + len - 1;
       } else {
-        end = Range.descriptorRel(this.content.at(start), sel.anchorOffset - 1);
+        end = Range.descriptorRel(this.content.at(prevStart), sel.anchorOffset - 1);
       }
     }
 
