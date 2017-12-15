@@ -304,7 +304,9 @@ class HtmlHighlighter
         end = $.extend(true, { }, start);
         end.offset = end.offset + len - 1;
       } else {
-        end = Range.descriptorRel(this.content.at(prevStart), sel.anchorOffset - 1);
+        end = Range.descriptorRel(
+          this.content.at(prevStart), sel.anchorOffset - 1
+        );
       }
     }
 
