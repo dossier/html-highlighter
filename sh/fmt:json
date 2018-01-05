@@ -1,0 +1,3 @@
+#!/bin/bash
+cd $(dirname "$0")/..
+sh/check-fmt:json | xargs prettier --parser json --write

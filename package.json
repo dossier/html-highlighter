@@ -22,7 +22,14 @@
     "build:dev": "webpack --progress --color --display-error-details",
     "start": "webpack-dev-server --progress --color --content-base dist/ --hot --inline --hot --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
     "start:watch": "webpack --progress --color --display-error-details --watch",
-    "test": "mocha-webpack --colors --webpack-config webpack.config-test.js 'test/start.js'"
+    "test": "mocha-webpack --colors --webpack-config webpack.config-test.js 'test/start.js'",
+    "lint": "sh/lint",
+    "fmt:js": "sh/fmt:js",
+    "fmt:json": "sh/fmt:json",
+    "fmt": "yarn fmt:js && yarn fmt:json",
+    "check-fmt:js": "sh/check-fmt:js",
+    "check-fmt:json": "sh/check-fmt:json",
+    "check-fmt": "sh/check-fmt:js && sh/check-fmt:json"
   },
   "peerDependencies": {
     "jquery": ">=2.0.0"

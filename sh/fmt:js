@@ -1,0 +1,3 @@
+#!/bin/bash
+cd $(dirname "$0")/..
+sh/check-fmt:js | xargs prettier --config .prettierrc --write
