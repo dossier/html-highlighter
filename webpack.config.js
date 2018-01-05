@@ -9,7 +9,7 @@ const env = process.env;  // eslint-disable-line no-process-env
 const isProduction = env.NODE_ENV === "production";
 
 function makeExampleConfig(name) {
-  return  {
+  const config = {
     entry: {
       // We always assume that the example's entry filename is `main.js`
       monolith: `./examples/${name}/main.js`,
@@ -35,6 +35,12 @@ function makeExampleConfig(name) {
     ],
     devtool: "#source-map",
   };
+
+  if (isProduction) {
+    config.module.rules = config.module.rules.concat(linters);
+  }
+
+  return config;
 }
 
 const linters = [
