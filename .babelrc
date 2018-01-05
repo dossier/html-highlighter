@@ -1,0 +1,13 @@
+{
+  "plugins": [
+    "transform-flow-strip-types",
+    "transform-object-rest-spread",
+    "transform-class-properties",
+    "transform-regenerator",
+    "transform-es2015-classes",
+    "transform-export-extensions"
+  ],
+  "presets": [
+    "es2015",
+  ]
+}
