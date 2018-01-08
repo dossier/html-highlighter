@@ -1,18 +1,19 @@
-var els, elo;
-var coll;
+/* eslint-disable import/unambiguous */
+let els, elo;
+let coll;
 
 function out(str) {
-  var text = elo.text();
+  const text = elo.text();
   elo.text(text + (text.length > 0 ? '\n' : '') + str);
 }
 
 function init(count) {
-  var last = 0;
+  let last = 0;
 
   coll = [];
 
   while (count-- > 0) {
-    var val = Math.floor(Math.random() * (Math.floor(Math.random() * 900) + 100)) + last;
+    let val = Math.floor(Math.random() * (Math.floor(Math.random() * 900) + 100)) + last;
     coll.push(val);
     last = val;
   }
@@ -23,11 +24,10 @@ function init(count) {
 function search(val) {
   out('> searching for ' + val);
 
-  var c,
-    mid,
-    count = 0,
-    min = 0,
-    max = coll.length - 1;
+  let c, mid;
+  let count = 0;
+  let min = 0;
+  let max = coll.length - 1;
 
   while (min < max) {
     if (++count > Math.ceil(coll.length / 2)) {
@@ -40,13 +40,19 @@ function search(val) {
 
     out('$' + count + ': ' + c + ' ' + min + ' < ' + mid + ' < ' + max);
 
-    if (c < val) min = mid + 1;
-    else max = mid;
+    if (c < val) {
+      min = mid + 1;
+    } else {
+      max = mid;
+    }
   }
 
   out('?' + count + ': ' + coll[min] + ' ' + min + ' < ' + mid + ' < ' + max);
-  if (max == min && coll[min] == val) out('@' + min);
-  else out('!not found');
+  if (max === min && coll[min] === val) {
+    out('@' + min);
+  } else {
+    out('!not found');
+  }
 
   return min;
 }

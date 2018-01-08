@@ -1,7 +1,7 @@
 export const defaults = {
-  // Sometimes it is useful for the client to determine how to bring an
-  // element into view via scrolling. If `scrollTo` is set, then it is
-  // called as a function with a jQuery node to scroll to.
+  // Sometimes it is useful for the client to determine how to bring an element into view via
+  // scrolling. If `scrollTo` is set, then it is called as a function with a jQuery node to scroll
+  // to.
   scrollTo: undefined,
   maxHighlight: 1,
   delays: {

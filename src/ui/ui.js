@@ -1,19 +1,24 @@
+// FIXME: refactor camel-case symbols
 import $ from 'jquery';
 
 import { Css } from '../consts.js';
+/* eslint-disable camelcase */
+import { is_$, is_obj_empty } from '../util.js';
+/* eslint-disable camelcase */
+
 import TemplateFinder from './templatefinder.js';
 import NodeFinder from './nodefinder.js';
-import { is_$, is_obj_empty } from '../util.js';
 
 /**
- * <p>Class responsible for updating the user interface widget, if one is
- * supplied.</p>
- *
- * @class
- * @param {Main} owner - reference to owning <code>Main</code> instance
- * @param {Object} options - map containing options
+ * Class responsible for updating the user interface widget, if one is supplied
  * */
 class Ui {
+  /**
+   * Class constructor
+   *
+   * @param {Main} owner - reference to owning <code>Main</code> instance
+   * @param {Object} options - map containing options
+   */
   constructor(owner, options) {
     this.owner = owner;
 
@@ -34,13 +39,13 @@ class Ui {
       next: finder.find('button-next'),
       prev: finder.find('button-prev'),
       expander: finder.find('expand'),
-      entities: finder.find('entities')
+      entities: finder.find('entities'),
     };
 
     finder = new TemplateFinder('text/hh-template', 'data-hh-scope');
     this.templates = {
       entityRow: finder.find('entity-row'),
-      entityEmpty: finder.find('entity-empty')
+      entityEmpty: finder.find('entity-empty'),
     };
 
     this.timeouts = {};
@@ -77,7 +82,7 @@ class Ui {
     this.nodes.next.click(() => this.owner.next());
     this.nodes.prev.click(() => this.owner.prev());
 
-    /* Initial empty state. */
+    // Initial empty state
     this.setEmpty_();
     this.update();
 
@@ -85,18 +90,19 @@ class Ui {
   }
 
   /**
-   * <p>Update the UI state.</p>
+   * Update the UI state
    *
-   * <p>Does a full or partial update of the UI state.  A full update is done if
-   * <code>full</code> is either unspecified (<code>undefined</code>) or
-   * <code>true</code>, and consists of refreshing the query set list as well
-   * as the cursor position and total.  A partial update merely refreshes
-   * the cursor position and total.</p>
+   * Does a full or partial update of the UI state.  A full update is done if `full` is either
+   * unspecified (`undefined`) or `true`, and consists of refreshing the query set list as well as
+   * the cursor position and total.  A partial update merely refreshes the cursor position and
+   * total.
    *
    * @param {boolean} full - specifies whether to do a full update
-   * */
+   */
   update(full) {
-    if (!this.options) return false;
+    if (!this.options) {
+      return;
+    }
 
     this.nodes.statsCurrent.html(this.owner.cursor.index >= 0 ? this.owner.cursor.index + 1 : '-');
     this.nodes.statsTotal.html(this.owner.cursor.total);
@@ -108,14 +114,16 @@ class Ui {
       return;
     }
 
-    /* Template `entity-row´ must supply an LI element skeleton. */
+    // Template `entity-row´ must supply an LI element skeleton
     let $elu = $('<ul/>');
 
     Object.keys(this.owner.queries).forEach(k => {
       const q = this.owner.queries[k];
       let $eli = this.templates.entityRow.clone();
 
-      if (q.enabled) $eli.find('enable').prop('checked', true);
+      if (q.enabled) {
+        $eli.find('enable').prop('checked', true);
+      }
 
       $eli.find('name').text(k);
       $eli.find('count').text(q.length);
@@ -125,8 +133,11 @@ class Ui {
     $elu.click(ev => {
       const $node = $(ev.target);
       if ($node.data('hh-scope') === 'enable') {
-        if ($node.prop('checked')) this.owner.enable(this.getName_($node));
-        else this.owner.disable(this.getName_($node));
+        if ($node.prop('checked')) {
+          this.owner.enable(this.getName_($node));
+        } else {
+          this.owner.disable(this.getName_($node));
+        }
 
         this.owner.apply();
       }
