@@ -35,6 +35,7 @@
     "jquery": ">=2.0.0"
   },
   "dependencies": {
+    "merge": "^1.2.0",
     "prettier": "^1.9.2"
   },
   "devDependencies": {
