@@ -1,12 +1,12 @@
 /* global process */
 
-const webpack = require("webpack");
-const fs = require("fs");
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require('webpack');
+const fs = require('fs');
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const env = process.env;  // eslint-disable-line no-process-env
-const isProduction = env.NODE_ENV === "production";
+const env = process.env; // eslint-disable-line no-process-env
+const isProduction = env.NODE_ENV === 'production';
 
 function makeExampleConfig(name) {
   const config = {
@@ -15,25 +15,25 @@ function makeExampleConfig(name) {
       monolith: `./examples/${name}/main.js`,
     },
     output: {
-      path: path.join(__dirname, "dist/examples", name),
-      filename: "[name].js",
+      path: path.join(__dirname, 'dist/examples', name),
+      filename: '[name].js',
     },
     module: {
       rules: [
         jsLoader,
-        { test: /\.css$/, loader: "style-loader!css-loader" },
-        { test: /\.json$/, loader: "json-loader" },
+        { test: /\.css$/, loader: 'style-loader!css-loader' },
+        { test: /\.json$/, loader: 'json-loader' },
       ],
     },
     plugins: [
       new HtmlWebpackPlugin({
-        chunks: ["monolith"],
-        title: "HTML Highlighter -- main example",
-        template: "./examples/monolith/main.html",
-        filename: "index.html",
+        chunks: ['monolith'],
+        title: 'HTML Highlighter -- main example',
+        template: './examples/monolith/main.html',
+        filename: 'index.html',
       }),
     ],
-    devtool: "#source-map",
+    devtool: '#source-map',
   };
 
   if (isProduction) {
@@ -45,16 +45,16 @@ function makeExampleConfig(name) {
 
 const linters = [
   {
-    enforce: "pre",
+    enforce: 'pre',
     test: /\.js$/,
     exclude: /node_modules|examples/,
-    loader: "eslint-loader",
+    loader: 'eslint-loader',
   },
 ];
 
 const jsLoader = {
   test: /.js$/,
-  loader: "babel-loader",
+  loader: 'babel-loader',
   exclude: /node_modules/,
   query: {
     cacheDirectory: true,
@@ -62,19 +62,19 @@ const jsLoader = {
 };
 
 const lib = {
-  entry: {htmlhighlighter: "./src/main.js"},
+  entry: { htmlhighlighter: './src/main.js' },
   output: {
-    path: path.join(__dirname, "dist"),
-    filename: "[name].js",
-    library: "[name]",
-    libraryTarget: "umd",
+    path: path.join(__dirname, 'dist'),
+    filename: '[name].js',
+    library: '[name]',
+    libraryTarget: 'umd',
     umdNamedDefine: true,
   },
   module: {
     rules: [jsLoader].concat(linters),
   },
   externals: {
-    jquery: "jQuery",
+    jquery: 'jQuery',
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -82,50 +82,49 @@ const lib = {
       BROWSER: true,
     }),
     new webpack.ProvidePlugin({
-      $: "jquery",
-      jQuery: "jquery",
-      "window.jQuery": "jquery",
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery',
     }),
     new webpack.NoEmitOnErrorsPlugin(),
     new webpack.optimize.OccurrenceOrderPlugin(true),
-    new webpack.BannerPlugin(fs.readFileSync("./LICENSE", "utf8")),
+    new webpack.BannerPlugin(fs.readFileSync('./LICENSE', 'utf8')),
   ],
-  devtool: "#source-map",
+  devtool: '#source-map',
 };
 
 const assets = {
-  entry: [
-    "./examples/media/images/logo.png",
-  ],
+  entry: ['./examples/media/images/logo.png'],
   output: {
-    path: path.join(__dirname, "dist"),
-    filename: "assets.js",
+    path: path.join(__dirname, 'dist'),
+    filename: 'assets.js',
   },
   module: {
     rules: [
       {
         test: /\.json$/,
-        loader: "file-loader?name=examples/data/[name].[ext]",
-      }, {
+        loader: 'file-loader?name=examples/data/[name].[ext]',
+      },
+      {
         test: /\.png$/,
-        loader: "file-loader?name=[path][name].[ext]",
+        loader: 'file-loader?name=[path][name].[ext]',
       },
     ],
   },
 };
 
 const tests = {
-  entry: "mocha-loader!./test/start.js",
+  entry: 'mocha-loader!./test/start.js',
   output: {
-    path: path.join(__dirname, "dist"),
-    filename: "test.js",
+    path: path.join(__dirname, 'dist'),
+    filename: 'test.js',
   },
   module: {
     rules: [
       jsLoader,
-      { test: /\.html$/, loader: "html-loader" },
-      { test: /\.json$/, loader: "json-loader" },
-      { test: /\.css$/, loader: "style-loader!css-loader" },
+      { test: /\.html$/, loader: 'html-loader' },
+      { test: /\.json$/, loader: 'json-loader' },
+      { test: /\.css$/, loader: 'style-loader!css-loader' },
     ].concat(linters),
   },
   plugins: [
@@ -134,15 +133,15 @@ const tests = {
       BROWSER: true,
     }),
     new HtmlWebpackPlugin({
-      title: "HTML Highlighter Tests",
-      template: "./test/html/index.html",
-      filename: "test.html",
+      title: 'HTML Highlighter Tests',
+      template: './test/html/index.html',
+      filename: 'test.html',
     }),
   ],
-  devtool: "#inline-source-map",
+  devtool: '#inline-source-map',
 };
 
-if(isProduction) {
+if (isProduction) {
   // Documentation disabled for now.
   // --
   // lib.module.rules.push({
@@ -159,10 +158,12 @@ if(isProduction) {
 
   // Append `.min` suffix after file name, drop duplicate symbols and minify
   // build artifacts.
-  lib.output.filename = "[name].min.js";
-  lib.plugins.push(new webpack.optimize.UglifyJsPlugin({
-    compress: {warnings: false},
-  }));
+  lib.output.filename = '[name].min.js';
+  lib.plugins.push(
+    new webpack.optimize.UglifyJsPlugin({
+      compress: { warnings: false },
+    })
+  );
 }
 
 const examples = [makeExampleConfig('monolith')];
