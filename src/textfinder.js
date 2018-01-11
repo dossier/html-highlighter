@@ -1,7 +1,10 @@
-import $ from "jquery";
+// @flow
 
-import Finder from "./finder.js";
-import Range from "./range.js";
+import merge from 'merge';
+
+import TextContent from './textcontent';
+import Finder from './finder';
+import Range from './range';
 
 /* FIXME: create a class for matching of regular expression subjects. */
 /**
@@ -14,19 +17,18 @@ class TextFinder extends Finder {
    * @param {TextContent} content - Reference to `TextContent` instance
    * @param {string} subject - Subject string to match
    */
-  constructor(content, subject) {
+  constructor(content: TextContent, subject: string) {
     // Construct base class
     super(content);
 
     // Build an array containing all hits of `subject´
     let match;
-    const re = (
+    const re =
       subject instanceof RegExp
         ? subject
-        : new RegExp(subject.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&"), "gi")
-    );
+        : new RegExp(subject.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'), 'gi');
 
-    while((match = re.exec(this.content.text)) !== null) {
+    while ((match = re.exec(this.content.text)) !== null) {
       this.results.push({ length: match[0].length, index: match.index });
     }
   }
@@ -37,8 +39,8 @@ class TextFinder extends Finder {
    * @returns {Range|false} Returns a `Range` if a match is available, or `false` if no more
    * matches are available.
    */
-  next() {
-    if(this.current >= this.results.length) {
+  next(): Range {
+    if (this.current >= this.results.length) {
       return false;
     }
 
@@ -48,8 +50,8 @@ class TextFinder extends Finder {
     let end;
 
     // Re-use start marker descriptor if end offset within bounds of start text node
-    if(start.offset + length <= start.marker.node.nodeValue.length) {
-      end = $.extend({ }, start);
+    if (start.offset + length <= start.marker.node.nodeValue.length) {
+      end = merge({}, start);
       end.offset = start.offset + length - 1;
     } else {
       end = this.getAt_(match.index + length - 1);

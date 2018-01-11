@@ -1,8 +1,7 @@
 /* eslint-disable camelcase */
-import $ from 'jquery';
-
-import TextNodeVisitor from './textnodevisitor.js';
-import TextNodeXpath from './textnodexpath.js';
+import * as dom from './dom';
+import TextNodeVisitor from './textnodevisitor';
+import TextNodeXpath from './textnodexpath';
 
 /**
  * Holds a representation of a range between two text nodes
@@ -155,10 +154,7 @@ class Range {
       end === null ? descr.marker.node.nodeValue.length - 1 : end
     );
 
-    $('<span/>')
-      .addClass(className)
-      .insertBefore(descr.marker.node)
-      .append(descr.marker.node);
+    dom.createHighlightElement(descr.marker.node, className);
   }
 
   /**
@@ -170,10 +166,7 @@ class Range {
    * @param {string} className - CSS class name to apply
    * */
   surround_whole_(node, className) {
-    $('<span/>')
-      .addClass(className)
-      .insertBefore(node)
-      .append(node);
+    dom.createHighlightElement(node, className);
   }
 }
 

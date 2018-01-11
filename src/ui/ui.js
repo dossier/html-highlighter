@@ -1,13 +1,13 @@
 // FIXME: refactor camel-case symbols
 import $ from 'jquery';
 
-import { Css } from '../consts.js';
+import { Css } from '../consts';
 /* eslint-disable camelcase */
-import { is_$, is_obj_empty } from '../util.js';
+import { is_$, is_obj_empty } from '../util';
 /* eslint-disable camelcase */
 
-import TemplateFinder from './templatefinder.js';
-import NodeFinder from './nodefinder.js';
+import TemplateFinder from './templatefinder';
+import NodeFinder from './nodefinder';
 
 /**
  * Class responsible for updating the user interface widget, if one is supplied
@@ -23,7 +23,6 @@ class Ui {
     this.owner = owner;
 
     if (!is_$(options.widget)) {
-      console.warn('HTML highlighter UI unavailable');
       Object.defineProperty(this, 'options', { value: false });
       return;
     }

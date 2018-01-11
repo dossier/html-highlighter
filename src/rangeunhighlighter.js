@@ -1,26 +1,26 @@
-import $ from 'jquery';
+// @flow
 
-import { Css } from './consts.js';
+import * as dom from './dom';
 
 /**
  * Convenience class for removing highlighting
- * @class
  */
-function RangeUnhighlighter() {
+class RangeUnhighlighter {
   /**
    * Remove highlighting given by its id
    *
    * @param {number} id - ID of the highlight to remove
    */
-  this.undo = function(id) {
-    $('.' + Css.highlight + '-id-' + id).each(function() {
-      // eslint-disable-next-line
-      const $el = $(this);
+  undo(id: number): void {
+    const coll = dom.getHighlightElements(id);
+    for (const el of coll) {
+      for (const child of el.childNodes) {
+        (el.parentNode: any).insertBefore(child, el);
+      }
 
-      $el.contents().insertBefore($el);
-      $el.remove();
-    });
-  };
+      el.remove();
+    }
+  }
 }
 
 export default RangeUnhighlighter;

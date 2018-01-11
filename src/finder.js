@@ -1,7 +1,12 @@
+// @flow
+
+import TextContent from './textcontent';
 /* eslint-disable camelcase */
-import { absm_noti } from './util.js';
-import Range from './range.js';
+import * as util from './util';
 /* eslint-enable camelcase */
+import Range from './range';
+
+export type MatchResult = {| length: number, index: number |};
 
 /**
  * Abstract base class of all finder classes
@@ -12,9 +17,12 @@ import Range from './range.js';
  * @param {*} subject - subject to find; can be of any type
  */
 class Finder {
-  constructor(content) {
-    Object.defineProperty(this, 'content', { value: content });
+  content: TextContent;
+  results: Array<MatchResult>;
+  current: number;
 
+  constructor(content: TextContent) {
+    this.content = content;
     this.results = [];
     this.current = 0;
   }
@@ -29,7 +37,7 @@ class Finder {
    * matches are available.
    */
   next() {
-    absm_noti();
+    util.abstract();
   }
 
   // Protected interface
@@ -41,7 +49,8 @@ class Finder {
    * @param {number} offset - Text offset
    * @returns {Object} Range descriptor
    */
-  getAt_(offset) {
+  // FIXME: return type is incorrect
+  getAt_(offset: number): void {
     const index = this.content.indexOf(offset);
     if (index === -1) {
       throw new Error('Failed to retrieve marker for offset: ' + offset);

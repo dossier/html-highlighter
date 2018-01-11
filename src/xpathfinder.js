@@ -1,8 +1,10 @@
+// @flow
+
 /* eslint-disable camelcase */
-import Finder from './finder.js';
-import TextNodeXpath from './textnodexpath.js';
-import Range from './range.js';
-import { is_obj } from './util.js';
+import TextContent from './textcontent';
+import Finder from './finder';
+import TextNodeXpath from './textnodexpath';
+import Range from './range';
 /* eslint-enable camelcase */
 
 /**
@@ -17,11 +19,12 @@ class XpathFinder extends Finder {
    * @param {string} subject - Descriptor containing an XPath representation and
    * start and end offsets.
    */
-  constructor(content, subject) {
+  // FIXME: what type is `subject`?
+  constructor(content: TextContent, subject: string) {
     // Construct base class
     super(content);
 
-    if (!is_obj(subject) || subject.start.offset < 0 || subject.end.offset < 0) {
+    if (subject.start.offset < 0 || subject.end.offset < 0) {
       throw new Error('Invalid or no XPath object specified');
     }
 

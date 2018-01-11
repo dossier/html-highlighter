@@ -1,6 +1,8 @@
-/* eslint-disable camelcase */
-import { Css } from './consts.js';
-import { is_$ } from './util.js';
+// @flow
+
+import { Css } from './consts';
+
+export type XPathPart = {| tag: string, index: number |};
 
 /**
  * This class builds XPath representations of text nodes, optionally within a DOM sub-tree.  If a
@@ -10,11 +12,10 @@ import { is_$ } from './util.js';
  * @param {DOMElement} [root=null] - Root DOM node
  */
 class TextNodeXpath {
-  constructor(root) {
-    this.root = root || null;
-    if (is_$(this.root)) {
-      this.root = this.root.get(0);
-    }
+  root: Node;
+
+  constructor(root: Node) {
+    this.root = root;
   }
 
   /**
@@ -25,10 +26,10 @@ class TextNodeXpath {
    *
    * Throws an exception if `node` is <strong>not</strong> a text node.
    *
-   * @param {DOMElement} node - Text node to compute XPath representation of
+   * @param {Node} node - Text node to compute XPath representation of
    * @returns {string} XPath representation
    */
-  xpathOf(node) {
+  xpathOf(node: Node): string {
     // Note: no checks required since `indexOfText_´ throws exception if node invalid: null or not
     // like text.
     let xpath = '/text()[' + this.indexOfText_(node) + ']';
@@ -36,19 +37,19 @@ class TextNodeXpath {
     // Skip all text or highlight container nodes
     /* eslint-disable curly */
     for (
-      node = node.parentNode;
-      node !== null && node !== this.root && this.isLikeText_(node);
+      node = (node.parentNode: any);
+      node != null && node !== this.root && this.isLikeText_(node);
       node = node.parentNode
     );
     /* eslint-enable curly */
 
     // Start traversing upwards from `node´'s parent node until we hit `root´ (or null)
-    for (; node !== null && node !== this.root && node.nodeType === 1; node = node.parentNode) {
+    for (; node != null && node !== this.root && node.nodeType === 1; node = node.parentNode) {
       const id = this.indexOfElement_(node);
       xpath = '/' + node.nodeName.toLowerCase() + '[' + id + ']' + xpath;
     }
 
-    if (node === null) {
+    if (node == null) {
       throw new Error("Specified node not within root's subtree");
     }
 
@@ -63,9 +64,9 @@ class TextNodeXpath {
    * containers.
    *
    * @param {string} xpath - String containing XPath representation
-   * @returns {DOMElement} The element referenced by the XPath string
+   * @returns {Node | null} The element referenced by the XPath string or `null` if not found
    * */
-  elementAt(xpath) {
+  elementAt(xpath: string): Node | null {
     const parts = xpath.split('/');
     let part;
     let cur = this.root; /* start from the root node */
@@ -81,8 +82,8 @@ class TextNodeXpath {
     let i = 1;
     for (const l = parts.length - 1; i < l; ++i) {
       part = this.xpathPart_(parts[i]);
-      cur = this.nthElementOf_(cur, part.tag, part.index);
-      if (cur === null) {
+      cur = this.nthElementOf_((cur: any), part.tag, part.index);
+      if (cur == null) {
         // This, we would hope, would be indicative that the tree mutated.  Otherwise, either this
         // algorithm is flawed or the reverse operation is.
         console.error('Failed to find nth child:', part, cur);
@@ -100,9 +101,10 @@ allowed.  Offending XPath representation: ${xpath}`
     }
 
     part = this.xpathPart_(parts[i]);
-    cur = part.tag === 'text()' ? this.nthTextOf_(cur, part.index) : null;
+    // Casting `cur` to `any` because we check above after mutation and return if `null`
+    cur = part.tag === 'text()' ? this.nthTextOf_((cur: any), part.index) : null;
 
-    if (cur === null || cur.nodeType !== 3) {
+    if (cur == null || cur.nodeType !== 3) {
       console.error('Element at specified XPath NOT a text node: %s', xpath, part, cur);
       return null;
     }
@@ -128,13 +130,13 @@ allowed.  Offending XPath representation: ${xpath}`
    *
    *   `#text + STRONG`
    *
-   * @param {HTMLElement} node - Text node
+   * @param {Node} node - Text node
    * @returns {number} Offset of text node
    */
-  offset(node) {
+  offset(node: Node): number {
     let offset = 0;
 
-    if (!node || node.nodeType !== 3) {
+    if (node == null || node.nodeType !== 3) {
       throw new Error('Invalid or no text node specified');
     }
 
@@ -142,18 +144,18 @@ allowed.  Offending XPath representation: ${xpath}`
     // Climb the tree of nested highlight containers in a left to right order, if any, calculating
     // their respective lengths and adding to the overall offset.
     while (true) {
-      while (node.previousSibling === null) {
-        node = node.parentNode;
-        if (node === this.root || node === null) {
+      while ((node: any).previousSibling == null) {
+        node = (node: any).parentNode;
+        if (node === this.root || node == null) {
           throw new Error('Invalid state: expected highlight container or text node');
         } else if (!this.isHighlight_(node)) {
           return offset;
-        } else if (node.previousSibling !== null) {
+        } else if (node.previousSibling != null) {
           break;
         }
       }
 
-      node = node.previousSibling;
+      node = (node.previousSibling: any);
       if (!this.isLikeText_(node)) {
         break;
       }
@@ -173,10 +175,10 @@ allowed.  Offending XPath representation: ${xpath}`
    * method in the right context.
    *
    * @access private
-   * @param {DOMElement} node - text node or **highlight** container
-   * @returns {integer} Combined length of text nodes
+   * @param {Node} node - text node or **highlight** container
+   * @returns {number} Combined length of text nodes
    */
-  length_(node) {
+  length_(node: Node): number {
     if (node.nodeType === 3) {
       return node.nodeValue.length;
     }
@@ -198,22 +200,21 @@ allowed.  Offending XPath representation: ${xpath}`
   /**
    * Skip to first highlight container parent of a specified node, if it is of text type
    *
-   * @param {DOMElement} node - text node.
-   * @returns {DOMElement} First highlight container of text node, if applicable.
+   * @param {Node} node - text node.
+   * @returns {Node} First highlight container of text node, if applicable.
    */
-  skip_(node) {
+  skip_(node: Node): Node {
     // Don't do anything if node isn't of text type
     if (node.nodeType === 3) {
-      /* eslint-disable no-constant-condition */
-      while (true) {
+      while (node != null) {
         // Skip to first highlight container element
-        const parent = node.parentNode;
+        const parent = (node.parentNode: any);
         if (parent === this.root || !this.isHighlight_(parent)) {
           break;
         }
+
         node = parent;
       }
-      /* eslint-enable no-constant-condition */
     }
 
     return node;
@@ -223,13 +224,15 @@ allowed.  Offending XPath representation: ${xpath}`
    * Return boolean value indicative of whether a given node is a highlight container
    * @access private
    *
-   * @param {DOMElement} node - DOM element to check
+   * @param {Node} node - DOM element to check
    * @returns {boolean} `true` if it is a highlight container
    */
-  isHighlight_(node) {
+  isHighlight_(node: Node): boolean {
     // NOTE: this is potentially problematic if the document uses class names that contain or are
     // equal to `Css.highlight´.
-    return node.nodeName.toLowerCase() === 'span' && node.className.indexOf(Css.highlight) !== -1;
+    return (
+      node.nodeName.toLowerCase() === 'span' && (node: any).className.indexOf(Css.highlight) !== -1
+    );
   }
 
   /**
@@ -239,21 +242,21 @@ allowed.  Offending XPath representation: ${xpath}`
    * Note that XPath indices are **not** zero-based.
    *
    * @access private
-   * @param {DOMElement} node - DOM element to calculate index of
+   * @param {Node} node - DOM element to calculate index of
    * @returns {number} Index of node plus one
    */
-  indexOfElement_(node) {
-    const name = node.nodeName.toLowerCase();
-    let index = 1;
-
-    if (node === null || this.isLikeText_(node)) {
+  indexOfElement_(node: Node): number {
+    if (this.isLikeText_(node)) {
       throw new Error('No node specified or node of text type');
     }
 
-    while ((node = node.previousSibling) !== null) {
-      // Don't count contiguous text nodes or highlight containers as being separate nodes.  IOW,
-      // contiguous text nodes or highlight containers are treated as ONE element.
-      if (!this.isLikeText_(node) && node.nodeName.toLowerCase() === name) {
+    const name = node.nodeName.toLowerCase();
+    let index = 1;
+
+    while ((node = (node: any).previousSibling) !== null) {
+      // Don't count contiguous text nodes or highlight containers as being nodes.  IOW, contiguous
+      // text nodes or highlight containers are treated as ONE element.
+      if (!this.isLikeText_(node) && (node: any).nodeName.toLowerCase() === name) {
         ++index;
       }
     }
@@ -282,19 +285,19 @@ allowed.  Offending XPath representation: ${xpath}`
    * Note that XPath indices are **not** zero-based.
    *
    * @access private
-   * @param {DOMElement} node - DOM element to calculate index of.
+   * @param {Node} node - DOM element to calculate index of.
    * @returns {number} Index of node plus one.
    */
-  indexOfText_(node) {
-    let index = 1,
-      wast = true;
-
-    if (node === null || !this.isLikeText_(node)) {
+  indexOfText_(node: Node): number {
+    if (!this.isLikeText_(node)) {
       throw new Error('No node specified or not of text type');
     }
 
+    let index = 1;
+    let wast = true;
+
     node = this.skip_(node);
-    while ((node = node.previousSibling) !== null) {
+    while ((node = (node: any).previousSibling) != null) {
       // Don't count contiguous text nodes or highlight containers as being separate nodes.  IOW,
       // contiguous text nodes or highlight containers are treated as ONE element.
       if (this.isLikeText_(node)) {
@@ -316,10 +319,10 @@ allowed.  Offending XPath representation: ${xpath}`
    * Return `true` if specified node is either of text type or a highlight container, thus like a
    * text node
    *
-   * @param {DOMElement} node - node to check
+   * @param {Node} node - node to check
    * @returns {boolean} - `true` if node is of text type of highlight container
    */
-  isLikeText_(node) {
+  isLikeText_(node: Node): boolean {
     return node.nodeType === 3 || this.isHighlight_(node);
   }
 
@@ -338,9 +341,9 @@ allowed.  Offending XPath representation: ${xpath}`
    * ```
    *
    * @param {string} part - An XPath representation part; e.g. "div[2]", "text()[3]" or "p"
-   * @returns {Object} Object containing tag and index
+   * @returns {XPathPart} Object containing tag and index
    */
-  xpathPart_(part) {
+  xpathPart_(part: string): XPathPart {
     let index;
 
     // If no index specified: assume first
@@ -348,34 +351,36 @@ allowed.  Offending XPath representation: ${xpath}`
       return { tag: part.toLowerCase(), index: 0 };
     }
 
+    let matchedPart;
     // *Attempt* to retrieve element's index.  If an exception is thrown, produce a meaningful
     // error but re-throw since the XPath representation is clearly invalid.
     try {
-      part = part.match(/([^[]+)\[(\d+)\]/);
-      index = parseInt(part[2], 10);
-      part = part[1];
+      // Note that `any` casts below are deliberate since we the code is within a try-catch block.
+      const match = part.match(/([^[]+)\[(\d+)\]/);
+      index = parseInt((match: any)[2], 10);
+      matchedPart = (match: any)[1];
       if (--index < 0) {
         throw new Error('Invalid index: ' + index);
       }
     } catch (x) {
-      console.error('Failed to extract child index: %s', part);
+      console.error(`Failed to extract child index: ${part}`);
       throw x; /* Re-throw after dumping inspectable object. */
     }
 
-    return { tag: part.toLowerCase(), index: index };
+    return { tag: matchedPart.toLowerCase(), index };
   }
 
   /**
    * Find the nth child element of a specified node, **excluding** text nodes
    *
-   * @param {DOMElement} parent - node whose children to search
+   * @param {Node} parent - node whose children to search
    * @param {string} tag - the tag name of the node sought in **lowercase** form
    * @param {integer} index - child index of the node sought
    *
-   * @returns {DOMElement} The nth element of `node`
+   * @returns {Node | null} The nth element of `node` or `null` if non-existent
    */
-  nthElementOf_(parent, tag, index) {
-    const ch = parent.children;
+  nthElementOf_(parent: Node, tag: string, index: number): Node | null {
+    const ch = (parent: any).children;
     let node;
 
     for (let i = 0, l = ch.length; i < l; ++i) {
@@ -399,12 +404,12 @@ allowed.  Offending XPath representation: ${xpath}`
   /**
    * Find the nth normalised text node within a specified element node
    *
-   * @param {DOMElement} parent - node whose children to search
+   * @param {Node} parent - node whose children to search
    * @param {integer} index - child index of the node sought
    *
-   * @returns {DOMElement} `null` if no match or element node
+   * @returns {Node | null} element node or `null` if no match
    */
-  nthTextOf_(parent, index) {
+  nthTextOf_(parent: Node, index: number): Node | null {
     let node;
     let wast = false;
     let ch = parent.childNodes;

@@ -1,15 +1,18 @@
-/* eslint-disable camelcase */
-// TODO: Remove dependency on jQuery.
-import $ from 'jquery';
+// @flow
 
-import { defaults, Css } from './consts.js';
-import Ui from './ui/ui.js';
-import TextContent from './textcontent.js';
-import RangeHighlighter from './rangehighlighter.js';
-import RangeUnhighlighter from './rangeunhighlighter.js';
-import Range from './range.js';
-import Cursor from './cursor.js';
-import { is_arr, is_obj_empty, constructFinder } from './util.js';
+/* eslint-disable camelcase */
+import merge from 'merge';
+
+import * as dom from './dom';
+import { defaults, Css } from './consts';
+import type { InputOptions, Options, Stats } from './consts';
+import Ui from './ui/ui';
+import TextContent from './textcontent';
+import RangeHighlighter from './rangehighlighter';
+import RangeUnhighlighter from './rangeunhighlighter';
+import Range from './range';
+import Cursor from './cursor';
+import { is_obj_empty, constructFinder } from './util';
 
 /**
  * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -17,9 +20,24 @@ import { is_arr, is_obj_empty, constructFinder } from './util.js';
  * text selection.
  * */
 class HtmlHighlighter {
-  constructor(options) {
+  options: Options;
+  cursor: Cursor;
+  ui: Ui;
+  stats: Stats;
+  lastId: number;
+  content: TextContent;
+  // FIXME: drop reliance on `any`
+  transaction: Array<any>;
+  queries: any;
+  highlights: Array<any>;
+
+  /** Static attribute that sets the debug state for methods that don't have access to the
+   * `options` descriptor and thus can't query the `debug` attribute. */
+  static debug: boolean = false;
+
+  constructor(options: InputOptions) {
     // Merge default options
-    options = $.extend(true, $.extend(true, {}, defaults), options);
+    this.options = merge({}, defaults, options);
 
     // Mutable properties
     this.transaction = [];
@@ -39,19 +57,17 @@ class HtmlHighlighter {
     };
 
     const { container } = options;
-    if (!container) {
-      options.container = $(window.document.body);
-    } else if (container instanceof HTMLElement || container instanceof HTMLDocument) {
-      options.container = $(container);
+    if (container == null) {
+      this.options.container = window.document.body;
+    } else if (container instanceof HTMLElement) {
+      this.options.container = container;
     }
 
-    // Define instance immutable properties
-    Object.defineProperty(this, 'options', { value: options });
-    Object.defineProperty(this, 'cursor', { value: new Cursor(this) });
-    Object.defineProperty(this, 'ui', { value: new Ui(this, options) });
-    Object.defineProperty(this, 'stats', { value: this.stats });
+    this.cursor = new Cursor(this);
+    this.ui = new Ui(this, this.options);
 
-    // Start by refreshing the internal document's text representation
+    // Start by refreshing the internal document's text representation, which initialises
+    // `this.content`.
     this.refresh();
     // console.info("HTML highlighter instantiated");
   }
@@ -62,7 +78,7 @@ class HtmlHighlighter {
    * Should only be invoked when the HTML structure mutates.
    */
   refresh() {
-    this.content = new TextContent(this.options.container.get(0));
+    this.content = new TextContent(this.options.container);
     if (HtmlHighlighter.debug === true) {
       this.content.assert_();
     }
@@ -78,13 +94,18 @@ class HtmlHighlighter {
    * Note that, at this point in time, only string queries and XPath representations are supported.
    *
    * @param {string} name - Name of the query set
-   * @param {string[]} queries - Array containing individual queries to highlight
-   * @param {bool} enabled - If explicitly `true`, query set is also enabled
+   * @param {Array<string>} queries - Array containing individual queries to highlight
+   * @param {bool} enabled - If explicitly `false`, query set is disabled; otherwise enabled
    * @param {number} [reserve] - Number of highlights to reserve for query set
    *
    * @returns {HTMLHighlighter} Self instance for chaining
    */
-  add(name, queries, enabled /* = false */, reserve /* = null */) {
+  add(
+    name: string,
+    queries: Array<string>,
+    enabled: boolean = true,
+    reserve: number | null = null
+  ) {
     this.transaction.push(
       function() {
         this.deferred_add_(name, queries, enabled !== false, reserve);
@@ -106,7 +127,7 @@ class HtmlHighlighter {
    *
    * @returns {HTMLHighlighter} Self instance for chaining
    */
-  append(name, queries, enabled /* = false */) {
+  append(name: string, queries: Array<string>, enabled: boolean = false) {
     this.transaction.push(
       function() {
         this.deferred_append_(name, queries, enabled !== false);
@@ -123,7 +144,7 @@ class HtmlHighlighter {
    * @param {string} name - Name of the query set to remove.
    * @returns {HTMLHighlighter} Self instance for chaining
    */
-  remove(name) {
+  remove(name: string) {
     this.transaction.push(
       function() {
         this.deferred_remove_(name);
@@ -141,7 +162,7 @@ class HtmlHighlighter {
    * @param {string} name - Name of the query set to enable.
    * @returns {HTMLHighlighter} Self instance for chaining
    */
-  enable(name) {
+  enable(name: string) {
     this.transaction.push(
       function() {
         this.deferred_enable_(name);
@@ -159,7 +180,7 @@ class HtmlHighlighter {
    * @param {string} name - Name of the query set to disable.
    * @returns {HTMLHighlighter} Self instance for chaining
    */
-  disable(name) {
+  disable(name: string) {
     this.transaction.push(
       function() {
         this.deferred_disable_(name);
@@ -176,7 +197,7 @@ class HtmlHighlighter {
    * @param {boolean} reset - Last query set id is reset, if `true`.
    * @returns {HTMLHighlighter} Self instance for chaining
    */
-  clear(reset) {
+  clear(reset: boolean) {
     this.transaction.push(
       function() {
         this.deferred_clear_(reset);
@@ -201,7 +222,7 @@ class HtmlHighlighter {
       try {
         action();
       } catch (x) {
-        console.error('Failed to apply action: %s', x);
+        console.error('Failed to apply action:', x);
       }
     });
 
@@ -215,7 +236,7 @@ class HtmlHighlighter {
    *
    * @param {Array} queries - Array containing query set names
    */
-  setIterableQueries(queries) {
+  setIterableQueries(queries: Array<string> | null = null): void {
     this.cursor.setIterableQueries(queries);
     this.ui.update(false);
   }
@@ -228,7 +249,7 @@ class HtmlHighlighter {
    * is the last in the collection and thus it is not possible to move to the next query set, the
    * first query set is made active instead, thus ensuring that the cursor always rolls over.
    */
-  next() {
+  next(): void {
     // Do not worry about overflow; just increment it
     this.cursor.set(this.cursor.index + 1, false);
     this.ui.update(false);
@@ -243,7 +264,7 @@ class HtmlHighlighter {
    * set, the last query set is made active instead, thus ensuring that the cursor always rolls
    * over.
    */
-  prev() {
+  prev(): void {
     if (this.cursor.total <= 0) {
       return;
     }
@@ -261,7 +282,7 @@ class HtmlHighlighter {
    * @returns {Range|null} The current selected text range or `null` if it could not be
    * computed.
    */
-  getSelectedRange() {
+  getSelectedRange(): Range | null {
     const sel = window.getSelection();
 
     if (!(sel && sel.anchorNode)) {
@@ -304,7 +325,7 @@ class HtmlHighlighter {
       start = Range.descriptorRel(this.content.at(start), sel.anchorOffset);
 
       if (sel.focusNode === sel.anchorNode) {
-        end = $.extend(true, {}, start);
+        end = merge({}, start);
         end.offset = start.offset + len - 1;
       } else {
         end = Range.descriptorRel(this.content.at(end), sel.focusOffset - 1);
@@ -313,7 +334,7 @@ class HtmlHighlighter {
       start = Range.descriptorRel(this.content.at(end), sel.focusOffset);
 
       if (sel.focusNode === sel.anchorNode) {
-        end = $.extend(true, {}, start);
+        end = merge({}, start);
         end.offset = end.offset + len - 1;
       } else {
         end = Range.descriptorRel(this.content.at(start), sel.anchorOffset - 1);
@@ -329,7 +350,7 @@ class HtmlHighlighter {
    *
    * Only the Chrome and Firefox implementations are supported.
    */
-  clearSelectedRange() {
+  clearSelectedRange(): void {
     // From: http://stackoverflow.com/a/3169849/3001914
     // Note that we don't support IE at all.
     if (window.getSelection) {
@@ -348,7 +369,7 @@ class HtmlHighlighter {
    *
    * @returns {boolean} `false` if no query sets currently
    * contained; `true` otherwise. */
-  empty() {
+  empty(): boolean {
     // `some` returns `true` if a query containing highlights is found, so for the purpose of this
     // method, we need to reverse its value so it returns `false` in this case.
     return !Object.keys(this.queries).some(k => this.queries[k].length > 0);
@@ -360,7 +381,7 @@ class HtmlHighlighter {
    * @param {string} name - the name of the query set.
    * @returns {number} the last id or `-1` if query set empty.
    * */
-  lastIdOf(name) {
+  lastIdOf(name: string): number {
     const q = this.get_(name);
     const l = q.length;
     return l > 0 ? q.id + l - 1 : -1;
@@ -384,8 +405,8 @@ class HtmlHighlighter {
     const markers = this.highlights;
     const reserve = q.reserve > 0 ? q.reserve - q.length : null;
 
-    let count = 0,
-      csscl = null;
+    let count = 0;
+    let csscl = null;
 
     if (this.options.useQueryAsClass) {
       csscl = Css.highlight + '-' + name;
@@ -490,7 +511,7 @@ class HtmlHighlighter {
     // nodes means we have to refresh the offsets of the text nodes, which may not be desirable.
     // There must be a better way.
     if (this.options.normalise) {
-      this.options.container.get(0).normalize();
+      this.options.container.normalize();
       this.refresh();
     }
   }
@@ -536,7 +557,7 @@ class HtmlHighlighter {
   }
 
   deferred_add_(name, queries, enabled, reserve) {
-    if (!is_arr(queries)) {
+    if (!Array.isArray(queries)) {
       throw new Error('Invalid or no queries array specified');
     }
 
@@ -591,7 +612,7 @@ class HtmlHighlighter {
   }
 
   deferred_append_(name, queries, enabled) {
-    if (!is_arr(queries)) {
+    if (!Array.isArray(queries)) {
       throw new Error('Invalid or no queries array specified');
     } else if (!(name in this.queries)) {
       throw new Error('Invalid or query set not yet created');
@@ -617,8 +638,9 @@ class HtmlHighlighter {
       return;
     }
 
+    const { disabled: cssDisabled } = Css;
     for (let i = q.id, l = i + q.length; i < l; ++i) {
-      $('.' + Css.highlight + '-id-' + i).removeClass(Css.disabled);
+      dom.removeClass(dom.getHighlightElements(i), cssDisabled);
     }
 
     q.enabled = true;
@@ -633,8 +655,9 @@ class HtmlHighlighter {
       return;
     }
 
+    const { disabled: cssDisabled } = Css;
     for (let i = q.id, l = i + q.length; i < l; ++i) {
-      $('.' + Css.highlight + '-id-' + i).addClass(Css.disabled);
+      dom.addClass(dom.getHighlightElements(i), cssDisabled);
     }
 
     q.enabled = false;
@@ -659,9 +682,5 @@ class HtmlHighlighter {
     this.ui.update();
   }
 }
-
-/** Static attribute that sets the debug state for methods that don't have access to the `options`
- * descriptor and thus can't query the `debug` attribute. */
-HtmlHighlighter.debug = false;
 
 export default HtmlHighlighter;
