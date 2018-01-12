@@ -137,8 +137,6 @@ class Ui {
         } else {
           this.owner.disable(this.getName_($node));
         }
-
-        this.owner.apply();
       }
     });
 

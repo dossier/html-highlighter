@@ -26,8 +26,6 @@ class HtmlHighlighter {
   stats: Stats;
   lastId: number;
   content: TextContent;
-  // FIXME: drop reliance on `any`
-  transaction: Array<any>;
   queries: any;
   highlights: Array<any>;
 
@@ -40,7 +38,6 @@ class HtmlHighlighter {
     this.options = merge({}, defaults, options);
 
     // Mutable properties
-    this.transaction = [];
     this.queries = {};
     this.highlights = [];
 
@@ -98,19 +95,63 @@ class HtmlHighlighter {
    * @param {bool} enabled - If explicitly `false`, query set is disabled; otherwise enabled
    * @param {number} [reserve] - Number of highlights to reserve for query set
    *
-   * @returns {HTMLHighlighter} Self instance for chaining
+   * @returns {HtmlHighlighter} Self instance for chaining
    */
   add(
     name: string,
     queries: Array<string>,
     enabled: boolean = true,
     reserve: number | null = null
-  ) {
-    this.transaction.push(
-      function() {
-        this.deferred_add_(name, queries, enabled !== false, reserve);
-      }.bind(this)
-    );
+  ): HtmlHighlighter {
+    enabled = enabled === true;
+    if (typeof reserve !== 'number' || reserve < 1) {
+      reserve = null;
+    }
+
+    // Remove query set if it exists
+    if (name in this.queries) {
+      this.remove(name);
+    }
+
+    // TODO: rename `id_highlight` and `id` attributes below.  The former actually refers to the
+    // query set id and the latter to the first highlight in the query set.  Should have been
+    // refactored long ago!
+    let q = (this.queries[name] = {
+      name: name,
+      enabled: enabled,
+      id_highlight: this.stats.highlight,
+      id: this.lastId,
+      length: 0,
+    });
+
+    const count = this.add_queries_(name, q, queries, enabled);
+    if (reserve != null) {
+      if (reserve > count) {
+        this.lastId = reserve;
+        q.reserve = reserve;
+      } else {
+        console.error('Invalid or insufficient reserve specified');
+        q.reserve = count;
+      }
+    } else {
+      this.lastId += count;
+    }
+
+    // Update global statistics
+    ++this.stats.queries;
+
+    // Ensure CSS highlight class rolls over on overflow
+    ++this.stats.highlight;
+    if (this.stats.highlight >= this.options.maxHighlight) {
+      this.stats.highlight = 0;
+    }
+
+    this.cursor.clear();
+    this.ui.update();
+    if (HtmlHighlighter.debug === true) {
+      this.assert_();
+    }
+
     return this;
   }
 
@@ -125,14 +166,20 @@ class HtmlHighlighter {
    * @param {string[]} queries - Array containing individual queries to highlight.
    * @param {bool} enabled - If explicitly `true`, query set is also enabled.
    *
-   * @returns {HTMLHighlighter} Self instance for chaining
+   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  append(name: string, queries: Array<string>, enabled: boolean = false) {
-    this.transaction.push(
-      function() {
-        this.deferred_append_(name, queries, enabled !== false);
-      }.bind(this)
-    );
+  append(name: string, queries: Array<string>, enabled: boolean = false): HtmlHighlighter {
+    if (!(name in this.queries)) {
+      throw new Error('Invalid or query set not yet created');
+    }
+
+    this.add_queries_(name, this.queries[name], queries, enabled === true);
+    this.cursor.clear();
+    this.ui.update();
+    if (HtmlHighlighter.debug === true) {
+      this.assert_();
+    }
+
     return this;
   }
 
@@ -142,14 +189,12 @@ class HtmlHighlighter {
    * An exception is thrown if the query set does not exist.
    *
    * @param {string} name - Name of the query set to remove.
-   * @returns {HTMLHighlighter} Self instance for chaining
+   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  remove(name: string) {
-    this.transaction.push(
-      function() {
-        this.deferred_remove_(name);
-      }.bind(this)
-    );
+  remove(name: string): HtmlHighlighter {
+    this.remove_(name);
+    this.cursor.clear();
+    this.ui.update();
     return this;
   }
 
@@ -160,14 +205,23 @@ class HtmlHighlighter {
    * enabled, nothing is done.
    *
    * @param {string} name - Name of the query set to enable.
-   * @returns {HTMLHighlighter} Self instance for chaining
+   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  enable(name: string) {
-    this.transaction.push(
-      function() {
-        this.deferred_enable_(name);
-      }.bind(this)
-    );
+  enable(name: string): HtmlHighlighter {
+    const q = this.get_(name);
+    if (q.enabled || q.id === null) {
+      return this;
+    }
+
+    const { disabled: cssDisabled } = Css;
+    for (let i = q.id, l = i + q.length; i < l; ++i) {
+      dom.removeClass(dom.getHighlightElements(i), cssDisabled);
+    }
+
+    q.enabled = true;
+    this.stats.total += q.length;
+    this.cursor.clear();
+    this.ui.update(false);
     return this;
   }
 
@@ -178,14 +232,23 @@ class HtmlHighlighter {
    * disabled, nothing is done.
    *
    * @param {string} name - Name of the query set to disable.
-   * @returns {HTMLHighlighter} Self instance for chaining
+   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  disable(name: string) {
-    this.transaction.push(
-      function() {
-        this.deferred_disable_(name);
-      }.bind(this)
-    );
+  disable(name: string): HtmlHighlighter {
+    const q = this.get_(name);
+    if (!q.enabled || q.id === null) {
+      return this;
+    }
+
+    const { disabled: cssDisabled } = Css;
+    for (let i = q.id, l = i + q.length; i < l; ++i) {
+      dom.addClass(dom.getHighlightElements(i), cssDisabled);
+    }
+
+    q.enabled = false;
+    this.stats.total -= q.length;
+    this.cursor.clear();
+    this.ui.update(false);
     return this;
   }
 
@@ -195,38 +258,23 @@ class HtmlHighlighter {
    * Optionally, the last query set id can be reset.
    *
    * @param {boolean} reset - Last query set id is reset, if `true`.
-   * @returns {HTMLHighlighter} Self instance for chaining
+   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  clear(reset: boolean) {
-    this.transaction.push(
-      function() {
-        this.deferred_clear_(reset);
-      }.bind(this)
-    );
-    return this;
-  }
+  clear(reset: boolean): HtmlHighlighter {
+    Object.keys(this.queries).forEach(k => this.remove_(k));
 
-  /**
-   * Apply transaction
-   *
-   * Note that transactions are **not** atomic.  One failure does not lead to a transaction
-   * rollback or even interruption of execution; the transaction is applied regardless.
-   */
-  apply() {
-    if (this.transaction.length === 0) {
-      console.info('Nothing to apply: transaction queue empty');
-      return;
+    if (!is_obj_empty(this.queries)) {
+      throw new Error('Query set object not empty');
     }
 
-    this.transaction.forEach(function(action) {
-      try {
-        action();
-      } catch (x) {
-        console.error('Failed to apply action:', x);
-      }
-    });
+    if (reset) {
+      this.lastId = 0;
+      this.stats.highlight = 0;
+    }
 
-    this.transaction = [];
+    this.cursor.clear();
+    this.ui.update();
+    return this;
   }
 
   /**
@@ -400,7 +448,7 @@ class HtmlHighlighter {
    *
    * @returns {number} number of highlights added.
    * */
-  add_queries_(name, q, queries, enabled) {
+  add_queries_(name: string, q: any, queries: Array<string>, enabled: boolean): number {
     const content = this.content;
     const markers = this.highlights;
     const reserve = q.reserve > 0 ? q.reserve - q.length : null;
@@ -485,7 +533,7 @@ class HtmlHighlighter {
    *
    * @param {string} name - The name of the query set to remove.
    */
-  remove_(name) {
+  remove_(name: string): void {
     const q = this.get_(name);
     const markers = this.highlights;
     let unhighlighter = new RangeUnhighlighter();
@@ -524,7 +572,7 @@ class HtmlHighlighter {
    * @param {string} name - The name of the query set to retrieve.
    * @returns {Object} Query set descriptor
    */
-  get_(name) {
+  get_(name: string): any {
     const q = this.queries[name];
     if (q === undefined) {
       throw new Error('Query set non-existent');
@@ -532,7 +580,7 @@ class HtmlHighlighter {
     return q;
   }
 
-  assert_() {
+  assert_(): void {
     let k;
     let c = 0;
     let l = 0;
@@ -554,132 +602,6 @@ class HtmlHighlighter {
     if (k !== l) {
       throw new Error('Invalid state: length mismatch');
     }
-  }
-
-  deferred_add_(name, queries, enabled, reserve) {
-    if (!Array.isArray(queries)) {
-      throw new Error('Invalid or no queries array specified');
-    }
-
-    enabled = enabled === true;
-    if (typeof reserve !== 'number' || reserve < 1) {
-      reserve = null;
-    }
-
-    // Remove query set if it exists
-    if (name in this.queries) {
-      this.deferred_remove_(name);
-    }
-
-    // TODO: rename `id_highlight` and `id` attributes below.  The former actually refers to the
-    // query set id and the latter to the first highlight in the query set.  Should have been
-    // refactored long ago!
-    let q = (this.queries[name] = {
-      name: name,
-      enabled: enabled,
-      id_highlight: this.stats.highlight,
-      id: this.lastId,
-      length: 0,
-    });
-
-    const count = this.add_queries_(name, q, queries, enabled);
-    if (reserve != null) {
-      if (reserve > count) {
-        this.lastId = reserve;
-        q.reserve = reserve;
-      } else {
-        console.error('Invalid or insufficient reserve specified');
-        q.reserve = count;
-      }
-    } else {
-      this.lastId += count;
-    }
-
-    // Update global statistics
-    ++this.stats.queries;
-
-    // Ensure CSS highlight class rolls over on overflow
-    ++this.stats.highlight;
-    if (this.stats.highlight >= this.options.maxHighlight) {
-      this.stats.highlight = 0;
-    }
-
-    this.cursor.clear();
-    this.ui.update();
-    if (HtmlHighlighter.debug === true) {
-      this.assert_();
-    }
-  }
-
-  deferred_append_(name, queries, enabled) {
-    if (!Array.isArray(queries)) {
-      throw new Error('Invalid or no queries array specified');
-    } else if (!(name in this.queries)) {
-      throw new Error('Invalid or query set not yet created');
-    }
-
-    this.add_queries_(name, this.queries[name], queries, enabled === true);
-    this.cursor.clear();
-    this.ui.update();
-    if (HtmlHighlighter.debug === true) {
-      this.assert_();
-    }
-  }
-
-  deferred_remove_(name) {
-    this.remove_(name);
-    this.cursor.clear();
-    this.ui.update();
-  }
-
-  deferred_enable_(name) {
-    const q = this.get_(name);
-    if (q.enabled || q.id === null) {
-      return;
-    }
-
-    const { disabled: cssDisabled } = Css;
-    for (let i = q.id, l = i + q.length; i < l; ++i) {
-      dom.removeClass(dom.getHighlightElements(i), cssDisabled);
-    }
-
-    q.enabled = true;
-    this.stats.total += q.length;
-    this.cursor.clear();
-    this.ui.update(false);
-  }
-
-  deferred_disable_(name) {
-    const q = this.get_(name);
-    if (!q.enabled || q.id === null) {
-      return;
-    }
-
-    const { disabled: cssDisabled } = Css;
-    for (let i = q.id, l = i + q.length; i < l; ++i) {
-      dom.addClass(dom.getHighlightElements(i), cssDisabled);
-    }
-
-    q.enabled = false;
-    this.stats.total -= q.length;
-    this.cursor.clear();
-    this.ui.update(false);
-  }
-
-  deferred_clear_(reset) {
-    Object.keys(this.queries).forEach(k => this.remove_(k));
-
-    if (!is_obj_empty(this.queries)) {
-      throw new Error('Query set object not empty');
-    }
-
-    if (reset) {
-      this.lastId = 0;
-      this.stats.highlight = 0;
-    }
-
-    this.cursor.clear();
-    this.ui.update();
   }
 }
 

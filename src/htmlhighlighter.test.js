@@ -27,87 +27,84 @@ describe('HTML Highlighter', function() {
     it('initialises', function() {});
 
     it('adds a query set with a single mention', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
       assert.strictEqual(hl.stats.total, counts.the);
     });
 
     it('adds a query set with multiple mentions', function() {
       const id = hl.lastId;
-      hl.add('test-the-viber', ['the', 'viber']).apply();
+      hl.add('test-the-viber', ['the', 'viber']);
       const expecting = counts.the + counts.viber;
       attest.totalHighlights(expecting, 1);
       assert.strictEqual(hl.lastId, expecting + id);
     });
 
     it('does not allow duplicate query sets - I', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
     });
 
     it('does not allow duplicate query sets - II', function() {
-      hl
-        .add('test-the', ['the'])
-        .add('test-the', ['the'])
-        .apply();
+      hl.add('test-the', ['the']).add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
     });
 
     it('removes query set when only one exists', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.remove('test-the').apply();
+      hl.remove('test-the');
       attest.clear();
     });
 
     it('removes correct query set when multiple queries exist', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
-      hl.remove('test-the').apply();
+      hl.remove('test-the');
       attest.totalHighlights(counts.viber, 1);
     });
 
     it('removes all query sets when multiple queries exist', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
-      hl.remove('test-the').apply();
+      hl.remove('test-the');
       attest.totalHighlights(counts.viber, 1);
 
-      hl.remove('test-viber').apply();
+      hl.remove('test-viber');
       attest.clear();
     });
 
     it('clears state when only one query set exists', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.clear().apply();
+      hl.clear();
       attest.clear();
     });
 
     it('clears state when multiple query sets exist', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
-      hl.clear().apply();
+      hl.clear();
       attest.clear();
     });
   });
@@ -123,10 +120,10 @@ describe('HTML Highlighter', function() {
     });
 
     it('moves cursor to next element', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
       attest.cursor(-1);
@@ -135,10 +132,10 @@ describe('HTML Highlighter', function() {
     });
 
     it('moves cursor to previous element', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
       attest.cursor(-1);
@@ -151,10 +148,10 @@ describe('HTML Highlighter', function() {
     });
 
     it('moves cursor to last element', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
       for (let i = 0; i < counts.the + counts.viber; ++i) {
@@ -166,10 +163,10 @@ describe('HTML Highlighter', function() {
     });
 
     it('cursor rolls over to first element from last', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
       for (let i = 0; i < counts.the + counts.viber + 1; ++i) {
@@ -181,10 +178,10 @@ describe('HTML Highlighter', function() {
     });
 
     it('cursor rolls over to last element from first', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
       attest.cursor(-1);
@@ -193,10 +190,10 @@ describe('HTML Highlighter', function() {
     });
 
     it('cursor rolls over to last element from first and back', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
       attest.cursor(-1);
@@ -211,8 +208,8 @@ describe('HTML Highlighter', function() {
       beforeEach('initialise state', function() {
         hl = instance.init();
 
-        hl.add('test-the', ['the']).apply();
-        hl.add('test-viber', ['viber']).apply();
+        hl.add('test-the', ['the']);
+        hl.add('test-viber', ['viber']);
         attest.totalHighlights(counts.the + counts.viber, 2);
       });
 
@@ -331,22 +328,23 @@ describe('HTML Highlighter', function() {
     });
 
     it('correctly selects text after single query set add', function() {
-      hl.add('test-the', ['the']).apply();
+      hl.add('test-the', ['the']);
       assert.strictEqual(hl.stats.total, counts.the);
       ops.selectStandard();
     });
 
     it('correctly selects text after second query set add', function() {
-      hl.add('test-the', ['the']).apply();
-      hl.add('test-viber', ['viber']).apply();
+      hl.add('test-the', ['the']);
+      hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
       ops.selectStandard();
     });
 
     it('correctly selects text after dense query set add', function() {
-      hl.add('test-the', ['the']).apply();
-      hl.add('test-viber', ['viber']).apply();
-      hl.add('test-a', ['a']).apply();
+      hl
+        .add('test-the', ['the'])
+        .add('test-viber', ['viber'])
+        .add('test-a', ['a']);
       attest.totalHighlights(counts.the + counts.viber + counts.a, 3);
       ops.selectStandard();
     });
@@ -420,14 +418,14 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights query set from XPath representation with noise';
       it(is, function() {
-        hl.add('test-the', ['the']).apply();
+        hl.add('test-the', ['the']);
         ops.highlight('standard');
         attest.totalHighlights(counts.the + 1, 2);
       });
 
       is = 'highlights two query sets from XPath representations with noise';
       it(is, function() {
-        hl.add('test-the', ['the']).apply();
+        hl.add('test-the', ['the']);
         ops.highlight('standard');
         ops.highlight('wrapElement');
         attest.totalHighlights(counts.the + 2, 3);
@@ -435,7 +433,7 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights three query sets from XPath representations with noise';
       it(is, function() {
-        hl.add('test-viber', ['viber']).apply();
+        hl.add('test-viber', ['viber']);
         ops.highlight('standard');
         ops.highlight('wrapElement');
         ops.highlight('multiElement');
@@ -444,7 +442,7 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights four query sets from XPath representations with noise';
       it(is, function() {
-        hl.add('test-viber', ['viber']).apply();
+        hl.add('test-viber', ['viber']);
         ops.highlight('standard');
         ops.highlight('wrapElement');
         ops.highlight('multiElement');
@@ -464,23 +462,23 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights one query set from XPath representation with noise';
       it(is, function() {
-        hl.add('test-the', ['the']).apply();
+        hl.add('test-the', ['the']);
         ops.highlight('standard');
         attest.totalHighlights(counts.the + 1, 2);
 
-        hl.add('test-the-2', ['the']).apply();
+        hl.add('test-the-2', ['the']);
         ops.highlight('standard', 'standard-2');
         attest.totalHighlights((counts.the + 1) << 1, 4);
       });
 
       is = 'highlights two query sets from XPath representations with noise';
       it(is, function() {
-        hl.add('test-viber', ['viber']).apply();
+        hl.add('test-viber', ['viber']);
         ops.highlight('standard');
         ops.highlight('wrapElement');
         attest.totalHighlights(counts.viber + 2, 3);
 
-        hl.add('test-viber-2', ['viber']).apply();
+        hl.add('test-viber-2', ['viber']);
         ops.highlight('standard', 'standard-2');
         ops.highlight('wrapElement', 'wrapElement-2');
         attest.totalHighlights((counts.viber + 2) << 1, 6);
@@ -488,13 +486,13 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights three query sets from XPath representations with noise';
       it(is, function() {
-        hl.add('test-viber', ['viber']).apply();
+        hl.add('test-viber', ['viber']);
         ops.highlight('standard');
         ops.highlight('wrapElement');
         ops.highlight('multiElement');
         attest.totalHighlights(counts.viber + 3, 4);
 
-        hl.add('test-viber-2', ['viber']).apply();
+        hl.add('test-viber-2', ['viber']);
         ops.highlight('standard', 'standard-2');
         ops.highlight('wrapElement', 'wrapElement-2');
         ops.highlight('multiElement', 'multiElement-2');
@@ -503,14 +501,14 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights four query sets from XPath representations with noise';
       it(is, function() {
-        hl.add('test-viber', ['viber']).apply();
+        hl.add('test-viber', ['viber']);
         ops.highlight('standard');
         ops.highlight('wrapElement');
         ops.highlight('multiElement');
         ops.highlight('bottomup');
         attest.totalHighlights(counts.viber + 4, 5);
 
-        hl.add('test-viber-2', ['viber']).apply();
+        hl.add('test-viber-2', ['viber']);
         ops.highlight('standard', 'standard-2');
         ops.highlight('wrapElement', 'wrapElement-2');
         ops.highlight('multiElement', 'multiElement-2');
@@ -530,9 +528,10 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights one query set from XPath representation after dense ' + 'query set add';
       it(is, function() {
-        hl.add('test-the', ['the']).apply();
-        hl.add('test-viber', ['viber']).apply();
-        hl.add('test-a', ['a']).apply();
+        hl
+          .add('test-the', ['the'])
+          .add('test-viber', ['viber'])
+          .add('test-a', ['a']);
         attest.totalHighlights(counts.the + counts.viber + counts.a, 3);
 
         ops.highlight('standard');
@@ -541,9 +540,10 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights two query sets from XPath representation after dense ' + 'query set add';
       it(is, function() {
-        hl.add('test-the', ['the']).apply();
-        hl.add('test-viber', ['viber']).apply();
-        hl.add('test-a', ['a']).apply();
+        hl
+          .add('test-the', ['the'])
+          .add('test-viber', ['viber'])
+          .add('test-a', ['a']);
         attest.totalHighlights(counts.the + counts.viber + counts.a, 3);
 
         ops.highlight('standard');
@@ -553,9 +553,10 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights three query sets from XPath representation after dense ' + 'query set add';
       it(is, function() {
-        hl.add('test-the', ['the']).apply();
-        hl.add('test-viber', ['viber']).apply();
-        hl.add('test-a', ['a']).apply();
+        hl
+          .add('test-the', ['the'])
+          .add('test-viber', ['viber'])
+          .add('test-a', ['a']);
         attest.totalHighlights(counts.the + counts.viber + counts.a, 3);
 
         ops.highlight('standard');
@@ -566,9 +567,10 @@ describe('HTML Highlighter', function() {
 
       is = 'highlights four query sets from XPath representation after dense ' + 'query set add';
       it(is, function() {
-        hl.add('test-the', ['the']).apply();
-        hl.add('test-viber', ['viber']).apply();
-        hl.add('test-a', ['a']).apply();
+        hl
+          .add('test-the', ['the'])
+          .add('test-viber', ['viber'])
+          .add('test-a', ['a']);
         attest.totalHighlights(counts.the + counts.viber + counts.a, 3);
 
         ops.highlight('standard');

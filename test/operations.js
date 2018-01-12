@@ -136,7 +136,7 @@ function highlight(name, qsetname) {
   }
 
   const hl = instance.get();
-  hl.add('test-' + qsetname, [tests[name].xpath]).apply();
+  hl.add('test-' + qsetname, [tests[name].xpath]);
   attest.highlight(hl.lastId - 1, tests[name].text);
 }
 

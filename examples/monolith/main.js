@@ -59,7 +59,7 @@ function init() {
 
   $add.click(function() {
     const name = $search.val();
-    highlighter.add(name, [name], true).apply();
+    highlighter.add(name, [name], true);
     $search.select().focus();
   });
 
@@ -153,7 +153,7 @@ function init() {
 }
 
 function load(index) {
-  highlighter.clear().apply();
+  highlighter.clear();
   container.innerHTML = data[index];
   highlighter.refresh();
   $search.focus();
