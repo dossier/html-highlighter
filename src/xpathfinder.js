@@ -76,7 +76,7 @@ class XpathFinder extends Finder {
     }
 
     // Save global character offset and relative start and end offsets in descriptor.
-    this.results.push({ start: start, end: end });
+    this.results.push({ start, end });
   }
 
   /**
