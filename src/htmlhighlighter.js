@@ -345,16 +345,18 @@ class HtmlHighlighter {
     // Strangely, if the selection spans more than one element, one may simply use the length of
     // the selected text regardless of the occurrence of whitespace in between.
     const len =
-      sel.anchorNode === sel.focusNode ? sel.focusOffset - sel.anchorOffset : sel.toString().length;
+      sel.anchorNode === sel.focusNode
+        ? Math.abs(sel.focusOffset - sel.anchorOffset)
+        : sel.toString().length;
     if (len <= 0) {
       return null;
     }
 
     // Determine start and end indices in text offset markers array
-    let start = this.content.find(sel.anchorNode);
-    let end = sel.focusNode === sel.anchorNode ? start : this.content.find(sel.focusNode);
-
-    if (start < 0 || end < 0) {
+    const startOffset = this.content.find(sel.anchorNode);
+    const endOffset =
+      sel.focusNode === sel.anchorNode ? startOffset : this.content.find(sel.focusNode);
+    if (startOffset < 0 || endOffset < 0) {
       console.error(
         'Unable to retrieve offset of selection anchor or focus node(s)',
         sel.anchorNode,
@@ -365,27 +367,31 @@ class HtmlHighlighter {
 
     // Create start and end range descriptors, whilst accounting for inverse selection where the
     // user selects text in a right to left orientation.
-    if (start < end || (start === end && sel.anchorOffset < sel.focusOffset)) {
-      start = Range.descriptorRel(this.content.at(start), sel.anchorOffset);
+    let startDescr, endDescr;
+    if (
+      startOffset < endOffset ||
+      (startOffset === endOffset && sel.anchorOffset < sel.focusOffset)
+    ) {
+      startDescr = Range.descriptorRel(this.content.at(startOffset), sel.anchorOffset);
 
       if (sel.focusNode === sel.anchorNode) {
-        end = merge({}, start);
-        end.offset = start.offset + len - 1;
+        endDescr = merge({}, startDescr);
+        endDescr.offset += len - 1;
       } else {
-        end = Range.descriptorRel(this.content.at(end), sel.focusOffset - 1);
+        endDescr = Range.descriptorRel(this.content.at(endOffset), sel.focusOffset - 1);
       }
     } else {
-      start = Range.descriptorRel(this.content.at(end), sel.focusOffset);
+      startDescr = Range.descriptorRel(this.content.at(endOffset), sel.focusOffset);
 
       if (sel.focusNode === sel.anchorNode) {
-        end = merge({}, start);
-        end.offset = end.offset + len - 1;
+        endDescr = merge({}, startDescr);
+        endDescr.offset += len - 1;
       } else {
-        end = Range.descriptorRel(this.content.at(start), sel.anchorOffset - 1);
+        endDescr = Range.descriptorRel(this.content.at(startOffset), sel.anchorOffset - 1);
       }
     }
 
-    return new Range(this.content, start, end);
+    return new Range(this.content, startDescr, endDescr);
   }
   /* eslint-enable complexity */
 
