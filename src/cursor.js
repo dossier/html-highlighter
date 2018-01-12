@@ -153,11 +153,9 @@ class Cursor {
    * over.
    */
   prev(): void {
-    if (this.total <= 0) {
-      return;
+    if (this.total > 0) {
+      this.set((this.index < 1 ? this.total : this.index) - 1, false);
     }
-
-    this.set((this.index < 1 ? this.total : this.index) - 1, false);
   }
 
   /**
