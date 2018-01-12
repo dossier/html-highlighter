@@ -290,20 +290,6 @@ class HtmlHighlighter {
   }
 
   /**
-   * Move cursor position to the next query in the active query set
-   *
-   * If the cursor moves past the last query in the active query set, the active query set moves to
-   * the next available one and the cursor position to its first query.  If the current query set
-   * is the last in the collection and thus it is not possible to move to the next query set, the
-   * first query set is made active instead, thus ensuring that the cursor always rolls over.
-   */
-  next(): void {
-    // Do not worry about overflow; just increment it
-    this.cursor.set(this.cursor.index + 1, false);
-    this.ui.update(false);
-  }
-
-  /**
    * Move cursor position to the previous query in the active query set
    *
    * If the cursor moves past the first query in the active query set, the active query set moves
@@ -313,11 +299,20 @@ class HtmlHighlighter {
    * over.
    */
   prev(): void {
-    if (this.cursor.total <= 0) {
-      return;
-    }
+    this.cursor.prev();
+    this.ui.update(false);
+  }
 
-    this.cursor.set((this.cursor.index < 1 ? this.cursor.total : this.cursor.index) - 1, false);
+  /**
+   * Move cursor position to the next query in the active query set
+   *
+   * If the cursor moves past the last query in the active query set, the active query set moves to
+   * the next available one and the cursor position to its first query.  If the current query set
+   * is the last in the collection and thus it is not possible to move to the next query set, the
+   * first query set is made active instead, thus ensuring that the cursor always rolls over.
+   */
+  next(): void {
+    this.cursor.next();
     this.ui.update(false);
   }
 
