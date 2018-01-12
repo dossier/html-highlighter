@@ -6,7 +6,6 @@ import * as attest from './attest';
 import { tests } from './tests';
 
 const { assert, expect } = chai;
-const { container } = instance;
 
 function dedup(arr) {
   const seen = {};
@@ -26,16 +25,16 @@ function dedup(arr) {
 
 function select(sn, so, en, eo) {
   let result;
-  const range = window.document.createRange();
+  const range = document.createRange();
   const sel = window.getSelection();
 
   if (!sel) {
     throw new Error('Unsupported: window.getSelection');
   }
 
-  const hl = instance.get();
+  const { highlighter, container } = instance.get('all');
   container.style.display = 'block';
-  hl.clearSelectedRange();
+  highlighter.clearSelectedRange();
 
   range.setStart(sn, so);
   range.setEnd(en, eo);
@@ -43,7 +42,7 @@ function select(sn, so, en, eo) {
   sel.removeAllRanges();
   sel.addRange(range);
 
-  result = hl.getSelectedRange();
+  result = highlighter.getSelectedRange();
   container.style.display = 'none';
 
   return result;
