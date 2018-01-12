@@ -3,7 +3,7 @@
 
 import chai from 'chai';
 
-import { init } from '../test/instance';
+import * as instance from '../test/instance';
 import * as ops from '../test/operations';
 import { counts } from '../test/tests';
 import * as attest from '../test/attest';
@@ -17,7 +17,7 @@ describe('HTML Highlighter', function() {
 
   describe('General', function() {
     beforeEach('initialise state', function() {
-      hl = init();
+      hl = instance.init();
     });
 
     afterEach('destroy state', function() {
@@ -43,6 +43,7 @@ describe('HTML Highlighter', function() {
     it('does not allow duplicate query sets - I', function() {
       hl.add('test-the', ['the']).apply();
       attest.totalHighlights(counts.the, 1);
+
       hl.add('test-the', ['the']).apply();
       attest.totalHighlights(counts.the, 1);
     });
@@ -113,7 +114,7 @@ describe('HTML Highlighter', function() {
 
   describe('Cursor movement', function() {
     beforeEach('initialise state', function() {
-      hl = init();
+      hl = instance.init();
       attest.cursor(-1);
     });
 
@@ -208,7 +209,7 @@ describe('HTML Highlighter', function() {
 
     describe('Iterable queries', function() {
       beforeEach('initialise state', function() {
-        hl = init();
+        hl = instance.init();
 
         hl.add('test-the', ['the']).apply();
         hl.add('test-viber', ['viber']).apply();
@@ -318,7 +319,7 @@ describe('HTML Highlighter', function() {
 
   describe('Text selection', function() {
     beforeEach('initialise state', function() {
-      hl = init();
+      hl = instance.init();
     });
 
     afterEach('destroy state', function() {
@@ -354,7 +355,7 @@ describe('HTML Highlighter', function() {
   describe('XPath', function() {
     describe('Basic', function() {
       beforeEach('initialise state', function() {
-        hl = init();
+        hl = instance.init();
       });
 
       afterEach('destroy state', function() {
@@ -410,7 +411,7 @@ describe('HTML Highlighter', function() {
 
     describe('Low noise', function() {
       beforeEach('initialise state', function() {
-        hl = init();
+        hl = instance.init();
       });
 
       afterEach('destroy state', function() {
@@ -454,7 +455,7 @@ describe('HTML Highlighter', function() {
 
     describe('Duplicate and noise', function() {
       beforeEach('initialise state', function() {
-        hl = init();
+        hl = instance.init();
       });
 
       afterEach('destroy state', function() {
@@ -520,7 +521,7 @@ describe('HTML Highlighter', function() {
 
     describe('Dense noise', function() {
       beforeEach('initialise state', function() {
-        hl = init();
+        hl = instance.init();
       });
 
       afterEach('destroy state', function() {
@@ -581,43 +582,43 @@ describe('HTML Highlighter', function() {
 
   describe('Special character handling', function() {
     it('creates a highlight encompassing an ampersand', function() {
-      hl = init(1);
+      hl = instance.init(1);
       ops.highlight('wampersand-n');
       attest.totalHighlights(1, 1);
 
-      hl = init(2);
+      hl = instance.init(2);
       ops.highlight('wampersand-&');
       attest.totalHighlights(1, 1);
 
-      hl = init(3);
+      hl = instance.init(3);
       ops.highlight('wampersand-&');
       attest.totalHighlights(1, 1);
     });
 
     it('creates a highlight starting at an ampersand', function() {
-      hl = init(1);
+      hl = instance.init(1);
       ops.highlight('sampersand-n');
       attest.totalHighlights(1, 1);
 
-      hl = init(2);
+      hl = instance.init(2);
       ops.highlight('sampersand-&');
       attest.totalHighlights(1, 1);
 
-      hl = init(3);
+      hl = instance.init(3);
       ops.highlight('sampersand-&');
       attest.totalHighlights(1, 1);
     });
 
     it('creates a highlight ending at an ampersand', function() {
-      hl = init(1);
+      hl = instance.init(1);
       ops.highlight('eampersand-n');
       attest.totalHighlights(1, 1);
 
-      hl = init(2);
+      hl = instance.init(2);
       ops.highlight('eampersand-&');
       attest.totalHighlights(1, 1);
 
-      hl = init(3);
+      hl = instance.init(3);
       ops.highlight('eampersand-&');
       attest.totalHighlights(1, 1);
     });
