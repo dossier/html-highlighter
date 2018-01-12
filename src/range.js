@@ -89,7 +89,7 @@ class Range {
 
     // TODO: we assume `visitor.next()' will never return null because `end´ is within bounds
     while (visitor.next() !== end) {
-      coll.push(visitor.current);
+      coll.push((visitor.current: any));
     }
 
     // Apply highlighting to start and end nodes, and to any nodes in between, if applicable.
@@ -139,7 +139,7 @@ class Range {
 
     // Add (whole) lengths of text nodes in between
     while (visitor.next() !== end) {
-      length += visitor.current.nodeValue.length;
+      length += (visitor.current: any).nodeValue.length;
     }
 
     return length;

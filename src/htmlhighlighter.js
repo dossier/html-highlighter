@@ -12,7 +12,6 @@ import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
 import Range from './range';
 import Cursor from './cursor';
-import { is_obj_empty } from './util';
 import * as constructor from './constructor';
 
 export type Stats = {|
@@ -20,6 +19,22 @@ export type Stats = {|
   total: number,
   highlight: number,
 |};
+
+export type QuerySet = {|
+  name: string,
+  enabled: boolean,
+  id_highlight: number,
+  id: number,
+  length: number,
+  reserve: number | null,
+|};
+
+export type Marker = {|
+  query: QuerySet,
+  index: number,
+  offset: number,
+|};
+
 /**
  * Main class of the HTML Highlighter module, which exposes an API enabling
  * clients to control all the features supported related to highlighting and
@@ -32,8 +47,8 @@ class HtmlHighlighter {
   stats: Stats;
   lastId: number;
   content: TextContent;
-  queries: any;
-  highlights: Array<any>;
+  queries: Map<string, QuerySet>;
+  highlights: Array<Marker>;
 
   /** Static attribute that sets the debug state for methods that don't have access to the
    * `options` descriptor and thus can't query the `debug` attribute. */
@@ -44,7 +59,7 @@ class HtmlHighlighter {
     this.options = merge({}, defaults, options);
 
     // Mutable properties
-    this.queries = {};
+    this.queries = new Map();
     this.highlights = [];
 
     // TODO: rename attribute to something else that makes it clear it refers to the next highlight
@@ -97,7 +112,7 @@ class HtmlHighlighter {
    * Note that, at this point in time, only string queries and XPath representations are supported.
    *
    * @param {string} name - Name of the query set
-   * @param {Array<string>} queries - Array containing individual queries to highlight
+   * @param {Array<any>} queries - Array containing individual queries to highlight
    * @param {bool} enabled - If explicitly `false`, query set is disabled; otherwise enabled
    * @param {number} [reserve] - Number of highlights to reserve for query set
    *
@@ -105,7 +120,7 @@ class HtmlHighlighter {
    */
   add(
     name: string,
-    queries: Array<string>,
+    queries: Array<any>,
     enabled: boolean = true,
     reserve: number | null = null
   ): HtmlHighlighter {
@@ -115,29 +130,32 @@ class HtmlHighlighter {
     }
 
     // Remove query set if it exists
-    if (name in this.queries) {
+    if (this.queries.has(name)) {
       this.remove(name);
     }
 
     // TODO: rename `id_highlight` and `id` attributes below.  The former actually refers to the
     // query set id and the latter to the first highlight in the query set.  Should have been
     // refactored long ago!
-    let q = (this.queries[name] = {
-      name: name,
-      enabled: enabled,
+    const querySet: QuerySet = {
+      name,
+      enabled,
       id_highlight: this.stats.highlight,
       id: this.lastId,
       length: 0,
-    });
+      reserve: null,
+    };
 
-    const count = this.add_queries_(name, q, queries, enabled);
+    this.queries.set(name, querySet);
+
+    const count = this.add_queries_(querySet, queries, enabled);
     if (reserve != null) {
       if (reserve > count) {
         this.lastId = reserve;
-        q.reserve = reserve;
+        querySet.reserve = reserve;
       } else {
         console.error('Invalid or insufficient reserve specified');
-        q.reserve = count;
+        querySet.reserve = count;
       }
     } else {
       this.lastId += count;
@@ -175,11 +193,12 @@ class HtmlHighlighter {
    * @returns {HtmlHighlighter} Self instance for chaining
    */
   append(name: string, queries: Array<string>, enabled: boolean = false): HtmlHighlighter {
-    if (!(name in this.queries)) {
+    const query = this.queries.get(name);
+    if (query == null) {
       throw new Error('Invalid or query set not yet created');
     }
 
-    this.add_queries_(name, this.queries[name], queries, enabled === true);
+    this.add_queries_(query, queries, enabled === true);
     this.cursor.clear();
     this.ui.update();
     if (HtmlHighlighter.debug === true) {
@@ -267,9 +286,12 @@ class HtmlHighlighter {
    * @returns {HtmlHighlighter} Self instance for chaining
    */
   clear(reset: boolean): HtmlHighlighter {
-    Object.keys(this.queries).forEach(k => this.remove_(k));
+    for (const [name] of this.queries) {
+      this.remove_(name);
+    }
 
-    if (!is_obj_empty(this.queries)) {
+    // Sanity check
+    if (!this.empty()) {
       throw new Error('Query set object not empty');
     }
 
@@ -425,9 +447,7 @@ class HtmlHighlighter {
    * @returns {boolean} `false` if no query sets currently
    * contained; `true` otherwise. */
   empty(): boolean {
-    // `some` returns `true` if a query containing highlights is found, so for the purpose of this
-    // method, we need to reverse its value so it returns `false` in this case.
-    return !Object.keys(this.queries).some(k => this.queries[k].length > 0);
+    return this.queries.size === 0;
   }
 
   /**
@@ -447,43 +467,47 @@ class HtmlHighlighter {
   /**
    * Add or append queries to a query set, either enabled or disabled
    *
-   * @param {string} name - the name of the query set.
-   * @param {Object} q - query set descriptor.
-   * @param {Array} queries - array containing the queries to add or append.
+   * @param {QUerySet} querySet - query set descriptor.
+   * @param {Array<any>} queries - array containing the queries to add or append.
    * @param {boolean} enabled - highlights are enabled if `true`;
    * this is the default state.
    *
    * @returns {number} number of highlights added.
    * */
-  add_queries_(name: string, q: any, queries: Array<string>, enabled: boolean): number {
+  add_queries_(querySet: any, queries: Array<any>, enabled: boolean): number {
     const content = this.content;
     const markers = this.highlights;
-    const reserve = q.reserve > 0 ? q.reserve - q.length : null;
+    const reserve = querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
 
     let count = 0;
     let csscl = null;
 
     if (this.options.useQueryAsClass) {
-      csscl = Css.highlight + '-' + name;
+      csscl = Css.highlight + '-' + querySet.name;
     }
 
-    let highlighter = new RangeHighlighter(q.id_highlight, q.id + q.length, enabled, csscl);
+    let highlighter = new RangeHighlighter(
+      querySet.id_highlight,
+      querySet.id + querySet.length,
+      enabled,
+      csscl
+    );
 
     // For each query, perform a lookup in the internal text representation and highlight each hit.
     // The global offset of each highlight is recorded in the `this.highlights´ array.  The offset
     // is used by the `Cursor´ class to compute the next/previous highlight to show.
-    queries.forEach(function(i) {
+    queries.forEach((subject: any): void => {
       let hit, finder;
 
       try {
-        finder = constructor.finder(content, i);
+        finder = constructor.finder(content, subject);
       } catch (x) {
-        console.error('exception: ', x);
+        console.error('exception:', x);
         return;
       }
 
       if (hit === false) {
-        console.info('Query has no hits: ', i);
+        console.info('Query has no hits:', subject);
         return;
       }
 
@@ -512,7 +536,7 @@ class HtmlHighlighter {
         }
 
         markers.splice(markers.length > 0 && markers[min].offset < offset ? min + 1 : min, 0, {
-          query: q,
+          query: querySet,
           index: count,
           offset: offset,
         });
@@ -527,10 +551,11 @@ class HtmlHighlighter {
       }
     });
 
-    q.length += count;
+    querySet.length += count;
     if (enabled) {
       this.stats.total += count;
     }
+
     return count;
   }
 
@@ -562,7 +587,7 @@ class HtmlHighlighter {
       }
     }
 
-    delete this.queries[name];
+    this.queries.delete(name);
 
     // TODO: Unfortunately, using the built-in `normalize` `HTMLElement` method to normalise text
     // nodes means we have to refresh the offsets of the text nodes, which may not be desirable.
@@ -579,12 +604,12 @@ class HtmlHighlighter {
    * Throws an exception if the query set does not exist.
    *
    * @param {string} name - The name of the query set to retrieve.
-   * @returns {Object} Query set descriptor
+   * @returns {QuerySet} Query set descriptor
    */
-  get_(name: string): any {
-    const q = this.queries[name];
-    if (q === undefined) {
-      throw new Error('Query set non-existent');
+  get_(name: string): QuerySet {
+    const q = this.queries.get(name);
+    if (q == null) {
+      throw new Error(`Query set non-existent: ${name}`);
     }
     return q;
   }
@@ -594,9 +619,9 @@ class HtmlHighlighter {
     let c = 0;
     let l = 0;
 
-    Object.keys(this.queries).forEach(ki => {
-      l += this.queries[ki].length;
-    });
+    for (const [, query] of this.queries) {
+      l += query.length;
+    }
 
     k = 0;
     this.highlights.forEach(function(i) {

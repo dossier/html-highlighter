@@ -102,6 +102,7 @@ class Cursor {
 
     markers.some(function(m, i) {
       const q = m.query;
+
       if (!q.enabled) {
         return false;
       } else if (iterable !== null && iterable.indexOf(q.name) < 0) {
