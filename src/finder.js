@@ -31,12 +31,12 @@ class Finder {
    * @abstract
    * Return next available match
    *
-   * If no more matches available, returns `false`.
+   * If no more matches available, returns `null`.
    *
-   * @returns {Range|false} Returns a `Range` if a match is available, or `false` if no more
+   * @returns {Range | null} Returns a `Range` if a match is available, or `null` if no more
    * matches are available.
    */
-  next() {
+  next(): Range | null {
     util.abstract();
   }
 

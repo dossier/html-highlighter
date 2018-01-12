@@ -12,7 +12,8 @@ import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
 import Range from './range';
 import Cursor from './cursor';
-import { is_obj_empty, constructFinder } from './util';
+import { is_obj_empty } from './util';
+import * as constructor from './constructor';
 
 /**
  * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -464,7 +465,7 @@ class HtmlHighlighter {
       let hit, finder;
 
       try {
-        finder = constructFinder(content, i);
+        finder = constructor.finder(content, i);
       } catch (x) {
         console.error('exception: ', x);
         return;
@@ -477,7 +478,7 @@ class HtmlHighlighter {
 
       // Note: insertion of global offsets to the `this.highlights` array could (should?) be done
       // in a web worker concurrently.
-      while ((hit = finder.next()) !== false) {
+      while ((hit = finder.next()) !== null) {
         if (reserve !== null && count >= reserve) {
           console.error('highlight reserve exceeded');
           break;

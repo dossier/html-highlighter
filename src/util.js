@@ -3,9 +3,6 @@
 
 import $ from 'jquery';
 
-import TextFinder from './textfinder';
-import XpathFinder from './xpathfinder';
-
 export function abstract() {
   throw new Error('Abstract method not implemented');
 }
@@ -33,19 +30,4 @@ export function is_obj_empty(x) {
   }
 
   return Object.keys(x).length === 0;
-}
-
-/**
- * Construct appropriate `Finder`-derived class for a given subject
- *
- * @param {TextContent} content - reference to `TextContent` holding a text representation of the
- * document
- * @param {*} subject - subject to find; can be of any type
- *
- * @returns {Finder} finder instance ready for use
- */
-export function constructFinder(content, subject) {
-  return is_str(subject) || subject instanceof RegExp
-    ? new TextFinder(content, subject)
-    : new XpathFinder(content, subject);
 }

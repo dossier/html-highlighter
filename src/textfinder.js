@@ -6,18 +6,32 @@ import TextContent from './textcontent';
 import Finder from './finder';
 import Range from './range';
 
+export type TextSubject = string | RegExp;
+
 /* FIXME: create a class for matching of regular expression subjects. */
 /**
  * Class responsible for finding text in a `TextContent` instance
  */
 class TextFinder extends Finder {
   /**
+   * Determine if given subject is of type accepted by the `TextFinder` class
+   *
+   * This method determines if a given subject can be used to instantiate a `TextFinder` class.
+   *
+   * @param {any} subject - Subject to determine
+   * @returns {boolean} `true` if subject can be used to instantiate a `TextFinder` class
+   */
+  static isSubject(subject: any): boolean {
+    return typeof subject === 'string' || subject instanceof RegExp;
+  }
+
+  /**
    * Class constructor
    *
    * @param {TextContent} content - Reference to `TextContent` instance
-   * @param {string} subject - Subject string to match
+   * @param {TextFinderSubject} subject - Subject string to match
    */
-  constructor(content: TextContent, subject: string) {
+  constructor(content: TextContent, subject: TextSubject) {
     // Construct base class
     super(content);
 
@@ -34,14 +48,14 @@ class TextFinder extends Finder {
   }
 
   /**
-   * Return next available match.
+   * Return next available match
    *
-   * @returns {Range|false} Returns a `Range` if a match is available, or `false` if no more
+   * @returns {Range | null} Returns a `Range` if a match is available, or `null` if no more
    * matches are available.
    */
-  next(): Range {
+  next(): Range | null {
     if (this.current >= this.results.length) {
-      return false;
+      return null;
     }
 
     const match = this.results[this.current];
