@@ -71,9 +71,7 @@ class XpathFinder extends Finder {
 
     /*     console.log("DEBUG start = ", start, "end = ", end, subject); */
 
-    if (start === end) {
-      throw new Error('Invalid XPath representation: start == end');
-    } else if (start > end) {
+    if (start > end) {
       throw new Error('Invalid XPath representation: start > end');
     }
 
