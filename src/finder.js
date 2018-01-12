@@ -5,6 +5,7 @@ import TextContent from './textcontent';
 import * as util from './util';
 /* eslint-enable camelcase */
 import Range from './range';
+import type { RangeDescriptor } from './range';
 
 export type MatchResult = {| length: number, index: number |};
 
@@ -36,6 +37,7 @@ class Finder {
    * @returns {Range | null} Returns a `Range` if a match is available, or `null` if no more
    * matches are available.
    */
+  // $FlowFixMe: below signature is needed in specialized classes
   next(): Range | null {
     util.abstract();
   }
@@ -47,10 +49,9 @@ class Finder {
    * @access private
    *
    * @param {number} offset - Text offset
-   * @returns {Object} Range descriptor
+   * @returns {RangeDescriptor} Range descriptor
    */
-  // FIXME: return type is incorrect
-  getAt_(offset: number): void {
+  getAt_(offset: number): RangeDescriptor {
     const index = this.content.indexOf(offset);
     if (index === -1) {
       throw new Error('Failed to retrieve marker for offset: ' + offset);

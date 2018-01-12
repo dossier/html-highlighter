@@ -484,6 +484,7 @@ class HtmlHighlighter {
           break;
         }
 
+        // $FlowFixMe: dumbo flow! `hit` cannot be `null` as per condition in `while`
         const offset = hit.start.marker.offset + hit.start.offset;
         let mid;
         let min = 0;
@@ -506,6 +507,7 @@ class HtmlHighlighter {
         });
 
         try {
+          // $FlowFixMe: dumbo flow! `hit` cannot be `null` as per condition in `while` above
           highlighter.do(hit);
           ++count;
         } catch (x) {

@@ -50,7 +50,7 @@ function getAllHighlightElements(additionalClass: string | null = null): NodeLis
   return document.querySelectorAll(`.${Css.highlight}${otherClass}`);
 }
 
-function createHighlightElement(node: HTMLElement, className: string): HTMLElement {
+function createHighlightElement(node: HTMLElement | Node, className: string): HTMLElement {
   const span = document.createElement('span');
   span.className = className;
   (node.parentNode: any).insertBefore(span, node);

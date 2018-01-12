@@ -183,13 +183,13 @@ class TextContent {
    *
    * @returns {number} The marker index of `element` or `-1` if not found.
    */
-  find(element: Node, start: number): number {
+  find(element: Node, start: ?number = 0): number {
     if (element.nodeType !== 3) {
       return -1;
     }
 
     for (
-      let i = start === undefined ? 0 : start, l = this.markers.length;
+      let i = start == null ? 0 : start, l = this.markers.length;
       i < l;
       ++i // eslint-disable-line indent
     ) {

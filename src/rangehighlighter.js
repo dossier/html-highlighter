@@ -9,16 +9,16 @@ import Range from './range';
  * @param {number} count - The CSS highlight class index to use
  * @param {number} id - The individual id to apply to the highlight
  * @param {bool} enabled - If explicitly `false`, highlights are created but not shown
- * @param {string} cssClass - Additional CSS class to use
+ * @param {string | null} cssClass - Additional CSS class to use
  */
 class RangeHighlighter {
   id: number;
   classes: string;
 
-  constructor(count: number, id: number, enabled: boolean, cssClass: string) {
+  constructor(count: number, id: number, enabled: boolean, cssClass: string | null) {
     const classes = [Css.highlight, `${Css.highlight}-${count}`];
 
-    if (cssClass) {
+    if (cssClass != null) {
       classes.push(cssClass);
     }
 
