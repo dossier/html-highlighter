@@ -8,7 +8,7 @@ const { assert } = chai;
 
 function clear() {
   assert.strictEqual(
-    document.querySelectorAll('.hh-highlight').length,
+    instance.querySelectorAll('.hh-highlight').length,
     0,
     'there are no highlights'
   );
@@ -20,20 +20,22 @@ function totalHighlights(hc, qc = 1) {
   const queries = new Set();
   const highlights = new Set();
 
-  for (const el of document.querySelectorAll('.hh-highlight')) {
+  for (const el of instance.querySelectorAll('.hh-highlight')) {
+    /* eslint-disable no-empty */
     try {
       const qid = el.className.match(/hh-highlight-(\d+)/)[1];
       const hid = el.className.match(/hh-highlight-id-(\d+)/)[1];
       queries.add(qid);
       highlights.add(hid);
     } catch (x) {}
+    /* eslint-enable no-empty */
   }
 
   const hl = instance.get();
   assert.strictEqual(queries.size, qc);
   assert.strictEqual(highlights.size, hc);
-  assert.strictEqual(hl.stats.total, hc);
   assert.strictEqual(hl.stats.queries, qc);
+  assert.strictEqual(hl.stats.total, hc);
 }
 
 function selectionRange(range) {
@@ -55,7 +57,7 @@ function highlight(id, text) {
   let l = 0;
   let t = '';
 
-  for (const el of document.querySelectorAll(`.hh-highlight-id-${id}`)) {
+  for (const el of instance.querySelectorAll(`.hh-highlight-id-${id}`)) {
     l += ops.lengthOf(el);
     t += ops.textOf(el);
   }

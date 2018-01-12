@@ -106,7 +106,7 @@ function textOf(node) {
 }
 
 function selectStandard() {
-  const p = document.querySelectorAll('p')[2];
+  const p = instance.querySelectorAll('p')[2];
   const ft = firstTextOf(p);
   const lt = lastTextOf(p);
   let result;

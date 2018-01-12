@@ -38,10 +38,31 @@ function init(ndx) {
 function getOptions() {
   return { container, maxHighlight: 100 };
 }
+
+function get(what) {
+  switch (what) {
+    case undefined:
+    case null:
+    case 'instance':
+      return instance;
+
+    case 'container':
+      return container;
+
+    case 'all':
+      return { container, highlighter: instance };
+
+    default:
+      throw new Error(`Unknown type: ${what}`);
+  }
 }
 
-function get() {
-  return hl;
+function querySelector(selector) {
+  return container.querySelector(selector);
 }
 
-export { container, init, get };
+function querySelectorAll(selector) {
+  return container.querySelectorAll(selector);
+}
+
+export { init, get, querySelector, querySelectorAll };
