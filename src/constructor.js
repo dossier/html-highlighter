@@ -19,8 +19,8 @@ import type { XpathSubject } from './xpathfinder';
 function finder(content: TextContent, subject: TextSubject | XpathSubject) {
   // FIXME: employ more robust check below that doesn't assume Xpath finder by default
   return TextFinder.isSubject(subject)
-    ? new TextFinder(content, subject)
-    : new XpathFinder(content, subject);
+    ? new TextFinder(content, (subject: any))
+    : new XpathFinder(content, (subject: any));
 }
 
 export { finder };
