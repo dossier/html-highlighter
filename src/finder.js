@@ -7,8 +7,6 @@ import * as util from './util';
 import Range from './range';
 import type { RangeDescriptor } from './range';
 
-export type MatchResult = {| length: number, index: number |};
-
 /**
  * Abstract base class of all finder classes
  *
@@ -19,7 +17,7 @@ export type MatchResult = {| length: number, index: number |};
  */
 class Finder {
   content: TextContent;
-  results: Array<MatchResult>;
+  results: Array<any>;
   current: number;
 
   constructor(content: TextContent) {
