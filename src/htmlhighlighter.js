@@ -5,7 +5,7 @@ import merge from 'merge';
 
 import * as dom from './dom';
 import { defaults, Css } from './consts';
-import type { InputOptions, Options, Stats } from './consts';
+import type { InputOptions, Options } from './consts';
 import Ui from './ui/ui';
 import TextContent from './textcontent';
 import RangeHighlighter from './rangehighlighter';
@@ -15,6 +15,11 @@ import Cursor from './cursor';
 import { is_obj_empty } from './util';
 import * as constructor from './constructor';
 
+export type Stats = {|
+  queries: number,
+  total: number,
+  highlight: number,
+|};
 /**
  * Main class of the HTML Highlighter module, which exposes an API enabling
  * clients to control all the features supported related to highlighting and

@@ -24,7 +24,9 @@ export type Options = {|
   normalise: boolean,
 |};
 
-export const defaults: Options = {
+// Default options.  Note that we cannot declare this map as `Options` since not all attributes are
+// defined.
+export const defaults = {
   // Sometimes it is useful for the client to determine how to bring an element into view via
   // scrolling. If `scrollTo` is set, then it is called as a function with a jQuery node to scroll
   // to.
@@ -42,9 +44,3 @@ export const Css = {
   enabled: 'hh-enabled',
   disabled: 'hh-disabled',
 };
-
-export type Stats = {|
-  queries: number,
-  total: number,
-  highlight: number,
-|};
