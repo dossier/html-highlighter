@@ -72,18 +72,10 @@ const lib = {
   module: {
     rules: [jsLoader].concat(linters),
   },
-  externals: {
-    jquery: 'jQuery',
-  },
   plugins: [
     new webpack.DefinePlugin({
       PRODUCTION: isProduction,
       BROWSER: true,
-    }),
-    new webpack.ProvidePlugin({
-      $: 'jquery',
-      jQuery: 'jquery',
-      'window.jQuery': 'jquery',
     }),
     new webpack.NoEmitOnErrorsPlugin(),
     new webpack.optimize.OccurrenceOrderPlugin(true),
