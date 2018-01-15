@@ -85,15 +85,17 @@ class Cursor {
    *
    * @param {number} index - Virtual cursor index
    * @param {boolean} dontRecurse - When `true` instructs the method not to employ recursion
+   *
+   * @returns {boolean} `true` if move occurred
    */
-  set(index: number, dontRecurse: boolean): void {
+  set(index: number, dontRecurse: boolean): boolean {
     const owner = this.owner;
     const markers = owner.highlights;
 
     if (index < 0) {
       throw new Error('Invalid cursor index specified: ' + index);
     } else if (owner.stats.total <= 0) {
-      return;
+      return false;
     }
 
     let count = index;
@@ -121,7 +123,7 @@ class Cursor {
       if (!dontRecurse) {
         this.set(0, true);
       }
-      return;
+      return false;
     }
 
     // Clear currently active highlight, if any, and set requested highlight active
@@ -141,7 +143,13 @@ class Cursor {
       }
     }
 
+    if (this.index === index) {
+      return false;
+    }
+
     this.index = index;
+    this.emit('update', index);
+    return true;
   }
 
   /**
