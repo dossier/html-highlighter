@@ -12,6 +12,9 @@ bootstrap(html);
 let container;
 let instance;
 
+// Switch to debug mode
+hh.HtmlHighlighter.debug = true;
+
 function init(ndx) {
   // Ensure window and document exist in jsdom environment
   if (window == null || document == null || document.body == null) {
