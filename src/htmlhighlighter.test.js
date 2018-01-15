@@ -526,7 +526,7 @@ describe('HTML Highlighter', function() {
         hl = null;
       });
 
-      is = 'highlights one query set from XPath representation after dense ' + 'query set add';
+      is = 'highlights one query set from XPath representation after dense query set add';
       it(is, function() {
         hl
           .add('test-the', ['the'])
@@ -538,7 +538,7 @@ describe('HTML Highlighter', function() {
         attest.totalHighlights(counts.the + counts.viber + counts.a + 1, 4);
       });
 
-      is = 'highlights two query sets from XPath representation after dense ' + 'query set add';
+      is = 'highlights two query sets from XPath representation after dense query set add';
       it(is, function() {
         hl
           .add('test-the', ['the'])
@@ -551,7 +551,7 @@ describe('HTML Highlighter', function() {
         attest.totalHighlights(counts.the + counts.viber + counts.a + 2, 5);
       });
 
-      is = 'highlights three query sets from XPath representation after dense ' + 'query set add';
+      is = 'highlights three query sets from XPath representation after dense query set add';
       it(is, function() {
         hl
           .add('test-the', ['the'])
@@ -565,7 +565,7 @@ describe('HTML Highlighter', function() {
         attest.totalHighlights(counts.the + counts.viber + counts.a + 3, 6);
       });
 
-      is = 'highlights four query sets from XPath representation after dense ' + 'query set add';
+      is = 'highlights four query sets from XPath representation after dense query set add';
       it(is, function() {
         hl
           .add('test-the', ['the'])
