@@ -1,23 +1,34 @@
 // @flow
 
-/* eslint-disable camelcase */
+import EventEmitter from 'events';
+
 import * as dom from './dom';
 import { Css } from './consts';
 import HtmlHighlighter from './htmlhighlighter';
-/* eslint-enable camelcase */
 
 /**
  * Class responsible for managing the state of the highlight cursor
  *
- * @param {Object} owner - Reference to the owning instance.
- * */
-class Cursor {
+ * Emits the following events:
+ *
+ *  - clear: cursor position is cleared
+ *  - setiterable: allowable iterable queries set or cleared
+ *  - update: cursor position mutated
+ */
+class Cursor extends EventEmitter {
   owner: HtmlHighlighter;
   index: number;
   iterableQueries: Array<string> | null;
   total: number;
 
+  /**
+   * Class constructor
+   *
+   * @param {Object} owner - Reference to the owning instance
+   */
   constructor(owner: HtmlHighlighter) {
+    super();
+
     this.owner = owner;
     this.index = -1;
     this.iterableQueries = null;
@@ -31,6 +42,7 @@ class Cursor {
     this.clearActive_();
     this.index = -1;
     this.update();
+    this.emit('clear');
   }
 
   /**
@@ -52,6 +64,7 @@ class Cursor {
     }
 
     this.clear();
+    this.emit('setiterable', queries);
   }
 
   /**

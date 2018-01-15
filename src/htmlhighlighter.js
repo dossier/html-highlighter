@@ -1,6 +1,7 @@
 // @flow
-
 /* eslint-disable camelcase */
+import EventEmitter from 'events';
+
 import merge from 'merge';
 
 import * as dom from './dom';
@@ -38,8 +39,18 @@ export type Marker = {|
  * Main class of the HTML Highlighter module, which exposes an API enabling
  * clients to control all the features supported related to highlighting and
  * text selection.
+ *
+ * Emits the following events:
+ *
+ *  - refresh: text content refreshed
+ *  - add: query set added
+ *  - append: queries added to query set
+ *  - remove: query set removed
+ *  - enable: query set enabled
+ *  - disable: query set disabled
+ *  - clear: all query sets removed and cursor cleared
  * */
-class HtmlHighlighter {
+class HtmlHighlighter extends EventEmitter {
   options: Options;
   cursor: Cursor;
   stats: Stats;
@@ -53,6 +64,8 @@ class HtmlHighlighter {
   static debug: boolean = false;
 
   constructor(options: InputOptions) {
+    super();
+
     // Merge default options
     this.options = merge({}, defaults, options);
 
@@ -95,6 +108,7 @@ class HtmlHighlighter {
   refresh() {
     this.content = new TextContent(this.options.container);
     this.assert_();
+    this.emit('refresh');
   }
 
   /**
@@ -167,6 +181,7 @@ class HtmlHighlighter {
 
     this.cursor.clear();
     this.assert_();
+    this.emit('add', name, querySet, queries);
 
     return this;
   }
@@ -185,14 +200,15 @@ class HtmlHighlighter {
    * @returns {HtmlHighlighter} Self instance for chaining
    */
   append(name: string, queries: Array<string>, enabled: boolean = false): HtmlHighlighter {
-    const query = this.queries.get(name);
-    if (query == null) {
+    const querySet = this.queries.get(name);
+    if (querySet == null) {
       throw new Error('Invalid or query set not yet created');
     }
 
-    this.add_queries_(query, queries, enabled === true);
+    this.add_queries_(querySet, queries, enabled === true);
     this.cursor.clear();
     this.assert_();
+    this.emit('append', name, querySet, queries);
 
     return this;
   }
@@ -208,6 +224,7 @@ class HtmlHighlighter {
   remove(name: string): HtmlHighlighter {
     this.remove_(name);
     this.cursor.clear();
+    this.emit('remove', name);
     return this;
   }
 
@@ -234,6 +251,7 @@ class HtmlHighlighter {
     q.enabled = true;
     this.stats.total += q.length;
     this.cursor.clear();
+    this.emit('enable', name);
     return this;
   }
 
@@ -260,6 +278,7 @@ class HtmlHighlighter {
     q.enabled = false;
     this.stats.total -= q.length;
     this.cursor.clear();
+    this.emit('disable', name);
     return this;
   }
 
@@ -287,6 +306,7 @@ class HtmlHighlighter {
     }
 
     this.cursor.clear();
+    this.emit('clear');
     return this;
   }
 
