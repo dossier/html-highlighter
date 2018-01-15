@@ -6,7 +6,6 @@ import merge from 'merge';
 import * as dom from './dom';
 import { defaults, Css } from './consts';
 import type { InputOptions, Options } from './consts';
-import Ui from './ui/ui';
 import TextContent from './textcontent';
 import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
@@ -43,7 +42,6 @@ export type Marker = {|
 class HtmlHighlighter {
   options: Options;
   cursor: Cursor;
-  ui: Ui;
   stats: Stats;
   lastId: number;
   content: TextContent;
@@ -82,7 +80,6 @@ class HtmlHighlighter {
     }
 
     this.cursor = new Cursor(this);
-    this.ui = new Ui(this, this.options);
 
     // Start by refreshing the internal document's text representation, which initialises
     // `this.content`.
@@ -171,7 +168,6 @@ class HtmlHighlighter {
     }
 
     this.cursor.clear();
-    this.ui.update();
     if (HtmlHighlighter.debug === true) {
       this.assert_();
     }
@@ -200,7 +196,6 @@ class HtmlHighlighter {
 
     this.add_queries_(query, queries, enabled === true);
     this.cursor.clear();
-    this.ui.update();
     if (HtmlHighlighter.debug === true) {
       this.assert_();
     }
@@ -219,7 +214,6 @@ class HtmlHighlighter {
   remove(name: string): HtmlHighlighter {
     this.remove_(name);
     this.cursor.clear();
-    this.ui.update();
     return this;
   }
 
@@ -246,7 +240,6 @@ class HtmlHighlighter {
     q.enabled = true;
     this.stats.total += q.length;
     this.cursor.clear();
-    this.ui.update(false);
     return this;
   }
 
@@ -273,7 +266,6 @@ class HtmlHighlighter {
     q.enabled = false;
     this.stats.total -= q.length;
     this.cursor.clear();
-    this.ui.update(false);
     return this;
   }
 
@@ -301,7 +293,6 @@ class HtmlHighlighter {
     }
 
     this.cursor.clear();
-    this.ui.update();
     return this;
   }
 
@@ -314,7 +305,6 @@ class HtmlHighlighter {
    */
   setIterableQueries(queries: Array<string> | null = null): void {
     this.cursor.setIterableQueries(queries);
-    this.ui.update(false);
   }
 
   /**
@@ -328,7 +318,6 @@ class HtmlHighlighter {
    */
   prev(): void {
     this.cursor.prev();
-    this.ui.update(false);
   }
 
   /**
@@ -341,7 +330,6 @@ class HtmlHighlighter {
    */
   next(): void {
     this.cursor.next();
-    this.ui.update(false);
   }
 
   /* eslint-disable complexity */
