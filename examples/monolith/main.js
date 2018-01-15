@@ -1,7 +1,6 @@
 /* eslint-disable no-use-before-define */
-import $ from 'jquery';
-
 import { HtmlHighlighter, XPathFinder, RangeHighlighter } from '../../src/main.js';
+import UI from './ui';
 import './theme.css';
 
 /* eslint-disable global-require */
@@ -37,6 +36,7 @@ let $selector, container, $widgetSelection, $widgetMain, $search, $add;
 let count = 0;
 let mouseDown = 0;
 let highlighter;
+let ui;
 
 function init() {
   $selector = $('#filter-data');
@@ -145,9 +145,10 @@ function init() {
 
   highlighter = new HtmlHighlighter({
     container,
-    widget: $widgetMain,
     maxHighlight: MAX_HIGHLIGHT,
   });
+
+  ui = new UI(highlighter, $widgetMain);
 
   load(0);
 }

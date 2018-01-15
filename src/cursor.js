@@ -90,7 +90,10 @@ class Cursor extends EventEmitter {
       }
     }
 
-    this.total = total;
+    if (this.total !== total) {
+      this.total = total;
+      this.emit('update', this.index, this.total);
+    }
   }
 
   /**
@@ -161,7 +164,7 @@ class Cursor extends EventEmitter {
     }
 
     this.index = index;
-    this.emit('update', index);
+    this.emit('update', index, this.total);
     return true;
   }
 
