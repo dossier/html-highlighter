@@ -12,7 +12,7 @@ function makeExampleConfig(name) {
   const config = {
     entry: {
       // We always assume that the example's entry filename is `main.js`
-      monolith: `./examples/${name}/main.js`,
+      [name]: `./examples/${name}/main.js`,
     },
     output: {
       path: path.join(__dirname, 'dist/examples', name),
@@ -27,9 +27,8 @@ function makeExampleConfig(name) {
     },
     plugins: [
       new HtmlWebpackPlugin({
-        chunks: ['monolith'],
         title: 'HTML Highlighter -- main example',
-        template: './examples/monolith/main.html',
+        template: `./examples/${name}/main.html`,
         filename: 'index.html',
       }),
     ],
