@@ -5,7 +5,7 @@ import EventEmitter from 'events';
 import merge from 'merge';
 
 import * as dom from './dom';
-import { defaults, Css } from './consts';
+import { Css } from './consts';
 import type { InputOptions, Options } from './consts';
 import TextContent from './textcontent';
 import RangeHighlighter from './rangehighlighter';
@@ -63,11 +63,23 @@ class HtmlHighlighter extends EventEmitter {
    * `options` descriptor and thus can't query the `debug` attribute. */
   static debug: boolean = false;
 
+  // Default options.  Note that we cannot declare this map as `Options` since not all attributes
+  // are defined.
+  static defaults: InputOptions = {
+    // Sometimes it is useful for the client to determine how to bring an element into view via
+    // scrolling. If `scrollTo` is set, then it is called as a function with a `Node` to scroll
+    // to.
+    scrollTo: null,
+    maxHighlight: 1,
+    useQueryAsClass: false,
+    normalise: true,
+  };
+
   constructor(options: InputOptions) {
     super();
 
     // Merge default options
-    this.options = merge({}, defaults, options);
+    this.options = merge({}, HtmlHighlighter.defaults, options);
 
     // Mutable properties
     this.queries = new Map();
