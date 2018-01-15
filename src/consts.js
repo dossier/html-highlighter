@@ -6,9 +6,6 @@ export type InputOptions = {|
   container?: HTMLElement,
   scrollTo?: ScrollToCallback,
   maxHighlight?: number,
-  delays?: {
-    toggleEntities: number,
-  },
   useQueryAsClass?: boolean,
   normalise?: boolean,
 |};
@@ -17,9 +14,6 @@ export type Options = {|
   container: HTMLElement,
   scrollTo: ScrollToCallback | null,
   maxHighlight: number,
-  delays: {
-    toggleEntities: number,
-  },
   useQueryAsClass: boolean,
   normalise: boolean,
 |};
@@ -32,9 +26,6 @@ export const defaults = {
   // to.
   scrollTo: null,
   maxHighlight: 1,
-  delays: {
-    toggleEntities: 250,
-  },
   useQueryAsClass: false,
   normalise: true,
 };
