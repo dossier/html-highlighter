@@ -1,5 +1,8 @@
+/* global $ */
 /* eslint-disable no-use-before-define */
+
 import { HtmlHighlighter, XPathFinder, RangeHighlighter } from '../../src/main.js';
+
 import UI from './ui';
 import './theme.css';
 
@@ -149,7 +152,6 @@ function init() {
   });
 
   ui = new UI(highlighter, $widgetMain);
-
   load(0);
 }
 

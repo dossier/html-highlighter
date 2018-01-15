@@ -1,4 +1,4 @@
-import $ from 'jquery';
+/* global $ */
 
 export function is$(el) {
   return el instanceof $;

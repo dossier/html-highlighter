@@ -1,4 +1,6 @@
+/* global $ */
 /* eslint-disable no-use-before-define */
+
 import { is$, isStr } from './util';
 
 /**
