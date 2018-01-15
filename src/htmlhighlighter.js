@@ -94,9 +94,7 @@ class HtmlHighlighter {
    */
   refresh() {
     this.content = new TextContent(this.options.container);
-    if (HtmlHighlighter.debug === true) {
-      this.content.assert_();
-    }
+    this.assert_();
   }
 
   /**
@@ -168,9 +166,7 @@ class HtmlHighlighter {
     }
 
     this.cursor.clear();
-    if (HtmlHighlighter.debug === true) {
-      this.assert_();
-    }
+    this.assert_();
 
     return this;
   }
@@ -196,9 +192,7 @@ class HtmlHighlighter {
 
     this.add_queries_(query, queries, enabled === true);
     this.cursor.clear();
-    if (HtmlHighlighter.debug === true) {
-      this.assert_();
-    }
+    this.assert_();
 
     return this;
   }
@@ -584,6 +578,8 @@ class HtmlHighlighter {
       this.options.container.normalize();
       this.refresh();
     }
+
+    this.assert_();
   }
 
   /**
@@ -603,6 +599,12 @@ class HtmlHighlighter {
   }
 
   assert_(): void {
+    if (!HtmlHighlighter.debug) {
+      return;
+    }
+
+    this.content.assert();
+
     let k;
     let c = 0;
     let l = 0;

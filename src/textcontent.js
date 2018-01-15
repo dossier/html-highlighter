@@ -132,7 +132,7 @@ class TextContent {
 
     // From global state since we don't have access to the `options` descriptor.
     if (HtmlHighlighter.debug) {
-      this.assert_();
+      this.assert();
     }
 
     // Remove old node.
@@ -246,7 +246,7 @@ class TextContent {
    * Debug method for asserting that the current textual representation is valid, in particular
    * that the offset markers are all contiguous.
    */
-  assert_(): void {
+  assert(): void {
     let offset = 0;
 
     // Ensure offsets are contiguous
