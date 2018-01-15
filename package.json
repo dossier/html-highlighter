@@ -32,7 +32,7 @@
     "check-fmt": "sh/check-fmt:js && sh/check-fmt:json"
   },
   "dependencies": {
-    "merge": "^1.2.0",
+    "merge": "^1.2.0"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
@@ -67,7 +67,7 @@
     "mocha": "^3.3.0",
     "mocha-loader": "^1.1.1",
     "mocha-webpack": "^0.7.0",
-    "prettier": "^1.9.2"
+    "prettier": "^1.9.2",
     "source-map-support": "^0.4.15",
     "webpack": "^2.5.1",
     "webpack-dev-server": "^2.4.5",
