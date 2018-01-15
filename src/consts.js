@@ -4,7 +4,7 @@ export type ScrollToCallback = HTMLElement => void;
 
 export type InputOptions = {|
   container?: HTMLElement,
-  scrollTo?: ScrollToCallback,
+  scrollTo?: ScrollToCallback | null,
   maxHighlight?: number,
   useQueryAsClass?: boolean,
   normalise?: boolean,
