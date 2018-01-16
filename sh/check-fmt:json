@@ -1,0 +1,6 @@
+#!/bin/bash
+cd $(dirname "$0")/..
+count_json=$(find . -name '*.json' \( -path './src/*' -o -path './examples/*' \) | wc -l)
+if [ "$count_json" != "0" ]; then
+  node_modules/.bin/prettier --parser json --list-different src/**/*.json examples/**/*.json
+fi

@@ -1,0 +1,34 @@
+[ignore]
+.*/node_modules/.*
+# Ignoring test source files due to numerous errors.
+.*/*.test.js
+
+[include]
+flow-typed
+
+[libs]
+flow-typed
+
+[options]
+# Adding file extensions resolves an issue whereby including the application's
+# S/CSS file causes the "Required module not found" error.  See below for more
+# info:
+# https://gist.github.com/lambdahands/d19e0da96285b749f0ef#gistcomment-1832050
+module.file_ext=.css
+module.file_ext=.js
+module.file_ext=.json
+
+# Directory definitions for resolving global package names.
+module.system.node.resolve_dirname=node_modules
+
+# Module mappers.
+module.name_mapper='.+\.s?css$' -> 'CSSModule'
+module.system=haste
+
+# Ecmascript option tweaks
+esproposal.export_star_as=enable
+# Suppresses a number of annoying errors about potentially unsafe get/set
+# usage.
+unsafe.enable_getters_and_setters=true
+
+#traces=20

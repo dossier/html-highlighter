@@ -1,21 +1,21 @@
-/* FIXME: refactor and remove. */
-import $ from "jquery";
-import TemplateInstance from "./templateinstance.js";
+import $ from 'jquery';
+
+import TemplateInstance from './templateinstance.js';
 
 /**
  * @class
- * */
-var Template = function(html, tag)
-{
-  this.html = html;
-  this.tag = tag || null;
+ */
+class Template {
+  constructor(html, tag) {
+    this.html = html;
+    this.tag = tag || null;
 
-  Object.defineProperty(this, "html", { value: html });
-};
+    Object.defineProperty(this, 'html', { value: html });
+  }
 
-Template.prototype.clone = function()
-{
-  return new TemplateInstance($(this.html), this.tag);
-};
+  clone() {
+    return new TemplateInstance($(this.html), this.tag);
+  }
+}
 
 export default Template;
