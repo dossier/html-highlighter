@@ -1,8 +1,17 @@
-/* eslint-disable camelcase */
-import $ from 'jquery';
+// @flow
 
-import TextNodeVisitor from './textnodevisitor.js';
-import TextNodeXpath from './textnodexpath.js';
+import * as dom from './dom';
+import TextContent from './textcontent';
+import TextNodeVisitor from './textnodevisitor';
+import TextNodeXpath from './textnodexpath';
+import type { Marker } from './textcontent';
+
+export type RangeDescriptor = {| marker: Marker, offset: number |};
+
+export type RangeXpathDescriptor = {|
+  start: { xpath: string, offset: number },
+  end: { xpath: string, offset: number },
+|};
 
 /**
  * Holds a representation of a range between two text nodes
@@ -12,14 +21,18 @@ import TextNodeXpath from './textnodexpath.js';
  * @param {Object} end - descriptor of end of range
  */
 class Range {
+  content: TextContent;
+  start: RangeDescriptor;
+  end: RangeDescriptor;
+
   /**
    * Create a range descriptor from a global offset.
    *
-   * @param {Object} marker - Text offset marker object
+   * @param {Marker} marker - Text offset marker object
    * @param {number} offset - Global offset
    *
-   * @returns {Object} Range descriptor */
-  static descriptorAbs(marker, offset) {
+   * @returns {RangeDescriptor} Range descriptor */
+  static descriptorAbs(marker: Marker, offset: number): RangeDescriptor {
     return {
       marker: marker,
       offset: offset - marker.offset,
@@ -29,19 +42,19 @@ class Range {
   /**
    * Create a range descriptor from an offset relative to the start of the text node
    *
-   * @param {Object} marker - Text offset marker object
+   * @param {Marker} marker - Text offset marker object
    * @param {number} offset - Relative offset from start of text node
    *
-   * @returns {Object} Range descriptor
+   * @returns {RangeDescriptor} Range descriptor
    */
-  static descriptorRel(marker, offset) {
+  static descriptorRel(marker, offset): RangeDescriptor {
     return {
       marker: marker,
       offset,
     };
   }
 
-  constructor(content, start, end) {
+  constructor(content: TextContent, start: RangeDescriptor, end: RangeDescriptor) {
     this.content = content;
 
     // Sanity check:
@@ -49,11 +62,8 @@ class Range {
       throw new Error('Invalid range: start > end');
     }
 
-    // Attributes
-    Object.defineProperties(this, {
-      start: { value: start },
-      end: { value: end },
-    });
+    this.start = start;
+    this.end = end;
   }
 
   /**
@@ -64,7 +74,7 @@ class Range {
    *
    * @param {string} className - The CSS class name to apply
    */
-  surround(className) {
+  surround(className: string): void {
     // Optimised case: highlighting does not span multiple nodes
     if (this.start.marker.node === this.end.marker.node) {
       this.surround_(this.start, this.start.offset, this.end.offset, className);
@@ -75,30 +85,30 @@ class Range {
     // text nodes contained in the start to end range, but excluding the start and end nodes
     const visitor = new TextNodeVisitor(this.start.marker.node, this.content.root);
     const end = this.end.marker.node;
-    let coll = [];
+    const coll = [];
 
     // TODO: we assume `visitor.next()' will never return null because `end´ is within bounds
     while (visitor.next() !== end) {
-      coll.push(visitor.current);
+      coll.push((visitor.current: any));
     }
 
     // Apply highlighting to start and end nodes, and to any nodes in between, if applicable.
     // Highlighting for the start and end nodes may require text node truncation but not for the
     // nodes in between.
     this.surround_(this.start, this.start.offset, null, className);
-    coll.forEach(n => this.surround_whole_(n, className));
+    coll.forEach(n => this.surroundWhole_(n, className));
     this.surround_(this.end, 0, this.end.offset, className);
   }
 
   /**
    * Compute the XPath representation of the active range
    *
-   * @returns {string} XPath representation of active range
+   * @returns {RangeXpathDescriptor} XPath representation of active range
    */
-  computeXpath() {
+  computeXpath(): RangeXpathDescriptor {
     const start = this.start.marker.node;
     const end = this.end.marker.node;
-    let computor = new TextNodeXpath(this.content.root);
+    const computor = new TextNodeXpath(this.content.root);
     return {
       start: {
         xpath: computor.xpathOf(start),
@@ -116,20 +126,20 @@ class Range {
    *
    * @returns {number} Number of characters
    */
-  length() {
+  length(): number {
     // Optimised case: range does not span multiple nodes
     if (this.start.marker.node === this.end.marker.node) {
       return this.end.offset - this.start.offset + 1;
     }
 
     // Range spans 2 or more nodes
-    let visitor = new TextNodeVisitor(this.start.marker.node, this.content.root);
+    const visitor = new TextNodeVisitor(this.start.marker.node, this.content.root);
     const end = this.end.marker.node;
     let length = this.start.marker.node.nodeValue.length - this.start.offset + this.end.offset + 1;
 
     // Add (whole) lengths of text nodes in between
     while (visitor.next() !== end) {
-      length += visitor.current.nodeValue.length;
+      length += (visitor.current: any).nodeValue.length;
     }
 
     return length;
@@ -145,20 +155,17 @@ class Range {
    *
    * @param {Object} descr - Start or end `Range` descriptor
    * @param {number} start - Start offset
-   * @param {number} end - End offset
+   * @param {number | null} end - End offset
    * @param {string} className - CSS class name to apply
    */
-  surround_(descr, start, end, className) {
+  surround_(descr: RangeDescriptor, start: number, end: number | null, className: string): void {
     this.content.truncate(
       descr.marker,
       start,
-      end === null ? descr.marker.node.nodeValue.length - 1 : end
+      end == null ? descr.marker.node.nodeValue.length - 1 : end
     );
 
-    $('<span/>')
-      .addClass(className)
-      .insertBefore(descr.marker.node)
-      .append(descr.marker.node);
+    dom.createHighlightElement(descr.marker.node, className);
   }
 
   /**
@@ -166,14 +173,11 @@ class Range {
    *
    * No text node truncation occurs.
    *
-   * @param {DOMElement} node - Text node to apply highlighting to
+   * @param {Node} node - Text node to apply highlighting to
    * @param {string} className - CSS class name to apply
    * */
-  surround_whole_(node, className) {
-    $('<span/>')
-      .addClass(className)
-      .insertBefore(node)
-      .append(node);
+  surroundWhole_(node: Node, className: string): void {
+    dom.createHighlightElement(node, className);
   }
 }
 

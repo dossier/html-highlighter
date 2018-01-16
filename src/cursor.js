@@ -1,8 +1,9 @@
-import $ from 'jquery';
+// @flow
 
 /* eslint-disable camelcase */
-import { Css } from './consts.js';
-import { is_arr, inview, scrollIntoView } from './util.js';
+import * as dom from './dom';
+import { Css } from './consts';
+import HtmlHighlighter from './htmlhighlighter';
 /* eslint-enable camelcase */
 
 /**
@@ -11,7 +12,12 @@ import { is_arr, inview, scrollIntoView } from './util.js';
  * @param {Object} owner - Reference to the owning instance.
  * */
 class Cursor {
-  constructor(owner) {
+  owner: HtmlHighlighter;
+  index: number;
+  iterableQueries: Array<string> | null;
+  total: number;
+
+  constructor(owner: HtmlHighlighter) {
     this.owner = owner;
     this.index = -1;
     this.iterableQueries = null;
@@ -21,7 +27,7 @@ class Cursor {
 
   /**
    * Clear the current cursor state and recalculate number of total iterable highlights */
-  clear() {
+  clear(): void {
     this.clearActive_();
     this.index = -1;
     this.update();
@@ -38,11 +44,11 @@ class Cursor {
    *
    * @param {(Array|string)} queries - An array (or string) containing the query set names.
    */
-  setIterableQueries(queries) {
-    if (queries === null) {
+  setIterableQueries(queries: Array<string> | null): void {
+    if (queries == null) {
       this.iterableQueries = null;
     } else {
-      this.iterableQueries = is_arr(queries) ? queries.slice() : [queries];
+      this.iterableQueries = queries.slice();
     }
 
     this.clear();
@@ -53,7 +59,7 @@ class Cursor {
    *
    * Does **not** update the UI state.  The caller is responsible for doing so.
    */
-  update() {
+  update(): void {
     const iterable = this.iterableQueries;
     if (iterable === null) {
       this.total = this.owner.stats.total;
@@ -77,10 +83,10 @@ class Cursor {
   /**
    * Set cursor to query referenced by absolute query index
    *
-   * @param {integer} index - Virtual cursor index
+   * @param {number} index - Virtual cursor index
    * @param {boolean} dontRecurse - When `true` instructs the method not to employ recursion
    */
-  set(index, dontRecurse) {
+  set(index: number, dontRecurse: boolean): void {
     const owner = this.owner;
     const markers = owner.highlights;
 
@@ -96,6 +102,7 @@ class Cursor {
 
     markers.some(function(m, i) {
       const q = m.query;
+
       if (!q.enabled) {
         return false;
       } else if (iterable !== null && iterable.indexOf(q.name) < 0) {
@@ -120,18 +127,48 @@ class Cursor {
     // Clear currently active highlight, if any, and set requested highlight active
     this.clearActive_();
     const c = markers[ndx];
-    let $el = $('.' + Css.highlight + '-id-' + (c.query.id + c.index))
-      .addClass(Css.enabled)
-      .eq(0);
+    const coll = dom.getHighlightElements(c.query.id + c.index);
 
     // Scroll viewport if element not visible
-    if (typeof owner.options.scrollTo !== 'undefined') {
-      owner.options.scrollTo($el);
-    } else if (!inview($el)) {
-      scrollIntoView($el, owner.options.scrollNode);
+    if (coll.length > 0) {
+      dom.addClass(coll, Css.enabled);
+
+      const first = coll[0];
+      if (typeof owner.options.scrollTo === 'function') {
+        owner.options.scrollTo(first);
+      } else if (!dom.isInView(first)) {
+        dom.scrollIntoView(first);
+      }
     }
 
     this.index = index;
+  }
+
+  /**
+   * Move cursor position to the previous query in the active query set
+   *
+   * If the cursor moves past the first query in the active query set, the active query set moves
+   * to the previous available one and the cursor position to its last query.  If the current query
+   * set is the first in the collection and thus it is not possible to move to the previous query
+   * set, the last query set is made active instead, thus ensuring that the cursor always rolls
+   * over.
+   */
+  prev(): void {
+    if (this.total > 0) {
+      this.set((this.index < 1 ? this.total : this.index) - 1, false);
+    }
+  }
+
+  /**
+   * Move cursor position to the next query in the active query set
+   *
+   * If the cursor moves past the last query in the active query set, the active query set moves to
+   * the next available one and the cursor position to its first query.  If the current query set
+   * is the last in the collection and thus it is not possible to move to the next query set, the
+   * first query set is made active instead, thus ensuring that the cursor always rolls over.
+   */
+  next(): void {
+    this.set(this.index + 1, false);
   }
 
   // Private interface
@@ -142,8 +179,11 @@ class Cursor {
    * The active cursor highlight is the element or elements at the current cursor position.
    * @access private
    */
-  clearActive_() {
-    $('.' + Css.highlight + '.' + Css.enabled).removeClass(Css.enabled);
+  clearActive_(): void {
+    const { enabled: cssEnabled } = Css;
+    for (const el of dom.getAllHighlightElements(cssEnabled)) {
+      dom.removeClass(el, cssEnabled);
+    }
   }
 }
 

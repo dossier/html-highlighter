@@ -1,21 +1,29 @@
-import $ from 'jquery';
+// @flow
 
-/* eslint-disable camelcase */
-import HtmlHighlighter from './htmlhighlighter.js';
-import { is_$ } from './util.js';
-/* eslint-enable camelcase */
+import * as dom from './dom';
+import HtmlHighlighter from './htmlhighlighter';
+
+export type Marker = {| node: Node, offset: number |};
+export type MarkerArray = Array<Marker>;
 
 /**
  * Class responsible for building and keeping a convenient representation
  * of the text present in an HTML DOM sub-tree.
- *
- * @param {DOMElement|jQuery} root - Reference to a DOM element or jQuery
- * instance.  If a jQuery instance is given, its first element is used.
  */
 class TextContent {
-  constructor(root) {
-    this.root = is_$(root) ? root.get(0) : root;
-    this.text = this.markers = null;
+  root: HTMLElement;
+  text: string;
+  // FIXME: add type
+  markers: MarkerArray;
+
+  /**
+   * Class constructor
+   * @param {Node|jQuery} root - Reference to a DOM element
+   */
+  constructor(root: HTMLElement) {
+    this.root = root;
+    this.text = '';
+    this.markers = [];
     this.refresh();
   }
 
@@ -30,14 +38,14 @@ class TextContent {
    * A marker descriptor is of the form:
    * ```
    * {
-   *   node:   DOMElement  // reference to DOMElement of text node
-   *   offset: integer     // global offset
+   *   node:   Node      // reference to text node
+   *   offset: integer   // global offset
    * }
    * ```
    *
    * Should only be invoked when the HTML structure mutates, e.g. a new document is loaded.
    * */
-  refresh() {
+  refresh(): void {
     this.text = '';
     let markers = (this.markers = []);
     const offset = this.visit_(this.root, 0);
@@ -68,13 +76,13 @@ class TextContent {
    *  - create new text node at `[ start .. end ]`
    *  - if `end != text.length - 1`: truncate `[ end .. text.length - 1 ]`
    *
-   * @param {Object} marker - Reference to descriptor of text node to truncate
+   * @param {Marker} marker - Reference to descriptor of text node to truncate
    * @param {number} start - Offset where to start truncation
    * @param {number} end - Offset where truncation ends
    *
    * @returns {number} Index of marker descriptor
    */
-  truncate(marker, start, end) {
+  truncate(marker: Marker, start: number, end: number): number {
     const text = marker.node.nodeValue;
     let index = this.indexOf(marker.offset);
     let old = marker.node; // The old text node
@@ -86,13 +94,12 @@ class TextContent {
 
     // Chars 0..start - 1
     if (start > 0) {
+      const node = document.createTextNode(text.substr(0, start));
       // Since we're creating a new text node out of the old text node, we need to add a new entry
       // to the markers array
       this.markers.splice(index, 0, {
         offset: marker.offset,
-        node: $(document.createTextNode(text.substr(0, start)))
-          .insertBefore(marker.node)
-          .get(0),
+        node: dom.insertBefore(node, marker.node),
       });
 
       ++index;
@@ -104,9 +111,10 @@ class TextContent {
     // new text node, just replacing it with one with the required [start..end] substring.  We do
     // need to update the node's offset though.
     marker.offset += start;
-    marker.node = $(document.createTextNode(text.substr(start, end - start + 1)))
-      .insertBefore(marker.node)
-      .get(0);
+    marker.node = dom.insertBefore(
+      document.createTextNode(text.substr(start, end - start + 1)),
+      marker.node
+    );
 
     // Chars end + 1..length
     if (end !== text.length - 1) {
@@ -118,9 +126,7 @@ class TextContent {
       // entry to the markers array.
       this.markers.splice(index + 1, 0, {
         offset: marker.offset + end - start + 1,
-        node: $(document.createTextNode(text.substr(end + 1)))
-          .insertAfter(marker.node)
-          .get(0),
+        node: dom.insertAfter(document.createTextNode(text.substr(end + 1)), marker.node),
       });
     }
 
@@ -130,7 +136,7 @@ class TextContent {
     }
 
     // Remove old node.
-    old.parentNode.removeChild(old);
+    (old.parentNode: any).removeChild(old);
     return index;
   }
 
@@ -144,7 +150,7 @@ class TextContent {
    * @param {number} offset - The offset to look up
    * @returns {number} The marker index that contains `offset`
    */
-  indexOf(offset) {
+  indexOf(offset: number): number {
     const markers = this.markers;
     let min = 0;
     let max = markers.length - 1;
@@ -171,19 +177,19 @@ class TextContent {
   /**
    * Find the index of the marker descriptor of a given text node element
    *
-   * @param {DOMElement} element - Reference to the text node to look up
+   * @param {Node} element - Reference to the text node to look up
    * @param {number} [start=0] - Start marker index if known for a fact that the text node is to be
    * found **after** a certain offset
    *
    * @returns {number} The marker index of `element` or `-1` if not found.
    */
-  find(element, start) {
+  find(element: Node, start: ?number = 0): number {
     if (element.nodeType !== 3) {
       return -1;
     }
 
     for (
-      let i = start === undefined ? 0 : start, l = this.markers.length;
+      let i = start == null ? 0 : start, l = this.markers.length;
       i < l;
       ++i // eslint-disable-line indent
     ) {
@@ -201,9 +207,9 @@ class TextContent {
    * Throws an exception if the given `index` is out of bounds.
    *
    * @param {number} index - Marker index
-   * @returns {Object} The offset marker descriptor
+   * @returns {Marker} The offset marker descriptor
    */
-  at(index) {
+  at(index: number): Marker {
     if (index < 0 || index >= this.markers.length) {
       throw new Error('Invalid marker index');
     }
@@ -211,7 +217,7 @@ class TextContent {
     return this.markers[index];
   }
 
-  visit_(node, offset) {
+  visit_(node: Node, offset: number): number {
     // Only interested in text nodes
     if (node.nodeType === 3) {
       const content = node.nodeValue;
@@ -240,7 +246,7 @@ class TextContent {
    * Debug method for asserting that the current textual representation is valid, in particular
    * that the offset markers are all contiguous.
    */
-  assert_() {
+  assert_(): void {
     let offset = 0;
 
     // Ensure offsets are contiguous

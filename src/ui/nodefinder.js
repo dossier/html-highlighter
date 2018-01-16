@@ -1,5 +1,5 @@
 /* eslint-disable camelcase */
-import { is_$, is_str, is_fn } from '../util.js';
+import { is_$, is_str } from '../util';
 
 /**
  * Locator of nodes by specified criteria
@@ -30,10 +30,6 @@ class NodeFinder {
   }
 
   withroot(newRoot, callback) {
-    if (!is_fn(callback)) {
-      throw new Error('Invalid or no callback function specified');
-    }
-
     const t = this.root_;
     let v;
     this.root_ = newRoot;

@@ -1,4 +1,4 @@
-import Template from './template.js';
+import Template from './template';
 
 /**
  * Locator of templates by ID
@@ -6,10 +6,10 @@ import Template from './template.js';
 class TemplateFinder {
   constructor(type, tag) {
     this.scripts = Array.prototype.slice
-                        .call(document.getElementsByTagName('script'), 0)
-                        .filter(function(i) {
-                          return i.type === type;
-                        });
+      .call(document.getElementsByTagName('script'), 0)
+      .filter(function(i) {
+        return i.type === type;
+      });
 
     this.tag = tag || 'data-scope';
   }

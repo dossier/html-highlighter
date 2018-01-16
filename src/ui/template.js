@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-import TemplateInstance from './templateinstance.js';
+import TemplateInstance from './templateinstance';
 
 /**
  * @class

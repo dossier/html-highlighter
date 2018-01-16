@@ -32,7 +32,7 @@ const dataSources = [
 ];
 /* eslint-enable global-require */
 
-let $selector, $document, $widgetSelection, $widgetMain, $search, $add;
+let $selector, container, $widgetSelection, $widgetMain, $search, $add;
 
 let count = 0;
 let mouseDown = 0;
@@ -40,7 +40,7 @@ let highlighter;
 
 function init() {
   $selector = $('#filter-data');
-  $document = $('#document');
+  container = document.getElementById('document');
   $widgetSelection = $('#widget-selection');
   $widgetMain = $('#widget-main');
   $search = $('#search');
@@ -59,7 +59,7 @@ function init() {
 
   $add.click(function() {
     const name = $search.val();
-    highlighter.add(name, [name], true).apply();
+    highlighter.add(name, [name], true);
     $search.select().focus();
   });
 
@@ -71,7 +71,7 @@ function init() {
     .remove();
 
   let timeout = null;
-  $document.on({
+  $(container).on({
     dblclick: function() {
       mouseDown = 0;
     },
@@ -144,7 +144,7 @@ function init() {
   });
 
   highlighter = new HtmlHighlighter({
-    container: $document,
+    container,
     widget: $widgetMain,
     maxHighlight: MAX_HIGHLIGHT,
   });
@@ -153,8 +153,8 @@ function init() {
 }
 
 function load(index) {
-  highlighter.clear().apply();
-  $document.html(data[index]);
+  highlighter.clear();
+  container.innerHTML = data[index];
   highlighter.refresh();
   $search.focus();
 }

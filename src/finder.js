@@ -1,7 +1,11 @@
+// @flow
+
+import TextContent from './textcontent';
 /* eslint-disable camelcase */
-import { absm_noti } from './util.js';
-import Range from './range.js';
+import * as util from './util';
 /* eslint-enable camelcase */
+import Range from './range';
+import type { RangeDescriptor } from './range';
 
 /**
  * Abstract base class of all finder classes
@@ -12,9 +16,12 @@ import Range from './range.js';
  * @param {*} subject - subject to find; can be of any type
  */
 class Finder {
-  constructor(content) {
-    Object.defineProperty(this, 'content', { value: content });
+  content: TextContent;
+  results: Array<any>;
+  current: number;
 
+  constructor(content: TextContent) {
+    this.content = content;
     this.results = [];
     this.current = 0;
   }
@@ -23,13 +30,14 @@ class Finder {
    * @abstract
    * Return next available match
    *
-   * If no more matches available, returns `false`.
+   * If no more matches available, returns `null`.
    *
-   * @returns {Range|false} Returns a `Range` if a match is available, or `false` if no more
+   * @returns {Range | null} Returns a `Range` if a match is available, or `null` if no more
    * matches are available.
    */
-  next() {
-    absm_noti();
+  // $FlowFixMe: below signature is needed in specialized classes
+  next(): Range | null {
+    util.abstract();
   }
 
   // Protected interface
@@ -39,9 +47,9 @@ class Finder {
    * @access private
    *
    * @param {number} offset - Text offset
-   * @returns {Object} Range descriptor
+   * @returns {RangeDescriptor} Range descriptor
    */
-  getAt_(offset) {
+  getAt_(offset: number): RangeDescriptor {
     const index = this.content.indexOf(offset);
     if (index === -1) {
       throw new Error('Failed to retrieve marker for offset: ' + offset);

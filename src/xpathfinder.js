@@ -1,9 +1,16 @@
+// @flow
+
 /* eslint-disable camelcase */
-import Finder from './finder.js';
-import TextNodeXpath from './textnodexpath.js';
-import Range from './range.js';
-import { is_obj } from './util.js';
+import TextContent from './textcontent';
+import Finder from './finder';
+import TextNodeXpath from './textnodexpath';
+import Range from './range';
 /* eslint-enable camelcase */
+
+export type XpathSubject = {|
+  start: { xpath: string, offset: number },
+  end: { xpath: string, offset: number },
+|};
 
 /**
  * Class responsible for locating text in a `TextContent` instance from an
@@ -14,14 +21,15 @@ class XpathFinder extends Finder {
    * Class constructor
    *
    * @param {TextContent} content - Reference to `TextContent` instance
-   * @param {string} subject - Descriptor containing an XPath representation and
+   * @param {XpathSubject} subject - Descriptor containing an XPath representation and
    * start and end offsets.
    */
-  constructor(content, subject) {
+  // FIXME: what type is `subject`?
+  constructor(content: TextContent, subject: XpathSubject) {
     // Construct base class
     super(content);
 
-    if (!is_obj(subject) || subject.start.offset < 0 || subject.end.offset < 0) {
+    if (subject.start.offset < 0 || subject.end.offset < 0) {
       throw new Error('Invalid or no XPath object specified');
     }
 
@@ -63,28 +71,29 @@ class XpathFinder extends Finder {
 
     /*     console.log("DEBUG start = ", start, "end = ", end, subject); */
 
-    if (start === end) {
-      throw new Error('Invalid XPath representation: start == end');
-    } else if (start > end) {
+    if (start > end) {
       throw new Error('Invalid XPath representation: start > end');
     }
 
     // Save global character offset and relative start and end offsets in descriptor.
-    this.results.push({ start: start, end: end });
+    this.results.push({ start, end });
   }
 
   /**
    * Return next available match
    *
-   * @returns {Range|false} Returns a `Range` if a match is available, or `false` if no more
+   * @returns {Range | null} Returns a `Range` if a match is available, or `null` if no more
    * matches are available.
    */
-  next() {
+  next(): Range | null {
     if (this.current >= this.results.length) {
-      return false;
+      return null;
     }
 
-    const subject = this.results[this.current];
+    const subject: any = this.results[this.current];
+    if (subject == null) {
+      throw new Error('Subject not found');
+    }
     ++this.current;
 
     // TODO: we don't necessarily need to invoke getAt_ for the end offset.  A check has to be made
