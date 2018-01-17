@@ -125,3 +125,9 @@ $ yarn test
 Note that tests relying on the `document.createRange` function are skipped due
 to the fact that jsdom, the virtual DOM environment used, does not provide an
 implementation.
+
+### Release process
+
+To release this repository to NPM, we use the `npm version` CLI tool. The
+automated build in CircleCI will publish the package to NPM when it recognizes
+that the current build is for a tag.
