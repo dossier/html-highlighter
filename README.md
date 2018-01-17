@@ -128,6 +128,17 @@ implementation.
 
 ### Release process
 
-To release this repository to NPM, we use the `npm version` CLI tool. The
-automated build in CircleCI will publish the package to NPM when it recognizes
-that the current build is for a tag.
+To release this repository to NPM, we use the following command:
+
+```sh
+npm version <type>
+```
+
+Once that command has been run, execute the following command to push the
+new commit and it's tag.
+
+```sh
+git push --tags
+```
+
+The automated build in CircleCI will then publish the package to NPM.
