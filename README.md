@@ -35,31 +35,65 @@ The inline comments and class documentation are sufficient for a JavaScript
 programmer to jump in and start using this.  To see an example, you can:
 
 ```bash
-    git clone git://github.com/dossier/html-highlighter
-    cd html-highlighter
-    $BROWSER examples/index.html
+    $ git clone git://github.com/dossier/html-highlighter
+    $ cd html-highlighter
+    $ yarn install
+    $ yarn start
+    $ $BROWSER http://localhost:8080/examples/monolith/
+```
+
+Note the trailing slash in the URL fragment `examples/monolith/`.  Omitting
+the slash will result in something loading but not quite running.
+
+## Dependencies
+
+The HTML Highlighter library relies on a number of dependencies that must be
+installed before any other step is taken.  Installing dependencies can be done
+as given below:
+
+```sh
+$ yarn install
 ```
 
 ## Building
+### Development
 
-The command given below creates a development build which is composed of a
-non-minified bundle of the HTML Highlighter library, as well as examples and
-tests.  All build artifacts are placed inside the `dist` directory.
-
-```sh
-$ npm run build
-```
-
-Creating a **production** build requires setting the `NODE_ENV` environment
-variable to `production`.  This results in *only* the HTML Highlighter library
-being built, optimized and minimized.  Everything else is omitted.
+When hacking on the HTML Highlighter, running the following command free one
+from having to manually compile the code with each iteration.  Bundles are
+automatically generated as changes are made, making development a breeze.
 
 ```sh
-$ NODE_ENV=production npm run build
+$ yarn start
 ```
 
-Note that the `build` script automatically installs dependencies.
+Access the generated assets on a browser via the URL `http://localhost:8080`.
 
+An alternative dynamic build mode relies on webpack's watch method for building
+bundles.  Bundles and assets are created in the directory `dist`.
+
+```sh
+$ yarn start:watch
+```
+
+Finally, the command given below creates a **static** development build which
+is composed of a non-minified bundle of the HTML Highlighter library, as well
+as examples and tests.  All build artifacts are placed inside the `dist`
+directory.  Note that this command must be run each time changes are made to
+the code.
+
+```sh
+$ yarn build:dev
+```
+
+### Production
+
+Creating a **production** build requires running a simple command and results
+in *only* the HTML Highlighter library being built, optimized and minimized.
+Everything else is omitted.
+
+```sh
+$ yarn build
+```
 
 ## Running tests
 
@@ -67,19 +101,14 @@ Tests can be executed in the browser and terminal.
 
 ### Browser
 
-There are two ways of running tests in the browser:
+To run tests in the browser, execute the following command from the
+repository's root directory:
 
 ```sh
-$ webpack --bail && http-server dist
+$ yarn start
 ```
 
-*or*
-
-```sh
-$ webpack-dev-server --bail --inline --hot --content-base=dist
-```
-
-In both cases you then need to point your browser to
+Then it is a simple matter of pointing the browser to
 `http://localhost:8080/test.html`.
 
 ### Terminal
@@ -88,9 +117,9 @@ Running tests in the terminal can be accomplished by executing the following
 command:
 
 ```sh
-$ npm run test
+$ yarn test
 ```
 
 Note that tests relying on the `document.createRange` function are skipped due
-to the fact that jsdom, the virtual DOM environment, does not provide an
+to the fact that jsdom, the virtual DOM environment used, does not provide an
 implementation.

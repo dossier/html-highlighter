@@ -1,12 +1,12 @@
 // @flow
-
 /* eslint-disable camelcase */
+import EventEmitter from 'events';
+
 import merge from 'merge';
 
 import * as dom from './dom';
-import { defaults, Css } from './consts';
+import { Css } from './consts';
 import type { InputOptions, Options } from './consts';
-import Ui from './ui/ui';
 import TextContent from './textcontent';
 import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
@@ -39,11 +39,20 @@ export type Marker = {|
  * Main class of the HTML Highlighter module, which exposes an API enabling
  * clients to control all the features supported related to highlighting and
  * text selection.
+ *
+ * Emits the following events:
+ *
+ *  - refresh: text content refreshed
+ *  - add: query set added
+ *  - append: queries added to query set
+ *  - remove: query set removed
+ *  - enable: query set enabled
+ *  - disable: query set disabled
+ *  - clear: all query sets removed and cursor cleared
  * */
-class HtmlHighlighter {
+class HtmlHighlighter extends EventEmitter {
   options: Options;
   cursor: Cursor;
-  ui: Ui;
   stats: Stats;
   lastId: number;
   content: TextContent;
@@ -54,9 +63,23 @@ class HtmlHighlighter {
    * `options` descriptor and thus can't query the `debug` attribute. */
   static debug: boolean = false;
 
+  // Default options.  Note that we cannot declare this map as `Options` since not all attributes
+  // are defined.
+  static defaults: InputOptions = {
+    // Sometimes it is useful for the client to determine how to bring an element into view via
+    // scrolling. If `scrollTo` is set, then it is called as a function with a `Node` to scroll
+    // to.
+    scrollTo: null,
+    maxHighlight: 1,
+    useQueryAsClass: false,
+    normalise: true,
+  };
+
   constructor(options: InputOptions) {
+    super();
+
     // Merge default options
-    this.options = merge({}, defaults, options);
+    this.options = merge({}, HtmlHighlighter.defaults, options);
 
     // Mutable properties
     this.queries = new Map();
@@ -82,7 +105,6 @@ class HtmlHighlighter {
     }
 
     this.cursor = new Cursor(this);
-    this.ui = new Ui(this, this.options);
 
     // Start by refreshing the internal document's text representation, which initialises
     // `this.content`.
@@ -97,9 +119,8 @@ class HtmlHighlighter {
    */
   refresh() {
     this.content = new TextContent(this.options.container);
-    if (HtmlHighlighter.debug === true) {
-      this.content.assert_();
-    }
+    this.assert_();
+    this.emit('refresh');
   }
 
   /**
@@ -171,10 +192,8 @@ class HtmlHighlighter {
     }
 
     this.cursor.clear();
-    this.ui.update();
-    if (HtmlHighlighter.debug === true) {
-      this.assert_();
-    }
+    this.assert_();
+    this.emit('add', name, querySet, queries);
 
     return this;
   }
@@ -193,17 +212,15 @@ class HtmlHighlighter {
    * @returns {HtmlHighlighter} Self instance for chaining
    */
   append(name: string, queries: Array<string>, enabled: boolean = false): HtmlHighlighter {
-    const query = this.queries.get(name);
-    if (query == null) {
+    const querySet = this.queries.get(name);
+    if (querySet == null) {
       throw new Error('Invalid or query set not yet created');
     }
 
-    this.add_queries_(query, queries, enabled === true);
+    this.add_queries_(querySet, queries, enabled === true);
     this.cursor.clear();
-    this.ui.update();
-    if (HtmlHighlighter.debug === true) {
-      this.assert_();
-    }
+    this.assert_();
+    this.emit('append', name, querySet, queries);
 
     return this;
   }
@@ -219,7 +236,7 @@ class HtmlHighlighter {
   remove(name: string): HtmlHighlighter {
     this.remove_(name);
     this.cursor.clear();
-    this.ui.update();
+    this.emit('remove', name);
     return this;
   }
 
@@ -246,7 +263,7 @@ class HtmlHighlighter {
     q.enabled = true;
     this.stats.total += q.length;
     this.cursor.clear();
-    this.ui.update(false);
+    this.emit('enable', name);
     return this;
   }
 
@@ -273,7 +290,7 @@ class HtmlHighlighter {
     q.enabled = false;
     this.stats.total -= q.length;
     this.cursor.clear();
-    this.ui.update(false);
+    this.emit('disable', name);
     return this;
   }
 
@@ -301,7 +318,7 @@ class HtmlHighlighter {
     }
 
     this.cursor.clear();
-    this.ui.update();
+    this.emit('clear');
     return this;
   }
 
@@ -314,7 +331,6 @@ class HtmlHighlighter {
    */
   setIterableQueries(queries: Array<string> | null = null): void {
     this.cursor.setIterableQueries(queries);
-    this.ui.update(false);
   }
 
   /**
@@ -328,7 +344,6 @@ class HtmlHighlighter {
    */
   prev(): void {
     this.cursor.prev();
-    this.ui.update(false);
   }
 
   /**
@@ -341,7 +356,6 @@ class HtmlHighlighter {
    */
   next(): void {
     this.cursor.next();
-    this.ui.update(false);
   }
 
   /* eslint-disable complexity */
@@ -596,6 +610,8 @@ class HtmlHighlighter {
       this.options.container.normalize();
       this.refresh();
     }
+
+    this.assert_();
   }
 
   /**
@@ -615,6 +631,12 @@ class HtmlHighlighter {
   }
 
   assert_(): void {
+    if (!HtmlHighlighter.debug) {
+      return;
+    }
+
+    this.content.assert();
+
     let k;
     let c = 0;
     let l = 0;

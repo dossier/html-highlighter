@@ -1,23 +1,34 @@
 // @flow
 
-/* eslint-disable camelcase */
+import EventEmitter from 'events';
+
 import * as dom from './dom';
 import { Css } from './consts';
 import HtmlHighlighter from './htmlhighlighter';
-/* eslint-enable camelcase */
 
 /**
  * Class responsible for managing the state of the highlight cursor
  *
- * @param {Object} owner - Reference to the owning instance.
- * */
-class Cursor {
+ * Emits the following events:
+ *
+ *  - clear: cursor position is cleared
+ *  - setiterable: allowable iterable queries set or cleared
+ *  - update: cursor position mutated
+ */
+class Cursor extends EventEmitter {
   owner: HtmlHighlighter;
   index: number;
   iterableQueries: Array<string> | null;
   total: number;
 
+  /**
+   * Class constructor
+   *
+   * @param {Object} owner - Reference to the owning instance
+   */
   constructor(owner: HtmlHighlighter) {
+    super();
+
     this.owner = owner;
     this.index = -1;
     this.iterableQueries = null;
@@ -31,6 +42,7 @@ class Cursor {
     this.clearActive_();
     this.index = -1;
     this.update();
+    this.emit('clear');
   }
 
   /**
@@ -52,6 +64,7 @@ class Cursor {
     }
 
     this.clear();
+    this.emit('setiterable', queries);
   }
 
   /**
@@ -77,7 +90,10 @@ class Cursor {
       }
     }
 
-    this.total = total;
+    if (this.total !== total) {
+      this.total = total;
+      this.emit('update', this.index, this.total);
+    }
   }
 
   /**
@@ -85,15 +101,17 @@ class Cursor {
    *
    * @param {number} index - Virtual cursor index
    * @param {boolean} dontRecurse - When `true` instructs the method not to employ recursion
+   *
+   * @returns {boolean} `true` if move occurred
    */
-  set(index: number, dontRecurse: boolean): void {
+  set(index: number, dontRecurse: boolean): boolean {
     const owner = this.owner;
     const markers = owner.highlights;
 
     if (index < 0) {
       throw new Error('Invalid cursor index specified: ' + index);
     } else if (owner.stats.total <= 0) {
-      return;
+      return false;
     }
 
     let count = index;
@@ -121,7 +139,7 @@ class Cursor {
       if (!dontRecurse) {
         this.set(0, true);
       }
-      return;
+      return false;
     }
 
     // Clear currently active highlight, if any, and set requested highlight active
@@ -141,7 +159,13 @@ class Cursor {
       }
     }
 
+    if (this.index === index) {
+      return false;
+    }
+
     this.index = index;
+    this.emit('update', index, this.total);
+    return true;
   }
 
   /**

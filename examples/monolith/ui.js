@@ -1,35 +1,24 @@
 // FIXME: refactor camel-case symbols
-import $ from 'jquery';
+import { Css } from '../../src/consts';
 
-import { Css } from '../consts';
-/* eslint-disable camelcase */
-import { is_$, is_obj_empty } from '../util';
-/* eslint-disable camelcase */
-
-import TemplateFinder from './templatefinder';
-import NodeFinder from './nodefinder';
+import { TemplateFinder, NodeFinder } from './template';
 
 /**
- * Class responsible for updating the user interface widget, if one is supplied
- * */
-class Ui {
+ * Class responsible for updating the user interface widget
+ */
+class UI {
+  static DELAY_TOGGLEENTITIES = 250;
+
   /**
    * Class constructor
    *
-   * @param {Main} owner - reference to owning <code>Main</code> instance
+   * @param {HtmlHighlighter} highlighter - reference to owning `HtmlHighlighter` instance
    * @param {Object} options - map containing options
    */
-  constructor(owner, options) {
-    this.owner = owner;
+  constructor(highlighter, $widget) {
+    this.highlighter = highlighter;
 
-    if (!is_$(options.widget)) {
-      Object.defineProperty(this, 'options', { value: false });
-      return;
-    }
-
-    Object.defineProperty(this, 'options', { value: options });
-
-    let finder = new NodeFinder('data-hh-scope', '', options.widget);
+    let finder = new NodeFinder('data-hh-scope', '', $widget);
 
     this.root = finder.root;
     this.nodes = {
@@ -62,7 +51,7 @@ class Ui {
         this.timeouts.entities = window.setTimeout(() => {
           el.css('overflow-y', 'auto');
           this.timeouts.entities = null;
-        }, this.options.delays.toggleEntities);
+        }, UI.DELAY_TOGGLEENTITIES);
 
         this.nodes.expander.addClass(Css.enabled);
       } else {
@@ -74,41 +63,27 @@ class Ui {
     this.nodes.entities.click(ev => {
       const $node = $(ev.target);
       if ($node.data('hh-scope') === 'remove') {
-        this.owner.remove(this.getName_($node)).apply();
+        this.highlighter.remove(this.getName_($node));
       }
     });
 
-    this.nodes.next.click(() => this.owner.next());
-    this.nodes.prev.click(() => this.owner.prev());
+    this.nodes.next.click(() => this.highlighter.next());
+    this.nodes.prev.click(() => this.highlighter.prev());
+
+    highlighter.on('add', this.onQuerySetAdded);
+    highlighter.on('remove', this.onQuerySetRemoved);
+    highlighter.on('clear', this.onStateCleared);
+    highlighter.on('enable', this.onQuerySetEnabled);
+    highlighter.on('disable', this.onQuerySetDisabled);
+    highlighter.cursor.on('clear', this.onCursorCleared);
+    highlighter.cursor.on('update', this.onCursorMoved);
 
     // Initial empty state
     this.setEmpty_();
-    this.update();
-
-    // console.info("HTML highlighter UI instantiated");
   }
 
-  /**
-   * Update the UI state
-   *
-   * Does a full or partial update of the UI state.  A full update is done if `full` is either
-   * unspecified (`undefined`) or `true`, and consists of refreshing the query set list as well as
-   * the cursor position and total.  A partial update merely refreshes the cursor position and
-   * total.
-   *
-   * @param {boolean} full - specifies whether to do a full update
-   */
-  update(full) {
-    if (!this.options) {
-      return;
-    }
-
-    this.nodes.statsCurrent.html(this.owner.cursor.index >= 0 ? this.owner.cursor.index + 1 : '-');
-    this.nodes.statsTotal.html(this.owner.cursor.total);
-
-    if (full === false || this.templates.entityRow === null) {
-      return;
-    } else if (is_obj_empty(this.owner.queries)) {
+  updateQuerySets() {
+    if (this.highlighter.queries.size < 1) {
       this.setEmpty_();
       return;
     }
@@ -116,8 +91,7 @@ class Ui {
     // Template `entity-row´ must supply an LI element skeleton
     let $elu = $('<ul/>');
 
-    Object.keys(this.owner.queries).forEach(k => {
-      const q = this.owner.queries[k];
+    this.highlighter.queries.forEach((q, k) => {
       let $eli = this.templates.entityRow.clone();
 
       if (q.enabled) {
@@ -133,15 +107,30 @@ class Ui {
       const $node = $(ev.target);
       if ($node.data('hh-scope') === 'enable') {
         if ($node.prop('checked')) {
-          this.owner.enable(this.getName_($node));
+          this.highlighter.enable(this.getName_($node));
         } else {
-          this.owner.disable(this.getName_($node));
+          this.highlighter.disable(this.getName_($node));
         }
       }
     });
 
     this.nodes.entities.children().remove();
     this.nodes.entities.append($elu);
+  }
+
+  onQuerySetAdded = () => this.updateQuerySets();
+  onQuerySetRemoved = () => this.updateQuerySets();
+  onQuerySetEnabled = () => this.updateQuerySets();
+  onQuerySetDisabled = () => this.updateQuerySets();
+  onStateCleared = () => this.setEmpty_();
+  onCursorCleared = () => this.updateCursor();
+  onCursorMoved = () => this.updateCursor();
+
+  updateCursor() {
+    this.nodes.statsCurrent.html(
+      this.highlighter.cursor.index >= 0 ? this.highlighter.cursor.index + 1 : '-'
+    );
+    this.nodes.statsTotal.html(this.highlighter.cursor.total);
   }
 
   getName_($node) {
@@ -160,4 +149,4 @@ class Ui {
   }
 }
 
-export default Ui;
+export default UI;

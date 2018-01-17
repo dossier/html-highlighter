@@ -31,12 +31,8 @@
     "check-fmt:json": "sh/check-fmt:json",
     "check-fmt": "sh/check-fmt:js && sh/check-fmt:json"
   },
-  "peerDependencies": {
-    "jquery": ">=2.0.0"
-  },
   "dependencies": {
-    "merge": "^1.2.0",
-    "prettier": "^1.9.2"
+    "merge": "^1.2.0"
   },
   "devDependencies": {
     "babel-core": "^6.24.1",
@@ -65,13 +61,13 @@
     "html-webpack-plugin": "^2.28.0",
     "http-server": "^0.10.0",
     "ignore-loader": "^0.1.2",
-    "jquery": "^3.2.1",
     "jsdom": "^11.5.1",
     "jsdom-global": "^3.0.2",
     "json-loader": "^0.5.4",
     "mocha": "^3.3.0",
     "mocha-loader": "^1.1.1",
     "mocha-webpack": "^0.7.0",
+    "prettier": "^1.9.2",
     "source-map-support": "^0.4.15",
     "webpack": "^2.5.1",
     "webpack-dev-server": "^2.4.5",
