@@ -1,5 +1,7 @@
 # HTML Highlighter
 
+[![CircleCI](https://circleci.com/gh/dossier/html-highlighter.svg?style=svg)](https://circleci.com/gh/dossier/html-highlighter)
+
 The HTML Highlighter is a JavaScript module that solves these problems:
 
  1. Display colorful highlights on words in a live Web page that are

@@ -3,7 +3,7 @@
   "title": "Html Highlighter",
   "description": "Highlight and select phrases in HTML pages.",
   "version": "0.1.3",
-  "main": "dist/html_highlighter.min.js",
+  "main": "dist/html_highlighter.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dossier/html-highlighter.git"
@@ -18,8 +18,9 @@
     "url": "https://github.com/dossier/html-highlighter.git/issues"
   },
   "scripts": {
-    "build": "NODE_ENV=production webpack --progress --color --display-error-details",
-    "build:dev": "webpack --progress --color --display-error-details",
+    "build": "webpack --progress --color --display-error-details",
+    "build:min": "NODE_ENV=production webpack --progress --color --display-error-details",
+    "prepublish": "yarn run build && yarn run build:min",
     "start": "webpack-dev-server --progress --color --content-base dist/ --hot --inline --hot --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
     "start:watch": "webpack --progress --color --display-error-details --watch",
     "test": "mocha-webpack --colors --webpack-config webpack.config-test.js 'test/start.js'",
@@ -31,6 +32,9 @@
     "check-fmt:json": "sh/check-fmt:json",
     "check-fmt": "sh/check-fmt:js && sh/check-fmt:json"
   },
+  "files": [
+    "dist/*"
+  ],
   "dependencies": {
     "merge": "^1.2.0"
   },
