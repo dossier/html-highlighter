@@ -35,3 +35,21 @@ jobs:
         
       # run tests!
       - run: yarn test
+
+      - run:
+          name: Authenticate to NPM
+          command: |
+            # See: http://blog.npmjs.org/post/118393368555/deploying-with-npm-private-modules
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            # Verify that the authentication works
+            npm whoami
+
+      - deploy:
+          name: Publish to NPM on tag
+          command: |
+            # If we aren't on a tagged release, this deploymnt does not run.
+            if [ -z "$CIRCLE_TAG" ]; then
+              exit 0
+            fi
+
+            npm publish
