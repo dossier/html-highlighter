@@ -521,10 +521,6 @@ class HtmlHighlighter extends EventEmitter {
         return;
       }
 
-      if (hit === false) {
-        console.info('Query has no hits:', subject);
-        return;
-      }
 
       // Note: insertion of global offsets to the `this.highlights` array could (should?) be done
       // in a web worker concurrently.
