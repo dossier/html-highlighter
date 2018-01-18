@@ -15,6 +15,12 @@ describe('HTML Highlighter', function() {
   let hl;
   let is;
 
+  try {
+    describeFullDocumentTests();
+  } catch (x) {
+    console.warn('Full document tests NOT available in browser mode');
+  }
+
   describe('General', function() {
     beforeEach('initialise state', function() {
       hl = instance.init();
@@ -626,3 +632,20 @@ describe('HTML Highlighter', function() {
     });
   });
 });
+
+function describeFullDocumentTests() {
+  if (BROWSER) {
+    throw new Error('Full document tests not available in browser mode');
+  }
+
+  let hl;
+  let is;
+
+  describe('Full document tests', function() {
+    beforeEach('initialise state', function() {
+      hl = instance.initFull(4);
+    });
+
+    // No tests currently exist for full document mode
+  });
+}
