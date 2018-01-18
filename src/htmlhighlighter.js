@@ -481,17 +481,18 @@ class HtmlHighlighter extends EventEmitter {
   /**
    * Add or append queries to a query set, either enabled or disabled
    *
-   * @param {QUerySet} querySet - query set descriptor.
+   * @param {QuerySet} querySet - query set descriptor.
    * @param {Array<any>} queries - array containing the queries to add or append.
    * @param {boolean} enabled - highlights are enabled if `true`;
    * this is the default state.
    *
    * @returns {number} number of highlights added.
    * */
-  add_queries_(querySet: any, queries: Array<any>, enabled: boolean): number {
+  add_queries_(querySet: QuerySet, queries: Array<any>, enabled: boolean): number {
     const content = this.content;
     const markers = this.highlights;
-    const reserve = querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
+    const reserve =
+      querySet.reserve != null && querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
 
     let count = 0;
     let csscl = null;
