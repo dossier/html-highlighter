@@ -13,6 +13,7 @@ import RangeUnhighlighter from './rangeunhighlighter';
 import Range from './range';
 import Cursor from './cursor';
 import * as constructor from './constructor';
+import logger from './logger';
 
 export type Stats = {|
   queries: number,
@@ -49,7 +50,7 @@ export type Marker = {|
  *  - enable: query set enabled
  *  - disable: query set disabled
  *  - clear: all query sets removed and cursor cleared
- * */
+ */
 class HtmlHighlighter extends EventEmitter {
   options: Options;
   cursor: Cursor;
@@ -109,7 +110,9 @@ class HtmlHighlighter extends EventEmitter {
     // Start by refreshing the internal document's text representation, which initialises
     // `this.content`.
     this.refresh();
-    // console.info("HTML highlighter instantiated");
+
+    logger.init(this);
+    logger.log('instantiated');
   }
 
   /**
@@ -175,7 +178,7 @@ class HtmlHighlighter extends EventEmitter {
         this.lastId = reserve;
         querySet.reserve = reserve;
       } else {
-        console.error('Invalid or insufficient reserve specified');
+        logger.error('invalid or insufficient reserve specified');
         querySet.reserve = count;
       }
     } else {
@@ -373,7 +376,7 @@ class HtmlHighlighter extends EventEmitter {
     if (!(sel && sel.anchorNode)) {
       return null;
     } else if (sel.anchorNode.nodeType !== 3 || sel.focusNode.nodeType !== 3) {
-      console.info('Selection anchor or focus node(s) not text: ignoring');
+      logger.info('selection anchor or focus node(s) not text: ignoring');
       return null;
     }
 
@@ -398,8 +401,8 @@ class HtmlHighlighter extends EventEmitter {
     const endOffset =
       sel.focusNode === sel.anchorNode ? startOffset : this.content.find(sel.focusNode);
     if (startOffset < 0 || endOffset < 0) {
-      console.error(
-        'Unable to retrieve offset of selection anchor or focus node(s)',
+      logger.error(
+        'Unable to retrieve offset of selection anchor or focus node(s):',
         sel.anchorNode,
         sel.focusNode
       );
@@ -481,17 +484,18 @@ class HtmlHighlighter extends EventEmitter {
   /**
    * Add or append queries to a query set, either enabled or disabled
    *
-   * @param {QUerySet} querySet - query set descriptor.
+   * @param {QuerySet} querySet - query set descriptor.
    * @param {Array<any>} queries - array containing the queries to add or append.
    * @param {boolean} enabled - highlights are enabled if `true`;
    * this is the default state.
    *
    * @returns {number} number of highlights added.
    * */
-  add_queries_(querySet: any, queries: Array<any>, enabled: boolean): number {
+  add_queries_(querySet: QuerySet, queries: Array<any>, enabled: boolean): number {
     const content = this.content;
     const markers = this.highlights;
-    const reserve = querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
+    const reserve =
+      querySet.reserve != null && querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
 
     let count = 0;
     let csscl = null;
@@ -507,6 +511,8 @@ class HtmlHighlighter extends EventEmitter {
       csscl
     );
 
+    logger.log(`adding queries for: ${querySet.name}`);
+
     // For each query, perform a lookup in the internal text representation and highlight each hit.
     // The global offset of each highlight is recorded in the `this.highlights´ array.  The offset
     // is used by the `Cursor´ class to compute the next/previous highlight to show.
@@ -516,20 +522,21 @@ class HtmlHighlighter extends EventEmitter {
       try {
         finder = constructor.finder(content, subject);
       } catch (x) {
-        console.error('exception:', x);
+        logger.exception(
+          `subject finder instantiation failed [query=${querySet.name}]: subject:`,
+          subject,
+          x
+        );
         return;
       }
 
-      if (hit === false) {
-        console.info('Query has no hits:', subject);
-        return;
-      }
+      logger.log('processing subject:', subject);
 
       // Note: insertion of global offsets to the `this.highlights` array could (should?) be done
       // in a web worker concurrently.
       while ((hit = finder.next()) !== null) {
         if (reserve !== null && count >= reserve) {
-          console.error('highlight reserve exceeded');
+          logger.error('highlight reserve exceeded');
           break;
         }
 
@@ -560,7 +567,7 @@ class HtmlHighlighter extends EventEmitter {
           highlighter.do(hit);
           ++count;
         } catch (x) {
-          console.error('exception: ', x);
+          logger.exception(`highlighting failed [query=${querySet.name}]: subject:`, subject, x);
         }
       }
     });

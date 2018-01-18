@@ -1,11 +1,10 @@
 // @flow
 
-/* eslint-disable camelcase */
 import TextContent from './textcontent';
 import Finder from './finder';
 import TextNodeXpath from './textnodexpath';
 import Range from './range';
-/* eslint-enable camelcase */
+import logger from './logger';
 
 export type XpathSubject = {|
   start: { xpath: string, offset: number },
@@ -53,8 +52,8 @@ class XpathFinder extends Finder {
     start = content.find(start);
     end = content.find(end);
     if (start < 0 || end < 0) {
-      console.error(
-        'Unable to derive global offsets: %d:%d [xpath=%s:%s to end=%s:%s]',
+      logger.error(
+        'unable to derive global offsets: %d:%d [xpath=%s:%s to end=%s:%s]',
         start,
         end,
         subject.start.xpath,
@@ -69,7 +68,7 @@ class XpathFinder extends Finder {
     start = content.at(start).offset + subject.start.offset;
     end = content.at(end).offset + subject.end.offset - 1;
 
-    /*     console.log("DEBUG start = ", start, "end = ", end, subject); */
+    /* logger.log("DEBUG start = ", start, "end = ", end, subject); */
 
     if (start > end) {
       throw new Error('Invalid XPath representation: start > end');

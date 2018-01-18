@@ -2,6 +2,7 @@
 
 import * as dom from './dom';
 import HtmlHighlighter from './htmlhighlighter';
+import logger from './logger';
 
 export type Marker = {| node: Node, offset: number |};
 export type MarkerArray = Array<Marker>;
@@ -254,8 +255,8 @@ class TextContent {
       const marker = this.markers[i];
 
       if (marker.offset !== offset) {
-        console.error('Invalid offset: %d@ %d:%d ->', i, marker.offset, offset, marker);
-        throw new Error('Invalid offset');
+        logger.error('invalid offset: %d@ %d:%d ->', i, marker.offset, offset, marker);
+        throw new Error('Halting due to invalid offset');
       }
 
       offset += marker.node.nodeValue.length;

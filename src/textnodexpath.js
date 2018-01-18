@@ -1,6 +1,7 @@
 // @flow
 
 import { Css } from './consts';
+import logger from './logger';
 
 export type XPathPart = {| tag: string, index: number |};
 
@@ -86,7 +87,7 @@ class TextNodeXpath {
       if (cur == null) {
         // This, we would hope, would be indicative that the tree mutated.  Otherwise, either this
         // algorithm is flawed or the reverse operation is.
-        console.error('Failed to find nth child:', part, cur);
+        logger.error('failed to find nth child:', part, cur);
         return null;
       }
     }
@@ -105,7 +106,7 @@ allowed.  Offending XPath representation: ${xpath}`
     cur = part.tag === 'text()' ? this.nthTextOf_((cur: any), part.index) : null;
 
     if (cur == null || cur.nodeType !== 3) {
-      console.error('Element at specified XPath NOT a text node: %s', xpath, part, cur);
+      logger.error('element at specified XPath NOT a text node:', xpath, part, cur);
       return null;
     }
 
@@ -369,7 +370,7 @@ allowed.  Offending XPath representation: ${xpath}`
         throw new Error('Invalid index: ' + index);
       }
     } catch (x) {
-      console.error(`Failed to extract child index: ${part}`);
+      logger.error(`failed to extract child index: ${part}`);
       throw x; /* Re-throw after dumping inspectable object. */
     }
 
@@ -403,7 +404,7 @@ allowed.  Offending XPath representation: ${xpath}`
       }
     }
 
-    console.error("Failed to locate tag '%s' at index %d", tag, index);
+    logger.error(`failed to locate tag '${tag}' at index ${String(index)}`);
     return null;
   }
 
@@ -451,7 +452,7 @@ allowed.  Offending XPath representation: ${xpath}`
 
         // Ensure tag sought after is the right one
         if (node.nodeType !== 3) {
-          console.error('Failed to locate text node at index %d', index);
+          logger.error(`failed to locate text node at index ${String(index)}`);
           return null;
         }
 
