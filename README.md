@@ -1,6 +1,7 @@
 # HTML Highlighter
 
 [![CircleCI](https://circleci.com/gh/dossier/html-highlighter.svg?style=svg)](https://circleci.com/gh/dossier/html-highlighter)
+[![npm](https://img.shields.io/npm/v/html-highlighter.svg)](https://www.npmjs.com/package/html-highlighter)
 
 The HTML Highlighter is a JavaScript module that solves these problems:
 
