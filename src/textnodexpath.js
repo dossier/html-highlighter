@@ -255,8 +255,14 @@ allowed.  Offending XPath representation: ${xpath}`
 
     while ((node = (node: any).previousSibling) !== null) {
       // Don't count contiguous text nodes or highlight containers as being nodes.  IOW, contiguous
-      // text nodes or highlight containers are treated as ONE element.
-      if (!this.isLikeText_(node) && (node: any).nodeName.toLowerCase() === name) {
+      // text nodes or highlight containers are treated as ONE element.  Also ignore special
+      // document type nodes (e.g. `<!DOCTYPE html>`) for HTML5 documents, to avoid producing an
+      // invalid XPath representation of `/html[2]` rather than the expected `/html[1]`.
+      if (
+        !this.isLikeText_(node) &&
+        (node: any).nodeName.toLowerCase() === name &&
+        node.nodeType !== Node.DOCUMENT_TYPE_NODE
+      ) {
         ++index;
       }
     }
