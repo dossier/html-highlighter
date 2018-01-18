@@ -62,8 +62,8 @@ function highlight(id, text) {
     t += ops.textOf(el);
   }
 
-  assert.strictEqual(text, t, 'expected highlight text');
-  assert.strictEqual(text.length, l, 'expected highlight length');
+  assert.strictEqual(t, text, 'expected highlight text');
+  assert.strictEqual(l, text.length, 'expected highlight length');
 }
 
 function cursor(position, total = null) {
