@@ -1,4 +1,4 @@
-/* global describe, beforeEach, afterEach, it */
+/* global BROWSER, describe, beforeEach, afterEach, it */
 /* eslint-disable no-use-before-define */
 
 import chai from 'chai';

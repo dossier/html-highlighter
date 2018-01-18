@@ -1,5 +1,5 @@
 // Load json data files.
-/* eslint-disable global-require */
+/* eslint-disable global-require, max-len */
 const dataFiles = [
   'viber_attacked_by_syrian_electronic_army-cropped',
   'one_paragraph-ampersand_nonexistent',

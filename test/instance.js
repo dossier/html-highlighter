@@ -1,3 +1,4 @@
+/* global BROWSER */
 /* eslint-disable no-use-before-define */
 import * as hh from '../src/main';
 
