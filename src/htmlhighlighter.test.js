@@ -646,6 +646,8 @@ function describeFullDocumentTests() {
       hl = instance.initFull(4);
     });
 
-    // No tests currently exist for full document mode
+    it('highlights text correctly', function() {
+      ops.highlight('full.wrapElement');
+    });
   });
 }
