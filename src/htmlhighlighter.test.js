@@ -662,5 +662,12 @@ function describeFullDocumentTests() {
     it('highlights text correctly', function() {
       ops.highlight('full.wrapElement');
     });
+
+    it('prefix text selection XPath correctly', function() {
+      // Note that, this being a full document test, `window.document.createRange` at the time of
+      // writing not available in jsdom environments.  The test will pass while `createRange` isn't
+      // available.
+      ops.selectStandard();
+    });
   });
 }
