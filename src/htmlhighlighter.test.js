@@ -1,4 +1,4 @@
-/* global describe, beforeEach, afterEach, it */
+/* global BROWSER, describe, beforeEach, afterEach, it */
 /* eslint-disable no-use-before-define */
 
 import chai from 'chai';
@@ -10,11 +10,25 @@ import * as attest from '../test/attest';
 
 const { assert } = chai;
 
+let hl;
+let is;
+
 // Test specifications
 describe('HTML Highlighter', function() {
-  let hl;
-  let is;
+  describeGeneralTests();
+  describeCursorMovementTests();
+  describeTextSelectionTests();
+  describeXpathTests();
+  describeSpecialCharacterHandlingTests();
 
+  try {
+    describeFullDocumentTests();
+  } catch (x) {
+    console.warn('Full document tests NOT available in browser mode');
+  }
+});
+
+function describeGeneralTests() {
   describe('General', function() {
     beforeEach('initialise state', function() {
       hl = instance.init();
@@ -108,7 +122,9 @@ describe('HTML Highlighter', function() {
       attest.clear();
     });
   });
+}
 
+function describeCursorMovementTests() {
   describe('Cursor movement', function() {
     beforeEach('initialise state', function() {
       hl = instance.init();
@@ -313,7 +329,9 @@ describe('HTML Highlighter', function() {
       });
     });
   });
+}
 
+function describeTextSelectionTests() {
   describe('Text selection', function() {
     beforeEach('initialise state', function() {
       hl = instance.init();
@@ -349,7 +367,9 @@ describe('HTML Highlighter', function() {
       ops.selectStandard();
     });
   });
+}
 
+function describeXpathTests() {
   describe('XPath', function() {
     describe('Basic', function() {
       beforeEach('initialise state', function() {
@@ -581,7 +601,9 @@ describe('HTML Highlighter', function() {
       });
     });
   });
+}
 
+function describeSpecialCharacterHandlingTests() {
   describe('Special character handling', function() {
     it('creates a highlight encompassing an ampersand', function() {
       hl = instance.init(1);
@@ -625,4 +647,27 @@ describe('HTML Highlighter', function() {
       attest.totalHighlights(1, 1);
     });
   });
-});
+}
+
+function describeFullDocumentTests() {
+  if (BROWSER) {
+    throw new Error('Full document tests not available in browser mode');
+  }
+
+  describe('Full document tests', function() {
+    beforeEach('initialise state', function() {
+      hl = instance.initFull(4);
+    });
+
+    it('highlights text correctly', function() {
+      ops.highlight('full.wrapElement');
+    });
+
+    it('prefix text selection XPath correctly', function() {
+      // Note that, this being a full document test, `window.document.createRange` at the time of
+      // writing not available in jsdom environments.  The test will pass while `createRange` isn't
+      // available.
+      ops.selectStandard();
+    });
+  });
+}

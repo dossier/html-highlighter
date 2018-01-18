@@ -1,10 +1,11 @@
 // Load json data files.
-/* eslint-disable global-require */
+/* eslint-disable global-require, max-len */
 const dataFiles = [
   'viber_attacked_by_syrian_electronic_army-cropped',
   'one_paragraph-ampersand_nonexistent',
   'one_paragraph-ampersand',
   'one_paragraph-ampersand_escaped',
+  'viber_attacked_by_syrian_electronic_army',
 ];
 const data = dataFiles.map(d => require(`../etc/data/${d}.json`).html);
 /* eslint-enable global-require */
@@ -116,6 +117,22 @@ const tests = {
     xpath: {
       start: { xpath: '/p[1]/code[1]/text()[1]', offset: 18 },
       end: { xpath: '/p[1]/text()[4]', offset: 93 },
+    },
+  },
+  'full.wrapElement': {
+    text:
+      'Viber appeared to have been hacked by the Syrian Electronic Army (a pro-government group',
+    xpath: {
+      start: {
+        xpath:
+          '/html[1]/body[1]/div[2]/article[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/p[1]/text()[1]',
+        offset: 62,
+      },
+      end: {
+        xpath:
+          '/html[1]/body[1]/div[2]/article[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/div[1]/p[1]/text()[2]',
+        offset: 24,
+      },
     },
   },
 };

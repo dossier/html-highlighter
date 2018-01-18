@@ -118,14 +118,14 @@ function selectStandard() {
     result = select(ft, 0, lt, lt.nodeValue.length);
   } catch (x) {
     console.error('`window.document.createRange` unavailable in jsdom env: test disabled');
-
     return null;
   }
 
+  const prefix = instance.isFull() ? '/html[1]/body[1]' : '';
   attest.selectionRange(result);
   expect(result.computeXpath()).to.deep.equal({
-    end: { offset: 260, xpath: '/p[3]/text()[1]' },
-    start: { offset: 0, xpath: '/p[3]/a[1]/text()[1]' },
+    end: { offset: 260, xpath: `${prefix}/p[3]/text()[1]` },
+    start: { offset: 0, xpath: `${prefix}/p[3]/a[1]/text()[1]` },
   });
   return result;
 }
@@ -136,8 +136,9 @@ function highlight(name, qsetname) {
   }
 
   const hl = instance.get();
-  hl.add('test-' + qsetname, [tests[name].xpath]);
-  attest.highlight(hl.lastId - 1, tests[name].text);
+  const test = tests[name];
+  hl.add('test-' + qsetname, [test.xpath]);
+  attest.highlight(hl.lastId - 1, test.text);
 }
 
 function getHighlightID(cl) {
