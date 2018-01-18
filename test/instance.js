@@ -11,19 +11,31 @@ bootstrap(html);
 // Test-wide attributes
 let container;
 let instance;
+let full = false;
 
 // Switch to debug mode
 hh.HtmlHighlighter.debug = true;
 
-function init(ndx) {
+function assertJsDOM() {
   // Ensure window and document exist in jsdom environment
   if (window == null || document == null || document.body == null) {
     throw new Error('DOM environment not available');
   }
+}
 
-  if (container) {
+function clear() {
+  if (full) {
+    full = false;
+  } else if (container) {
     container.remove();
   }
+
+  container = null;
+}
+
+function init(ndx) {
+  assertJsDOM();
+  clear();
 
   container = document.createElement('div');
   container.innerHTML = data[ndx || 0];
@@ -36,6 +48,27 @@ function init(ndx) {
   attest.clear();
 
   return instance;
+}
+
+function initFull(ndx) {
+  assertJsDOM();
+  clear();
+
+  if (BROWSER) {
+    throw new Error('Full mode can only be run in non-browser mode');
+  }
+
+  bootstrap(data[ndx]);
+  full = true;
+  container = document;
+  instance = new hh.HtmlHighlighter(getOptions());
+  attest.clear();
+
+  return instance;
+}
+
+function isFull() {
+  return full;
 }
 
 function getOptions() {
@@ -68,4 +101,4 @@ function querySelectorAll(selector) {
   return container.querySelectorAll(selector);
 }
 
-export { init, get, querySelector, querySelectorAll };
+export { init, initFull, isFull, get, querySelector, querySelectorAll };
