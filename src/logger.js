@@ -14,10 +14,6 @@ class Logger {
   highlighter: HtmlHighlighter | null;
 
   init(highlighter: HtmlHighlighter): void {
-    if (this.highlighter != null) {
-      throw new Error('Already initialized');
-    }
-
     this.highlighter = highlighter;
   }
 
