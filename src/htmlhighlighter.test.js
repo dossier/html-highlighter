@@ -10,17 +10,25 @@ import * as attest from '../test/attest';
 
 const { assert } = chai;
 
+let hl;
+let is;
+
 // Test specifications
 describe('HTML Highlighter', function() {
-  let hl;
-  let is;
+  describeGeneralTests();
+  describeCursorMovementTests();
+  describeTextSelectionTests();
+  describeXpathTests();
+  describeSpecialCharacterHandlingTests();
 
   try {
     describeFullDocumentTests();
   } catch (x) {
     console.warn('Full document tests NOT available in browser mode');
   }
+});
 
+function describeGeneralTests() {
   describe('General', function() {
     beforeEach('initialise state', function() {
       hl = instance.init();
@@ -114,7 +122,9 @@ describe('HTML Highlighter', function() {
       attest.clear();
     });
   });
+}
 
+function describeCursorMovementTests() {
   describe('Cursor movement', function() {
     beforeEach('initialise state', function() {
       hl = instance.init();
@@ -319,7 +329,9 @@ describe('HTML Highlighter', function() {
       });
     });
   });
+}
 
+function describeTextSelectionTests() {
   describe('Text selection', function() {
     beforeEach('initialise state', function() {
       hl = instance.init();
@@ -355,7 +367,9 @@ describe('HTML Highlighter', function() {
       ops.selectStandard();
     });
   });
+}
 
+function describeXpathTests() {
   describe('XPath', function() {
     describe('Basic', function() {
       beforeEach('initialise state', function() {
@@ -587,7 +601,9 @@ describe('HTML Highlighter', function() {
       });
     });
   });
+}
 
+function describeSpecialCharacterHandlingTests() {
   describe('Special character handling', function() {
     it('creates a highlight encompassing an ampersand', function() {
       hl = instance.init(1);
@@ -631,15 +647,12 @@ describe('HTML Highlighter', function() {
       attest.totalHighlights(1, 1);
     });
   });
-});
+}
 
 function describeFullDocumentTests() {
   if (BROWSER) {
     throw new Error('Full document tests not available in browser mode');
   }
-
-  let hl;
-  let is;
 
   describe('Full document tests', function() {
     beforeEach('initialise state', function() {
