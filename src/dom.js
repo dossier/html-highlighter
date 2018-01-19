@@ -1,4 +1,10 @@
 // @flow
+// FIXME: this module relies heavily on `document.querySelector` and `document.querySelectorAll`
+// methods but suffers from the limitation that it (presently) runs the queries on the wider
+// document's DOM.  This means that, should there ever be a use case for multiple HTML Highlighter
+// instances running concurrently within the same DOM on separate subtrees, the result of doing so
+// would most certainly be undefined and most likely confusing and resulting in loss or corruption
+// of (perceived) state.
 
 import { Css } from './consts';
 
