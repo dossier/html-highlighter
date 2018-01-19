@@ -61,7 +61,7 @@ $ yarn install
 ## Building
 ### Development
 
-When hacking on the HTML Highlighter, running the following command free one
+When hacking on the HTML Highlighter, running the following command frees one
 from having to manually compile the code with each iteration.  Bundles are
 automatically generated as changes are made, making development a breeze.
 
