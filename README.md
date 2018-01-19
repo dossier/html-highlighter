@@ -136,7 +136,7 @@ npm version <type>
 ```
 
 Once that command has been run, execute the following command to push the
-new commit and it's tag.
+new commit and its tag.
 
 ```sh
 git push --tags
