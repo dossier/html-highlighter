@@ -143,6 +143,9 @@ function scrollIntoView(el: HTMLElement, container: any): void {
   }
 }
 
+// Export "private" functions so they too can be tested.
+export { classNameToSet, ensureIterable };
+
 export {
   addClass,
   removeClass,
