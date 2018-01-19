@@ -24,8 +24,8 @@ export type Stats = {|
 export type QuerySet = {|
   name: string,
   enabled: boolean,
-  id_highlight: number,
-  id: number,
+  queryId: number,
+  highlightId: number,
   length: number,
   reserve: number | null,
 |};
@@ -158,14 +158,11 @@ class HtmlHighlighter extends EventEmitter {
       this.remove(name);
     }
 
-    // TODO: rename `id_highlight` and `id` attributes below.  The former actually refers to the
-    // query set id and the latter to the first highlight in the query set.  Should have been
-    // refactored long ago!
     const querySet: QuerySet = {
       name,
       enabled,
-      id_highlight: this.stats.highlight,
-      id: this.lastId,
+      queryId: this.stats.highlight,
+      highlightId: this.lastId,
       length: 0,
       reserve: null,
     };
@@ -254,14 +251,11 @@ class HtmlHighlighter extends EventEmitter {
    */
   enable(name: string): HtmlHighlighter {
     const q = this.get_(name);
-    if (q.enabled || q.id === null) {
+    if (q.enabled) {
       return this;
     }
 
-    const { disabled: cssDisabled } = Css;
-    for (let i = q.id, l = i + q.length; i < l; ++i) {
-      dom.removeClass(dom.getHighlightElements(i), cssDisabled);
-    }
+    dom.removeClass(dom.getForQuerySet(q.queryId), Css.disabled);
 
     q.enabled = true;
     this.stats.total += q.length;
@@ -281,14 +275,11 @@ class HtmlHighlighter extends EventEmitter {
    */
   disable(name: string): HtmlHighlighter {
     const q = this.get_(name);
-    if (!q.enabled || q.id === null) {
+    if (!q.enabled) {
       return this;
     }
 
-    const { disabled: cssDisabled } = Css;
-    for (let i = q.id, l = i + q.length; i < l; ++i) {
-      dom.addClass(dom.getHighlightElements(i), cssDisabled);
-    }
+    dom.addClass(dom.getForQuerySet(q.queryId), Css.disabled);
 
     q.enabled = false;
     this.stats.total -= q.length;
@@ -468,15 +459,15 @@ class HtmlHighlighter extends EventEmitter {
   }
 
   /**
-   * Return the last id of a query set
+   * Return the last highlight id of a query set
    *
    * @param {string} name - the name of the query set.
-   * @returns {number} the last id or `-1` if query set empty.
+   * @returns {number} the last highlight id or `-1` if query set empty.
    * */
   lastIdOf(name: string): number {
     const q = this.get_(name);
     const l = q.length;
-    return l > 0 ? q.id + l - 1 : -1;
+    return l > 0 ? q.highlightId + l - 1 : -1;
   }
 
   // Private interface
@@ -505,8 +496,8 @@ class HtmlHighlighter extends EventEmitter {
     }
 
     let highlighter = new RangeHighlighter(
-      querySet.id_highlight,
-      querySet.id + querySet.length,
+      querySet.queryId,
+      querySet.highlightId + querySet.length,
       enabled,
       csscl
     );
@@ -596,7 +587,7 @@ class HtmlHighlighter extends EventEmitter {
     --this.stats.queries;
     this.stats.total -= q.length;
 
-    for (let i = q.id, l = i + q.length; i < l; ++i) {
+    for (let i = q.highlightId, l = i + q.length; i < l; ++i) {
       unhighlighter.undo(i);
     }
 
