@@ -85,7 +85,7 @@ directory.  Note that this command must be run each time changes are made to
 the code.
 
 ```sh
-$ yarn build:dev
+$ yarn build:min
 ```
 
 ### Production
