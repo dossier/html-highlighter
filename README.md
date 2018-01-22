@@ -61,7 +61,7 @@ $ yarn install
 ## Building
 ### Development
 
-When hacking on the HTML Highlighter, running the following command free one
+When hacking on the HTML Highlighter, running the following command frees one
 from having to manually compile the code with each iteration.  Bundles are
 automatically generated as changes are made, making development a breeze.
 
@@ -85,7 +85,7 @@ directory.  Note that this command must be run each time changes are made to
 the code.
 
 ```sh
-$ yarn build:dev
+$ yarn build:min
 ```
 
 ### Production
@@ -136,7 +136,7 @@ npm version <type>
 ```
 
 Once that command has been run, execute the following command to push the
-new commit and it's tag.
+new commit and its tag.
 
 ```sh
 git push --tags
