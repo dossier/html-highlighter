@@ -220,6 +220,40 @@ function describeCursorMovementTests() {
       attest.cursor(0);
     });
 
+    it('invokes cursor "update" event on new query set', function(done) {
+      hl.cursor.on('update', (index, total) => {
+        assert.strictEqual(index, -1);
+        assert.strictEqual(total, counts.the);
+        done();
+      });
+
+      hl.add('test-the', ['the']);
+    });
+
+    it('invokes cursor "update" event on removing query set', function(done) {
+      hl.add('test-the', ['the']);
+
+      hl.cursor.on('update', (index, total) => {
+        assert.strictEqual(index, -1);
+        assert.strictEqual(total, 0);
+        done();
+      });
+
+      hl.remove('test-the');
+    });
+
+    it('invokes cursor "update" event when clearing state', function(done) {
+      hl.add('test-the', ['the']);
+
+      hl.cursor.on('update', (index, total) => {
+        assert.strictEqual(index, -1);
+        assert.strictEqual(total, 0);
+        done();
+      });
+
+      hl.clear();
+    });
+
     describe('Iterable queries', function() {
       beforeEach('initialise state', function() {
         hl = instance.init();
