@@ -41,7 +41,7 @@ class Cursor extends EventEmitter {
   clear(): void {
     this.clearActive_();
     this.index = -1;
-    this.update();
+    this.update(true);
     this.emit('clear');
   }
 
@@ -70,27 +70,27 @@ class Cursor extends EventEmitter {
   /**
    * Update the total of iterable highlights
    *
-   * Does **not** update the UI state.  The caller is responsible for doing so.
+   * Causes recomputation of the total available number of highlights and the update event to be
+   * produced if this number changes.  The event can be forcefully produced it `force` is set to
+   * `true`.
+   *
+   * @param { boolean } force - When `true` causes the "update" event to always be emitted
    */
-  update(): void {
+  update(force: boolean = false): void {
     const iterable = this.iterableQueries;
-    if (iterable === null) {
-      this.total = this.owner.stats.total;
-      return;
-    } else if (iterable.length === 0) {
-      this.total = 0;
-      return;
-    }
-
-    let markers = this.owner.highlights;
     let total = 0;
-    for (let i = markers.length - 1; i >= 0; --i) {
-      if (iterable.indexOf(markers[i].query.name) >= 0) {
-        ++total;
+    if (iterable == null) {
+      total = this.owner.stats.total;
+    } else if (iterable.length > 0) {
+      const markers = this.owner.highlights;
+      for (let i = markers.length - 1; i >= 0; --i) {
+        if (iterable.indexOf(markers[i].query.name) >= 0) {
+          ++total;
+        }
       }
     }
 
-    if (this.total !== total) {
+    if (force || total !== this.total) {
       this.total = total;
       this.emit('update', this.index, this.total);
     }
