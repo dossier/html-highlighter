@@ -3,6 +3,7 @@ import chai from 'chai';
 
 import * as instance from './instance';
 import * as ops from './operations';
+import * as tools from './toolbox';
 
 const { assert } = chai;
 
@@ -72,4 +73,22 @@ function cursor(position, total = null) {
   assert.strictEqual(hl.cursor.index, position);
 }
 
-export { clear, totalHighlights, selectionRange, highlight, cursor };
+// function className(element: Element, className: string | Array<string>): void {
+function className(element, classNames) {
+  const elc = tools.classNameToSet(element.className);
+  const cmpc = tools.classNameToSet(classNames);
+
+  assert.strictEqual(elc.size, cmpc.size);
+  for (const cl of elc) {
+    assert.ok(cmpc.has(cl));
+  }
+}
+
+// function classNameAll(elements: NodeList<Element>, classNames: string | Array<string>): void {
+function classNameAll(elements, classNames) {
+  for (const el of elements) {
+    className(el, classNames);
+  }
+}
+
+export { clear, totalHighlights, selectionRange, highlight, cursor, className, classNameAll };
