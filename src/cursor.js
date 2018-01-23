@@ -70,9 +70,9 @@ class Cursor extends EventEmitter {
   /**
    * Update the total of iterable highlights
    *
-   * Causes recomputation of the total available number of highlights to be recomputed and the
-   * update event to be produced if this number changes.  The event can be forcefully produced
-   * it `force` is set to `true`.
+   * Causes recomputation of the total available number of highlights and the update event to be
+   * produced if this number changes.  The event can be forcefully produced it `force` is set to
+   * `true`.
    *
    * @param { boolean } force - When `true` causes the "update" event to always be emitted
    */
