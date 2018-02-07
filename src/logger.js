@@ -64,10 +64,10 @@ class Logger {
   emit(type: string, args: LoggingArgs): void {
     const fn = console[type];
     if (fn == null) {
-      throw new Error(`Unknown \`console\` function or unavailable: ${type}`);
+      console.error(`logger: console function '${type}' undefined or invalid`);
+    } else {
+      fn.apply(console, this.prepend(args, 'html-highlighter'));
     }
-
-    fn.apply(window, this.prepend(args, 'html-highlighter'));
   }
 
   assert(): void {
