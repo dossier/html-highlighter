@@ -25,7 +25,7 @@ function createElement(options: CreateElementOptions = createElement.defaults) {
   }
 
   if (appendTo === 'body') {
-    document.body.appendChild(el);
+    (document.body: any).appendChild(el);
   }
 
   return el;
