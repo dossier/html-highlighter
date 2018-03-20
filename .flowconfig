@@ -27,8 +27,5 @@ module.system=haste
 
 # Ecmascript option tweaks
 esproposal.export_star_as=enable
-# Suppresses a number of annoying errors about potentially unsafe get/set
-# usage.
-unsafe.enable_getters_and_setters=true
 
 #traces=20
