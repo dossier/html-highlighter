@@ -33,10 +33,7 @@ class Range {
    *
    * @returns {RangeDescriptor} Range descriptor */
   static descriptorAbs(marker: Marker, offset: number): RangeDescriptor {
-    return {
-      marker: marker,
-      offset: offset - marker.offset,
-    };
+    return { marker, offset: offset - marker.offset };
   }
 
   /**
@@ -47,11 +44,8 @@ class Range {
    *
    * @returns {RangeDescriptor} Range descriptor
    */
-  static descriptorRel(marker, offset): RangeDescriptor {
-    return {
-      marker: marker,
-      offset,
-    };
+  static descriptorRel(marker: Marker, offset: number): RangeDescriptor {
+    return { marker, offset };
   }
 
   constructor(content: TextContent, start: RangeDescriptor, end: RangeDescriptor) {
