@@ -145,8 +145,7 @@ class Cursor extends EventEmitter {
     // Clear currently active highlight, if any, and set requested highlight active
     this.clearActive_();
     const c = markers[ndx];
-    const coll = dom.getHighlightElements(c.query.id + c.index);
-
+    const coll = dom.getHighlightElements(c.query.highlightId + c.index);
     // Scroll viewport if element not visible
     if (coll.length > 0) {
       dom.addClass(coll, Css.enabled);
