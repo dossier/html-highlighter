@@ -363,6 +363,81 @@ function describeCursorMovementTests() {
       });
     });
   });
+
+  describe('Highlight activation', function() {
+    beforeEach('initialise state', function() {
+      hl = instance.init();
+
+      hl.add('test-the', ['the']);
+      hl.add('test-viber', ['viber']);
+      hl.setIterableQueries('test-viber');
+      attest.totalHighlights(counts.the + counts.viber, 2);
+    });
+
+    afterEach('destroy state', function() {
+      hl = null;
+    });
+
+    it('moves cursor to next element', function() {
+      attest.cursor(-1, counts.viber);
+      hl.next();
+      attest.cursor(0, counts.viber);
+      attest.currentHighlight(counts.the);
+    });
+
+    it('moves cursor to previous element', function() {
+      attest.cursor(-1, counts.viber);
+      hl.next();
+      attest.cursor(0, counts.viber);
+      attest.currentHighlight(counts.the);
+      hl.next();
+      attest.cursor(1, counts.viber);
+      attest.currentHighlight(counts.the + 1);
+      hl.prev();
+      attest.cursor(0, counts.viber);
+      attest.currentHighlight(counts.the);
+    });
+
+    it('moves cursor to last element', function() {
+      attest.cursor(-1, counts.viber);
+
+      for (let i = 0; i < counts.viber; ++i) {
+        hl.next();
+        attest.cursor(i, counts.viber);
+        attest.currentHighlight(counts.the + i);
+      }
+    });
+
+    it('cursor rolls over to first element from last', function() {
+      for (let i = 0; i < counts.viber; ++i) {
+        attest.cursor(i - 1, counts.viber);
+        hl.next();
+        attest.currentHighlight(counts.the + i);
+      }
+
+      hl.next();
+      attest.cursor(0, counts.viber);
+      attest.currentHighlight(counts.the);
+    });
+
+    it('cursor rolls over to last element from first', function() {
+      attest.cursor(-1, counts.viber);
+      hl.prev();
+      attest.cursor(counts.viber - 1, counts.viber);
+      attest.currentHighlight(counts.the + counts.viber - 1);
+    });
+
+    it('cursor rolls over to last element from first and back', function() {
+      attest.cursor(-1, counts.viber);
+      hl.prev();
+      attest.cursor(counts.viber - 1, counts.viber);
+      attest.currentHighlight(counts.the + counts.viber - 1);
+
+      hl.next();
+      attest.cursor(0, counts.viber);
+      attest.currentHighlight(counts.the);
+    });
+  });
 }
 
 function describeTextSelectionTests() {
