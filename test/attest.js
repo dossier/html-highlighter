@@ -73,6 +73,12 @@ function cursor(position, total = null) {
   assert.strictEqual(hl.cursor.index, position);
 }
 
+function currentHighlight(id) {
+  const el = document.querySelector(`.hh-highlight-id-${id}`);
+  assert.ok(el != null);
+  assert.ok(el.classList.contains('hh-enabled'));
+}
+
 // function className(element: Element, className: string | Array<string>): void {
 function className(element, classNames) {
   const elc = tools.classNameToSet(element.className);
@@ -91,4 +97,13 @@ function classNameAll(elements, classNames) {
   }
 }
 
-export { clear, totalHighlights, selectionRange, highlight, cursor, className, classNameAll };
+export {
+  clear,
+  totalHighlights,
+  selectionRange,
+  highlight,
+  cursor,
+  currentHighlight,
+  className,
+  classNameAll,
+};
