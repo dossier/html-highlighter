@@ -102,13 +102,8 @@ function getOffset(el: HTMLElement): Position {
 }
 
 function isInView(el: HTMLElement): boolean {
-  const boundingBox = el.getBoundingClientRect();
-  const docTop = window.scrollY;
-  const docBottom = docTop + window.innerHeight;
-  const top = getOffset(el).y;
-  const bottom = top + boundingBox.height;
-
-  return top >= docTop && bottom <= docBottom;
+  const bbox = el.getBoundingClientRect();
+  return bbox.top >= 0 && bbox.top + bbox.height < window.innerHeight;
 }
 
 // Note that flow does not expose a formal Window type, which means we are unable to validate the
@@ -118,29 +113,18 @@ function scrollIntoView(el: HTMLElement, container: any): void {
     container = window;
   }
 
-  const MARGIN_VERTICAL = 25;
-
   let containerTop;
   let containerHeight;
   if (container === window) {
     containerHeight = window.innerHeight;
-    containerTop = container.scrollY;
+    containerTop = window.scrollY;
   } else {
     containerHeight = container.getBoundingClientRect().height;
     containerTop = container.scrollTop;
   }
 
-  const containerBottom = containerTop + containerHeight;
-  const elemBoundingBox = el.getBoundingClientRect();
-  const elemMarginBottom = parseInt(getComputedStyle(el).getPropertyValue('margin-top'), 10);
-  const elemTop = elemBoundingBox.top + elemMarginBottom;
-  const elemBottom = elemTop + elemBoundingBox.height + MARGIN_VERTICAL;
-
-  if (elemTop < containerTop) {
-    container.scrollTo({ top: elemTop });
-  } else if (elemBottom > containerBottom) {
-    container.scrollTo({ top: elemBottom - containerHeight });
-  }
+  const bbox = el.getBoundingClientRect();
+  container.scrollTo({ top: bbox.top + containerTop - (containerHeight - bbox.height) / 2 });
 }
 
 // Export "private" functions so they too can be tested.
