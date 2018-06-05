@@ -5,7 +5,7 @@ import chai from 'chai';
 
 import * as instance from '../test/instance';
 import * as ops from '../test/operations';
-import { counts } from '../test/tests';
+import { counts, tests } from '../test/tests';
 import * as attest from '../test/attest';
 
 const { assert } = chai;
@@ -120,6 +120,15 @@ function describeGeneralTests() {
 
       hl.clear();
       attest.clear();
+    });
+
+    it('clears state when overlapping highlights exist', function() {
+      const text = document.body.textContent;
+      hl.add('custom', tests.overlapping.queries);
+      attest.totalHighlights(counts.overlapping);
+
+      hl.clear();
+      assert.strictEqual(document.body.textContent, text);
     });
   });
 }

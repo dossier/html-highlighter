@@ -124,7 +124,13 @@ function init() {
               xpath.end.offset
           );
 
-        highlight_(xpath.start, xpath.end);
+        console.log('creating custom highlight:', xpath);
+        if (highlighter.has('custom')) {
+          highlighter.append('custom', [{ start: xpath.start, end: xpath.end }]);
+        } else {
+          highlighter.add('custom', [{ start: xpath.start, end: xpath.end }], true, 100);
+        }
+
         highlighter.clearSelectedRange();
         $widgetSelection.addClass('enabled');
       }, 150);
@@ -151,6 +157,9 @@ function init() {
     maxHighlight: MAX_HIGHLIGHT,
   });
 
+  highlighter.debug = true;
+  window.hh = highlighter;
+
   ui = new UI(highlighter, $widgetMain);
   load(0);
 }
@@ -162,8 +171,8 @@ function load(index) {
   $search.focus();
 }
 
-/* TODO: the following is a nasty hack which was quickly written as a proof
- * of concept and is thus NOT meant to be used in real applications. */
+/* TODO: the following is a nasty hack which was quickly written as a proof of concept and is thus
+ * NOT meant to be used in real applications.  Currently not in use. */
 function highlight_(start, end) {
   let hit;
   const finder = new XPathFinder(highlighter.content, { start: start, end: end });
@@ -179,3 +188,10 @@ function highlight_(start, end) {
 
 /* Run! */
 $(init);
+
+// Global utility functions for debugging
+// ----------------------------------------------------------------------
+window.hh2text = function(id) {
+  const nodes = document.querySelectorAll(`.hh-highlight-${id}`);
+  console.log(Array.from(nodes).reduce((t, n) => t + n.textContent, ''));
+};

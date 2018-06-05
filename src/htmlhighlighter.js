@@ -12,7 +12,7 @@ import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
 import Range from './range';
 import Cursor from './cursor';
-import * as constructor from './constructor';
+import * as factory from './factory';
 import logger from './logger';
 
 export type Stats = {|
@@ -52,6 +52,7 @@ export type Marker = {|
  *  - clear: all query sets removed and cursor cleared
  */
 class HtmlHighlighter extends EventEmitter {
+  debug: boolean;
   options: Options;
   cursor: Cursor;
   stats: Stats;
@@ -59,10 +60,6 @@ class HtmlHighlighter extends EventEmitter {
   content: TextContent;
   queries: Map<string, QuerySet>;
   highlights: Array<Marker>;
-
-  /** Static attribute that sets the debug state for methods that don't have access to the
-   * `options` descriptor and thus can't query the `debug` attribute. */
-  static debug: boolean = false;
 
   // Default options.  Note that we cannot declare this map as `Options` since not all attributes
   // are defined.
@@ -207,11 +204,11 @@ class HtmlHighlighter extends EventEmitter {
    *
    * @param {string} name - Name of the query set.
    * @param {string[]} queries - Array containing individual queries to highlight.
-   * @param {bool} enabled - If explicitly `true`, query set is also enabled.
+   * @param {bool} enabled - If `true`, query set is also enabled.
    *
    * @returns {HtmlHighlighter} Self instance for chaining
    */
-  append(name: string, queries: Array<string>, enabled: boolean = false): HtmlHighlighter {
+  append(name: string, queries: Array<string>, enabled: boolean = true): HtmlHighlighter {
     const querySet = this.queries.get(name);
     if (querySet == null) {
       throw new Error('Invalid or query set not yet created');
@@ -450,6 +447,16 @@ class HtmlHighlighter extends EventEmitter {
   }
 
   /**
+   * Return boolean value indicating whether a query exists
+   *
+   * @param {string} name - the name of query set
+   * @returns {boolean} `true` if query exists
+   */
+  has(name: string): boolean {
+    return this.queries.has(name);
+  }
+
+  /**
    * Return boolean indicative of whether one or more query sets are currently contained
    *
    * @returns {boolean} `false` if no query sets currently
@@ -511,7 +518,7 @@ class HtmlHighlighter extends EventEmitter {
       let hit, finder;
 
       try {
-        finder = constructor.finder(content, subject);
+        finder = factory.finder(content, subject);
       } catch (x) {
         logger.exception(
           `subject finder instantiation failed [query=${querySet.name}]: subject:`,
@@ -552,6 +559,8 @@ class HtmlHighlighter extends EventEmitter {
           index: count,
           offset: offset,
         });
+
+        logger.log('highlighting:', hit);
 
         try {
           // $FlowFixMe: dumbo flow! `hit` cannot be `null` as per condition in `while` above
@@ -629,7 +638,7 @@ class HtmlHighlighter extends EventEmitter {
   }
 
   assert_(): void {
-    if (!HtmlHighlighter.debug) {
+    if (!this.debug) {
       return;
     }
 

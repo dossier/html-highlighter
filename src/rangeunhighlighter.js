@@ -14,7 +14,8 @@ class RangeUnhighlighter {
   undo(id: number): void {
     const coll = dom.getHighlightElements(id);
     for (const el of coll) {
-      for (const child of el.childNodes) {
+      let child;
+      while ((child = el.childNodes[0]) != null) {
         (el.parentNode: any).insertBefore(child, el);
       }
 
