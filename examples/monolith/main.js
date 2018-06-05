@@ -125,7 +125,7 @@ function init() {
           );
 
         console.log('creating custom highlight:', xpath);
-        if (highlighter.queries.has('custom')) {
+        if (highlighter.has('custom')) {
           highlighter.append('custom', [{ start: xpath.start, end: xpath.end }]);
         } else {
           highlighter.add('custom', [{ start: xpath.start, end: xpath.end }], true, 100);

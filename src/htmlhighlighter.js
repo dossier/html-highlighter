@@ -447,6 +447,16 @@ class HtmlHighlighter extends EventEmitter {
   }
 
   /**
+   * Return boolean value indicating whether a query exists
+   *
+   * @param {string} name - the name of query set
+   * @returns {boolean} `true` if query exists
+   */
+  has(name: string): boolean {
+    return this.queries.has(name);
+  }
+
+  /**
    * Return boolean indicative of whether one or more query sets are currently contained
    *
    * @returns {boolean} `false` if no query sets currently
