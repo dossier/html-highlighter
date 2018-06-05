@@ -52,6 +52,7 @@ export type Marker = {|
  *  - clear: all query sets removed and cursor cleared
  */
 class HtmlHighlighter extends EventEmitter {
+  debug: boolean;
   options: Options;
   cursor: Cursor;
   stats: Stats;
@@ -59,10 +60,6 @@ class HtmlHighlighter extends EventEmitter {
   content: TextContent;
   queries: Map<string, QuerySet>;
   highlights: Array<Marker>;
-
-  /** Static attribute that sets the debug state for methods that don't have access to the
-   * `options` descriptor and thus can't query the `debug` attribute. */
-  static debug: boolean = false;
 
   // Default options.  Note that we cannot declare this map as `Options` since not all attributes
   // are defined.
@@ -629,7 +626,7 @@ class HtmlHighlighter extends EventEmitter {
   }
 
   assert_(): void {
-    if (!HtmlHighlighter.debug) {
+    if (!this.debug) {
       return;
     }
 
