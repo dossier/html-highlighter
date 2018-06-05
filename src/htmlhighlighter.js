@@ -12,7 +12,7 @@ import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
 import Range from './range';
 import Cursor from './cursor';
-import * as constructor from './constructor';
+import * as factory from './factory';
 import logger from './logger';
 
 export type Stats = {|
@@ -508,7 +508,7 @@ class HtmlHighlighter extends EventEmitter {
       let hit, finder;
 
       try {
-        finder = constructor.finder(content, subject);
+        finder = factory.finder(content, subject);
       } catch (x) {
         logger.exception(
           `subject finder instantiation failed [query=${querySet.name}]: subject:`,
