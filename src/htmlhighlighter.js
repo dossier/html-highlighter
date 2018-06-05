@@ -204,11 +204,11 @@ class HtmlHighlighter extends EventEmitter {
    *
    * @param {string} name - Name of the query set.
    * @param {string[]} queries - Array containing individual queries to highlight.
-   * @param {bool} enabled - If explicitly `true`, query set is also enabled.
+   * @param {bool} enabled - If `true`, query set is also enabled.
    *
    * @returns {HtmlHighlighter} Self instance for chaining
    */
-  append(name: string, queries: Array<string>, enabled: boolean = false): HtmlHighlighter {
+  append(name: string, queries: Array<string>, enabled: boolean = true): HtmlHighlighter {
     const querySet = this.queries.get(name);
     if (querySet == null) {
       throw new Error('Invalid or query set not yet created');
@@ -549,6 +549,8 @@ class HtmlHighlighter extends EventEmitter {
           index: count,
           offset: offset,
         });
+
+        logger.log('highlighting:', hit);
 
         try {
           // $FlowFixMe: dumbo flow! `hit` cannot be `null` as per condition in `while` above
