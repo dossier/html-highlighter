@@ -15,6 +15,7 @@ const counts = {
   the: 46,
   viber: 22,
   a: 285,
+  overlapping: 3,
 };
 
 // Tests available
@@ -134,6 +135,22 @@ const tests = {
         offset: 24,
       },
     },
+  },
+  overlapping: {
+    queries: [
+      {
+        start: { xpath: '/p[3]/text()[1]', offset: 19 },
+        end: { xpath: '/p[3]/text()[1]', offset: 52 },
+      },
+      {
+        start: { xpath: '/p[3]/text()[1]', offset: 38 },
+        end: { xpath: '/p[3]/text()[1]', offset: 73 },
+      },
+      {
+        start: { xpath: '/p[3]/text()[1]', offset: 1 },
+        end: { xpath: '/p[3]/text()[1]', offset: 23 },
+      },
+    ],
   },
 };
 
