@@ -6,7 +6,6 @@ import merge from 'merge';
 
 import * as dom from './dom';
 import { Css } from './consts';
-import type { InputOptions, Options } from './consts';
 import TextContent from './textcontent';
 import HighlightMarkers from './highlightmarkers';
 import RangeHighlighter from './rangehighlighter';
@@ -15,7 +14,7 @@ import Range from './range';
 import Cursor from './cursor';
 import * as factory from './factory';
 import logger from './logger';
-import type { Stats, QuerySet } from './typedefs';
+import type { ClientOptions, Options, Stats, QuerySet } from './typedefs';
 
 /**
  * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -44,7 +43,7 @@ class HtmlHighlighter extends EventEmitter {
 
   // Default options.  Note that we cannot declare this map as `Options` since not all attributes
   // are defined.
-  static defaults: InputOptions = {
+  static defaults: ClientOptions = {
     // Sometimes it is useful for the client to determine how to bring an element into view via
     // scrolling. If `scrollTo` is set, then it is called as a function with a `Node` to scroll
     // to.
@@ -54,7 +53,7 @@ class HtmlHighlighter extends EventEmitter {
     normalise: true,
   };
 
-  constructor(options: InputOptions) {
+  constructor(options: ClientOptions) {
     super();
 
     // Merge default options
@@ -524,9 +523,8 @@ class HtmlHighlighter extends EventEmitter {
           break;
         }
 
-        // $FlowFixMe: `hit` cannot be null here
+        // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
         markers.add(querySet, count, hit);
-
         logger.log('highlighting:', hit);
 
         try {

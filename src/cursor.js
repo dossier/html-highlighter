@@ -6,8 +6,7 @@ import * as dom from './dom';
 import { Css } from './consts';
 import logger from './logger';
 import HighlightMarkers from './highlightmarkers';
-
-export type ScrollToCallback = HTMLElement | (Node => void);
+import type { ScrollToCallback } from './typedefs';
 
 /**
  * Class responsible for managing the state of the highlight cursor
