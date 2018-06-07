@@ -77,19 +77,7 @@ class Cursor extends EventEmitter {
    * @param { boolean } force - When `true` causes the "update" event to always be emitted
    */
   update(force: boolean = false): void {
-    const iterable = this.iterableQueries;
-    let total = 0;
-    if (iterable == null) {
-      total = this.owner.stats.total;
-    } else if (iterable.length > 0) {
-      const markers = this.owner.highlights;
-      for (let i = markers.length - 1; i >= 0; --i) {
-        if (iterable.indexOf(markers[i].query.name) >= 0) {
-          ++total;
-        }
-      }
-    }
-
+    const total = this.owner.markers.calculateTotal(this.iterableQueries);
     if (force || total !== this.total) {
       this.total = total;
       this.emit('update', this.index, this.total);
@@ -106,7 +94,6 @@ class Cursor extends EventEmitter {
    */
   set(index: number, dontRecurse: boolean): boolean {
     const owner = this.owner;
-    const markers = owner.highlights;
 
     if (index < 0) {
       throw new Error('Invalid cursor index specified: ' + index);
@@ -114,38 +101,20 @@ class Cursor extends EventEmitter {
       return false;
     }
 
-    let count = index;
-    let ndx = null;
-    const iterable = this.iterableQueries;
-
-    markers.some(function(m, i) {
-      const q = m.query;
-
-      if (!q.enabled) {
-        return false;
-      } else if (iterable !== null && iterable.indexOf(q.name) < 0) {
-        return false;
-      } else if (count === 0) {
-        ndx = i;
-        return true;
-      }
-
-      --count;
-      return false;
-    });
+    const ndx = this.owner.markers.findNextHighlight(index, this.iterableQueries);
 
     // If index overflown, set to first highlight
-    if (ndx === null) {
+    if (ndx == null) {
       if (!dontRecurse) {
-        this.set(0, true);
+        return this.set(0, true);
       }
       return false;
     }
 
     // Clear currently active highlight, if any, and set requested highlight active
     this.clearActive_();
-    const c = markers[ndx];
-    const coll = dom.getHighlightElements(c.query.highlightId + c.index);
+    const current: any = this.owner.markers.get(ndx);
+    const coll = dom.getHighlightElements(current.query.highlightId + current.index);
     // Scroll viewport if element not visible
     if (coll.length > 0) {
       dom.addClass(coll, Css.enabled);

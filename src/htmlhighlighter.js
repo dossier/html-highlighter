@@ -8,33 +8,14 @@ import * as dom from './dom';
 import { Css } from './consts';
 import type { InputOptions, Options } from './consts';
 import TextContent from './textcontent';
+import HighlightMarkers from './highlightmarkers';
 import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
 import Range from './range';
 import Cursor from './cursor';
 import * as factory from './factory';
 import logger from './logger';
-
-export type Stats = {|
-  queries: number,
-  total: number,
-  highlight: number,
-|};
-
-export type QuerySet = {|
-  name: string,
-  enabled: boolean,
-  queryId: number,
-  highlightId: number,
-  length: number,
-  reserve: number | null,
-|};
-
-export type Marker = {|
-  query: QuerySet,
-  index: number,
-  offset: number,
-|};
+import type { Stats, QuerySet } from './typedefs';
 
 /**
  * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -59,7 +40,7 @@ class HtmlHighlighter extends EventEmitter {
   lastId: number;
   content: TextContent;
   queries: Map<string, QuerySet>;
-  highlights: Array<Marker>;
+  markers: HighlightMarkers;
 
   // Default options.  Note that we cannot declare this map as `Options` since not all attributes
   // are defined.
@@ -79,9 +60,8 @@ class HtmlHighlighter extends EventEmitter {
     // Merge default options
     this.options = merge({}, HtmlHighlighter.defaults, options);
 
-    // Mutable properties
     this.queries = new Map();
-    this.highlights = [];
+    this.markers = new HighlightMarkers();
 
     // TODO: rename attribute to something else that makes it clear it refers to the next highlight
     // id.
@@ -491,7 +471,7 @@ class HtmlHighlighter extends EventEmitter {
    * */
   add_queries_(querySet: QuerySet, queries: Array<any>, enabled: boolean): number {
     const content = this.content;
-    const markers = this.highlights;
+    const markers = this.markers;
     const reserve =
       querySet.reserve != null && querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
 
@@ -512,7 +492,7 @@ class HtmlHighlighter extends EventEmitter {
     logger.log(`adding queries for: ${querySet.name}`);
 
     // For each query, perform a lookup in the internal text representation and highlight each hit.
-    // The global offset of each highlight is recorded in the `this.highlights´ array.  The offset
+    // The global offset of each highlight is recorded by the `markers´ object.  The offset
     // is used by the `Cursor´ class to compute the next/previous highlight to show.
     queries.forEach((subject: any): void => {
       let hit, finder;
@@ -530,40 +510,19 @@ class HtmlHighlighter extends EventEmitter {
 
       logger.log('processing subject:', subject);
 
-      // Note: insertion of global offsets to the `this.highlights` array could (should?) be done
-      // in a web worker concurrently.
-      while ((hit = finder.next()) !== null) {
+      while ((hit = finder.next()) != null) {
         if (reserve !== null && count >= reserve) {
           logger.error('highlight reserve exceeded');
           break;
         }
 
-        // $FlowFixMe: dumbo flow! `hit` cannot be `null` as per condition in `while`
-        const offset = hit.start.marker.offset + hit.start.offset;
-        let mid;
-        let min = 0;
-        let max = markers.length - 1;
-
-        while (min < max) {
-          mid = Math.floor((min + max) / 2);
-
-          if (markers[mid].offset < offset) {
-            min = mid + 1;
-          } else {
-            max = mid;
-          }
-        }
-
-        markers.splice(markers.length > 0 && markers[min].offset < offset ? min + 1 : min, 0, {
-          query: querySet,
-          index: count,
-          offset: offset,
-        });
+        // $FlowFixMe: `hit` cannot be null here
+        markers.add(querySet, count, hit);
 
         logger.log('highlighting:', hit);
 
         try {
-          // $FlowFixMe: dumbo flow! `hit` cannot be `null` as per condition in `while` above
+          // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
           highlighter.do(hit);
           ++count;
         } catch (x) {
@@ -590,7 +549,6 @@ class HtmlHighlighter extends EventEmitter {
    */
   remove_(name: string): void {
     const q = this.get_(name);
-    const markers = this.highlights;
     let unhighlighter = new RangeUnhighlighter();
 
     --this.stats.queries;
@@ -600,14 +558,7 @@ class HtmlHighlighter extends EventEmitter {
       unhighlighter.undo(i);
     }
 
-    for (let i = 0; i < markers.length; ) {
-      if (markers[i].query === q) {
-        markers.splice(i, 1);
-      } else {
-        ++i;
-      }
-    }
-
+    this.markers.removeAll(q);
     this.queries.delete(name);
 
     // TODO: Unfortunately, using the built-in `normalize` `HTMLElement` method to normalise text
@@ -644,27 +595,12 @@ class HtmlHighlighter extends EventEmitter {
 
     this.content.assert();
 
-    let k;
-    let c = 0;
-    let l = 0;
-
+    let size = 0;
     for (const [, query] of this.queries) {
-      l += query.length;
+      size += query.length;
     }
 
-    k = 0;
-    this.highlights.forEach(function(i) {
-      if (i.offset < c || i.index >= i.query.length) {
-        throw new Error('Invalid state: highlight out of position');
-      }
-
-      c = i.offset;
-      ++k;
-    });
-
-    if (k !== l) {
-      throw new Error('Invalid state: length mismatch');
-    }
+    this.markers.assert(size);
   }
 }
 
