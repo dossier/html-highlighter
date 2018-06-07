@@ -1,7 +1,7 @@
 /* global $ */
 /* eslint-disable no-use-before-define */
 
-import { HtmlHighlighter, XPathFinder, RangeHighlighter } from '../../src/main.js';
+import { HtmlHighlighter, XPathFinder, RangeHighlighter, setVerbose, setDebugging } from '../../src/main.js';
 
 import UI from './ui';
 import './theme.css';
@@ -157,7 +157,8 @@ function init() {
     maxHighlight: MAX_HIGHLIGHT,
   });
 
-  highlighter.debug = true;
+  setVerbose(true);
+  setDebugging(true);
   window.hh = highlighter;
 
   ui = new UI(highlighter, $widgetMain);

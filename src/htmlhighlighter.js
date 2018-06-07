@@ -4,6 +4,7 @@ import EventEmitter from 'events';
 
 import merge from 'merge';
 
+import globals from './globals';
 import logger from './logger';
 import type { ClientOptions, Options, Stats, QuerySet, QuerySubject } from './typedefs';
 import { Css } from './consts';
@@ -32,7 +33,6 @@ import Cursor from './cursor';
  *  - clear: all query sets removed and cursor cleared
  */
 class HtmlHighlighter extends EventEmitter {
-  debug: boolean;
   options: Options;
   cursor: Cursor;
   stats: Stats;
@@ -88,8 +88,6 @@ class HtmlHighlighter extends EventEmitter {
     // Start by refreshing the internal document's text representation, which initialises
     // `this.content`.
     this.refresh();
-
-    logger.init(this);
     logger.log('instantiated');
   }
 
@@ -100,7 +98,7 @@ class HtmlHighlighter extends EventEmitter {
    */
   refresh() {
     this.content = new TextContent(this.options.container);
-    if (this.debug) {
+    if (globals.debugging) {
       this.assert();
     }
     this.emit('refresh');
@@ -174,7 +172,7 @@ class HtmlHighlighter extends EventEmitter {
     this.cursor.clear();
     this.emit('add', name, querySet, queries);
 
-    if (this.debug) {
+    if (globals.debugging) {
       this.assert();
     }
 
@@ -204,7 +202,7 @@ class HtmlHighlighter extends EventEmitter {
     this.cursor.clear();
     this.emit('append', name, querySet, queries);
 
-    if (this.debug) {
+    if (globals.debugging) {
       this.assert();
     }
 
@@ -295,7 +293,7 @@ class HtmlHighlighter extends EventEmitter {
     this.cursor.clear();
     this.emit('clear');
 
-    if (this.debug) {
+    if (globals.debugging) {
       this.assert();
     }
 
@@ -594,7 +592,7 @@ class HtmlHighlighter extends EventEmitter {
       this.refresh();
     }
 
-    if (this.debug) {
+    if (globals.debugging) {
       this.assert();
     }
   }

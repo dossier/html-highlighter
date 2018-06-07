@@ -1,5 +1,6 @@
 // @flow
 
+import globals from './globals';
 import * as dom from './dom';
 import logger from './logger';
 
@@ -11,7 +12,6 @@ export type MarkerArray = Array<Marker>;
  * of the text present in an HTML DOM sub-tree.
  */
 class TextContent {
-  debug: boolean;
   root: HTMLElement;
   text: string;
   // FIXME: add type
@@ -22,7 +22,6 @@ class TextContent {
    * @param {Node|jQuery} root - Reference to a DOM element
    */
   constructor(root: HTMLElement) {
-    this.debug = false;
     this.root = root;
     this.text = '';
     this.markers = [];
@@ -52,12 +51,13 @@ class TextContent {
     let markers = (this.markers = []);
     const offset = this.visit_(this.root, 0);
 
-    // FIXME: bypass when not in debug mode
     // Sanity check
-    if (this.markers.length !== 0) {
-      const marker = markers[markers.length - 1];
-      if (offset - marker.node.nodeValue.length !== marker.offset) {
-        throw new Error('Invalid state detected: offset mismatch');
+    if (globals.debugging) {
+      if (this.markers.length !== 0) {
+        const marker = markers[markers.length - 1];
+        if (offset - marker.node.nodeValue.length !== marker.offset) {
+          throw new Error('Invalid state detected: offset mismatch');
+        }
       }
     }
   }
@@ -132,7 +132,7 @@ class TextContent {
       });
     }
 
-    if (this.debug) {
+    if (globals.debugging) {
       this.assert();
     }
 
