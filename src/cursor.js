@@ -124,7 +124,7 @@ class Cursor extends EventEmitter {
       dom.addClass(coll, Css.enabled);
 
       const first = coll[0];
-      if (scrollTo === 'function') {
+      if (typeof scrollTo === 'function') {
         try {
           scrollTo(first);
         } catch (x) {
