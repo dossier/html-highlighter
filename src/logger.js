@@ -1,6 +1,6 @@
 // @flow
 
-import HtmlHighlighter from './htmlhighlighter';
+import globals from './globals';
 
 export type LoggingArgs = Array<any>;
 
@@ -11,22 +11,14 @@ export type LoggingArgs = Array<any>;
  * attribute is `true`.  Also ensures all messages contain the 'html-highlighter: ' prefix.
  */
 class Logger {
-  highlighter: HtmlHighlighter | null;
-
-  init(highlighter: HtmlHighlighter): void {
-    this.highlighter = highlighter;
-  }
-
   debug(...args: LoggingArgs): void {
-    this.assert();
-    if ((this.highlighter: any).debug) {
+    if (globals.verbose) {
       this.emit('debug', args);
     }
   }
 
   log(...args: LoggingArgs): void {
-    this.assert();
-    if ((this.highlighter: any).debug) {
+    if (globals.verbose) {
       this.emit('log', args);
     }
   }
@@ -67,12 +59,6 @@ class Logger {
       console.error(`logger: console function '${type}' undefined or invalid`);
     } else {
       fn.apply(console, this.prepend(args, 'html-highlighter'));
-    }
-  }
-
-  assert(): void {
-    if (this.highlighter == null) {
-      throw new Error('Not initialized yet with valid HTML Highlighter instance');
     }
   }
 }

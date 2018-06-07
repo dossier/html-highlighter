@@ -46,6 +46,7 @@ function init(ndx) {
   document.body.appendChild(container);
 
   instance = new hh.HtmlHighlighter(getOptions());
+  hh.setDebugging(true);
   attest.clear();
 
   return instance;

@@ -2,11 +2,10 @@
 
 import merge from 'merge';
 
+import type { TextSubject } from './typedefs';
 import TextContent from './textcontent';
 import Finder from './finder';
 import Range from './range';
-
-export type TextSubject = string | RegExp;
 
 /* FIXME: create a class for matching of regular expression subjects. */
 /**

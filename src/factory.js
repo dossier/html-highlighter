@@ -1,10 +1,9 @@
 // @flow
 
+import type { TextSubject, XpathSubject } from './typedefs';
 import TextContent from './textcontent';
 import TextFinder from './textfinder';
 import XpathFinder from './xpathfinder';
-import type { TextSubject } from './textfinder';
-import type { XpathSubject } from './xpathfinder';
 
 /**
  * Construct appropriate `Finder`-derived class for a given subject

@@ -1,7 +1,7 @@
 // @flow
 
+import globals from './globals';
 import * as dom from './dom';
-import HtmlHighlighter from './htmlhighlighter';
 import logger from './logger';
 
 export type Marker = {| node: Node, offset: number |};
@@ -51,12 +51,13 @@ class TextContent {
     let markers = (this.markers = []);
     const offset = this.visit_(this.root, 0);
 
-    // FIXME: bypass when not in debug mode
     // Sanity check
-    if (this.markers.length !== 0) {
-      const marker = markers[markers.length - 1];
-      if (offset - marker.node.nodeValue.length !== marker.offset) {
-        throw new Error('Invalid state detected: offset mismatch');
+    if (globals.debugging) {
+      if (this.markers.length !== 0) {
+        const marker = markers[markers.length - 1];
+        if (offset - marker.node.nodeValue.length !== marker.offset) {
+          throw new Error('Invalid state detected: offset mismatch');
+        }
       }
     }
   }
@@ -131,8 +132,7 @@ class TextContent {
       });
     }
 
-    // From global state since we don't have access to the `options` descriptor.
-    if (HtmlHighlighter.debug) {
+    if (globals.debugging) {
       this.assert();
     }
 
