@@ -99,7 +99,9 @@ class HtmlHighlighter extends EventEmitter {
    */
   refresh() {
     this.content = new TextContent(this.options.container);
-    this.assert_();
+    if (this.debug) {
+      this.assert();
+    }
     this.emit('refresh');
   }
 
@@ -169,8 +171,11 @@ class HtmlHighlighter extends EventEmitter {
     }
 
     this.cursor.clear();
-    this.assert_();
     this.emit('add', name, querySet, queries);
+
+    if (this.debug) {
+      this.assert();
+    }
 
     return this;
   }
@@ -196,8 +201,11 @@ class HtmlHighlighter extends EventEmitter {
 
     this.add_queries_(querySet, queries, enabled === true);
     this.cursor.clear();
-    this.assert_();
     this.emit('append', name, querySet, queries);
+
+    if (this.debug) {
+      this.assert();
+    }
 
     return this;
   }
@@ -569,7 +577,9 @@ class HtmlHighlighter extends EventEmitter {
       this.refresh();
     }
 
-    this.assert_();
+    if (this.debug) {
+      this.assert();
+    }
   }
 
   /**
@@ -588,11 +598,7 @@ class HtmlHighlighter extends EventEmitter {
     return q;
   }
 
-  assert_(): void {
-    if (!this.debug) {
-      return;
-    }
-
+  assert(): void {
     this.content.assert();
 
     let size = 0;

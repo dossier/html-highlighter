@@ -1,7 +1,6 @@
 // @flow
 
 import * as dom from './dom';
-import HtmlHighlighter from './htmlhighlighter';
 import logger from './logger';
 
 export type Marker = {| node: Node, offset: number |};
@@ -12,6 +11,7 @@ export type MarkerArray = Array<Marker>;
  * of the text present in an HTML DOM sub-tree.
  */
 class TextContent {
+  debug: boolean;
   root: HTMLElement;
   text: string;
   // FIXME: add type
@@ -22,6 +22,7 @@ class TextContent {
    * @param {Node|jQuery} root - Reference to a DOM element
    */
   constructor(root: HTMLElement) {
+    this.debug = false;
     this.root = root;
     this.text = '';
     this.markers = [];
@@ -131,8 +132,7 @@ class TextContent {
       });
     }
 
-    // From global state since we don't have access to the `options` descriptor.
-    if (HtmlHighlighter.debug) {
+    if (this.debug) {
       this.assert();
     }
 
