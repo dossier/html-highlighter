@@ -4,17 +4,17 @@ import EventEmitter from 'events';
 
 import merge from 'merge';
 
-import * as dom from './dom';
+import logger from './logger';
+import type { ClientOptions, Options, Stats, QuerySet, QuerySubject } from './typedefs';
 import { Css } from './consts';
+import * as dom from './dom';
+import * as factory from './factory';
 import TextContent from './textcontent';
 import HighlightMarkers from './highlightmarkers';
 import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
 import Range from './range';
 import Cursor from './cursor';
-import * as factory from './factory';
-import logger from './logger';
-import type { ClientOptions, Options, Stats, QuerySet } from './typedefs';
 
 /**
  * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -40,6 +40,7 @@ class HtmlHighlighter extends EventEmitter {
   content: TextContent;
   queries: Map<string, QuerySet>;
   markers: HighlightMarkers;
+  state: Map<number, any>;
 
   // Default options.  Note that we cannot declare this map as `Options` since not all attributes
   // are defined.
@@ -61,6 +62,7 @@ class HtmlHighlighter extends EventEmitter {
 
     this.queries = new Map();
     this.markers = new HighlightMarkers();
+    this.state = new Map();
 
     // TODO: rename attribute to something else that makes it clear it refers to the next highlight
     // id.
@@ -186,13 +188,13 @@ class HtmlHighlighter extends EventEmitter {
    * **must** have enough reserved space available to contain the new queries.  All queries not
    * fitting in the container are suppressed.
    *
-   * @param {string} name - Name of the query set.
-   * @param {string[]} queries - Array containing individual queries to highlight.
-   * @param {bool} enabled - If `true`, query set is also enabled.
+   * @param {string} name - Name of the query set
+   * @param {QuerySubject} queries - Array containing individual queries to highlight
+   * @param {bool} enabled - If `true`, query set is also enabled
    *
    * @returns {HtmlHighlighter} Self instance for chaining
    */
-  append(name: string, queries: Array<string>, enabled: boolean = true): HtmlHighlighter {
+  append(name: string, queries: Array<QuerySubject>, enabled: boolean = true): HtmlHighlighter {
     const querySet = this.queries.get(name);
     if (querySet == null) {
       throw new Error('Invalid or query set not yet created');
@@ -285,11 +287,6 @@ class HtmlHighlighter extends EventEmitter {
       this.remove_(name);
     }
 
-    // Sanity check
-    if (!this.empty()) {
-      throw new Error('Query set object not empty');
-    }
-
     if (reset) {
       this.lastId = 0;
       this.stats.highlight = 0;
@@ -297,6 +294,11 @@ class HtmlHighlighter extends EventEmitter {
 
     this.cursor.clear();
     this.emit('clear');
+
+    if (this.debug) {
+      this.assert();
+    }
+
     return this;
   }
 
@@ -444,6 +446,16 @@ class HtmlHighlighter extends EventEmitter {
   }
 
   /**
+   * Return state associated with highlight
+   *
+   * @param {number} highlightId - Highlight ID
+   * @returns {any} State associated with highlight; `undefined` or `null` otherwise
+   */
+  getState(highlightId: number): any {
+    return this.state.get(highlightId);
+  }
+
+  /**
    * Return boolean indicative of whether one or more query sets are currently contained
    *
    * @returns {boolean} `false` if no query sets currently
@@ -470,13 +482,12 @@ class HtmlHighlighter extends EventEmitter {
    * Add or append queries to a query set, either enabled or disabled
    *
    * @param {QuerySet} querySet - query set descriptor.
-   * @param {Array<any>} queries - array containing the queries to add or append.
-   * @param {boolean} enabled - highlights are enabled if `true`;
-   * this is the default state.
+   * @param {Array<QuerySubject>} queries - array containing the queries to add or append.
+   * @param {boolean} enabled - highlights are enabled if `true`
    *
    * @returns {number} number of highlights added.
    * */
-  add_queries_(querySet: QuerySet, queries: Array<any>, enabled: boolean): number {
+  add_queries_(querySet: QuerySet, queries: Array<QuerySubject>, enabled: boolean): number {
     const content = this.content;
     const markers = this.markers;
     const reserve =
@@ -516,6 +527,7 @@ class HtmlHighlighter extends EventEmitter {
       }
 
       logger.log('processing subject:', subject);
+      const state = subject.state;
 
       while ((hit = finder.next()) != null) {
         if (reserve !== null && count >= reserve) {
@@ -530,6 +542,12 @@ class HtmlHighlighter extends EventEmitter {
         try {
           // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
           highlighter.do(hit);
+
+          // Contain state associated with query subject, if applicable.
+          if (state != null) {
+            this.state.set(count, state);
+          }
+
           ++count;
         } catch (x) {
           logger.exception(`highlighting failed [query=${querySet.name}]: subject:`, subject, x);
@@ -562,6 +580,7 @@ class HtmlHighlighter extends EventEmitter {
 
     for (let i = q.highlightId, l = i + q.length; i < l; ++i) {
       unhighlighter.undo(i);
+      this.state.delete(i);
     }
 
     this.markers.removeAll(q);
@@ -605,6 +624,18 @@ class HtmlHighlighter extends EventEmitter {
     }
 
     this.markers.assert(size);
+
+    if (this.lastId === 0 || this.stats.highlight === 0) {
+      if (this.lastId !== this.stats.highlight) {
+        throw new Error('IDs mismatch when empty');
+      } else if (this.queries.size !== 0) {
+        throw new Error('Queries map not empty');
+      } else if (this.state.size !== 0) {
+        throw new Error('Highlight state map not empty');
+      }
+    } else if (this.state.size > size) {
+      throw new Error('Unexpected highlight state');
+    }
   }
 }
 

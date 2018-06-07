@@ -1,15 +1,11 @@
 // @flow
 
+import type { XpathSubject } from './typedefs';
 import TextContent from './textcontent';
 import Finder from './finder';
 import TextNodeXpath from './textnodexpath';
 import Range from './range';
 import logger from './logger';
-
-export type XpathSubject = {|
-  start: { xpath: string, offset: number },
-  end: { xpath: string, offset: number },
-|};
 
 /**
  * Class responsible for locating text in a `TextContent` instance from an

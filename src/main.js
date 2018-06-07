@@ -5,7 +5,7 @@ import HtmlHighlighter from './htmlhighlighter';
 import RangeHighlighter from './rangehighlighter';
 import TextFinder from './textfinder';
 import XPathFinder from './xpathfinder';
-import type { ClientOptions } from './typedefs';
+import type { ClientOptions, TextSubject, XpathSubject } from './typedefs';
 
-export type { ClientOptions };
+export type { ClientOptions, TextSubject, XpathSubject };
 export { HtmlHighlighter, RangeHighlighter, TextFinder, XPathFinder };

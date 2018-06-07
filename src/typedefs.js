@@ -34,3 +34,13 @@ export type QuerySet = {|
   length: number,
   reserve: number | null,
 |};
+
+export type TextSubject = string | RegExp;
+
+export type XpathSubject = {|
+  state: any,
+  start: { xpath: string, offset: number },
+  end: { xpath: string, offset: number },
+|};
+
+export type QuerySubject = TextSubject | XpathSubject;
