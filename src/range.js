@@ -72,6 +72,7 @@ class Range {
     // Optimised case: highlighting does not span multiple nodes
     if (this.start.marker.node === this.end.marker.node) {
       this.surround_(this.start, this.start.offset, this.end.offset, className);
+      this.start.offset = 0;
       return;
     }
 
@@ -92,6 +93,7 @@ class Range {
     this.surround_(this.start, this.start.offset, null, className);
     coll.forEach(n => this.surroundWhole_(n, className));
     this.surround_(this.end, 0, this.end.offset, className);
+    this.start.offset = 0;
   }
 
   /**
