@@ -415,6 +415,10 @@ function describeCursorMovementTests() {
         attest.cursor(i, counts.viber);
         attest.currentHighlight(counts.the + i);
       }
+
+      const last = counts.the + counts.viber - 1;
+      attest.cursor(counts.viber - 1, counts.viber);
+      attest.currentHighlight(last);
     });
 
     it('cursor rolls over to first element from last', function() {
