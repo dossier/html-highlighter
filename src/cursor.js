@@ -8,6 +8,8 @@ import logger from './logger';
 import HighlightMarkers from './highlightmarkers';
 import type { ScrollToCallback } from './typedefs';
 
+export type IterableQueries = string | Array<string>;
+
 /**
  * Class responsible for managing the state of the highlight cursor
  *
@@ -56,11 +58,14 @@ class Cursor extends EventEmitter {
    *
    * The restriction can be lifted at any time by passing `null` to the method.
    *
-   * @param {(Array|string)} queries - An array (or string) containing the query set names.
+   * @param {IterableQueries | null} queries - An array (or string) containing the query set names
+   * or `null` if all query-sets active.
    */
-  setIterableQueries(queries: Array<string> | null): void {
+  setIterableQueries(queries: IterableQueries | null): void {
     if (queries == null) {
       this.iterableQueries = null;
+    } else if (typeof queries === 'string') {
+      this.iterableQueries = [queries];
     } else {
       this.iterableQueries = queries.slice();
     }
