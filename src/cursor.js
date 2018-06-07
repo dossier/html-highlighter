@@ -4,7 +4,10 @@ import EventEmitter from 'events';
 
 import * as dom from './dom';
 import { Css } from './consts';
-import HtmlHighlighter from './htmlhighlighter';
+import logger from './logger';
+import HighlightMarkers from './highlightmarkers';
+
+export type ScrollToCallback = HTMLElement | (Node => void);
 
 /**
  * Class responsible for managing the state of the highlight cursor
@@ -16,7 +19,7 @@ import HtmlHighlighter from './htmlhighlighter';
  *  - update: cursor position mutated
  */
 class Cursor extends EventEmitter {
-  owner: HtmlHighlighter;
+  markers: HighlightMarkers;
   index: number;
   iterableQueries: Array<string> | null;
   total: number;
@@ -24,12 +27,12 @@ class Cursor extends EventEmitter {
   /**
    * Class constructor
    *
-   * @param {Object} owner - Reference to the owning instance
+   * @param {HighlightMarkers} markers - Reference to highlight markers object
    */
-  constructor(owner: HtmlHighlighter) {
+  constructor(markers: HighlightMarkers) {
     super();
 
-    this.owner = owner;
+    this.markers = markers;
     this.index = -1;
     this.iterableQueries = null;
     this.total = 0;
@@ -77,7 +80,7 @@ class Cursor extends EventEmitter {
    * @param { boolean } force - When `true` causes the "update" event to always be emitted
    */
   update(force: boolean = false): void {
-    const total = this.owner.markers.calculateTotal(this.iterableQueries);
+    const total = this.markers.calculateTotal(this.iterableQueries);
     if (force || total !== this.total) {
       this.total = total;
       this.emit('update', this.index, this.total);
@@ -89,19 +92,17 @@ class Cursor extends EventEmitter {
    *
    * @param {number} index - Virtual cursor index
    * @param {boolean} dontRecurse - When `true` instructs the method not to employ recursion
+   * @param {ScrollToCallback} scrollTo - Optional custom function to invoke if highlight being
+   * moved to is not visible on the page
    *
    * @returns {boolean} `true` if move occurred
    */
-  set(index: number, dontRecurse: boolean): boolean {
-    const owner = this.owner;
-
+  set(index: number, dontRecurse: boolean, scrollTo?: ScrollToCallback): boolean {
     if (index < 0) {
       throw new Error('Invalid cursor index specified: ' + index);
-    } else if (owner.stats.total <= 0) {
-      return false;
     }
 
-    const ndx = this.owner.markers.findNextHighlight(index, this.iterableQueries);
+    const ndx = this.markers.findNextHighlight(index, this.iterableQueries);
 
     // If index overflown, set to first highlight
     if (ndx == null) {
@@ -113,15 +114,19 @@ class Cursor extends EventEmitter {
 
     // Clear currently active highlight, if any, and set requested highlight active
     this.clearActive_();
-    const current: any = this.owner.markers.get(ndx);
+    const current: any = this.markers.get(ndx);
     const coll = dom.getHighlightElements(current.query.highlightId + current.index);
     // Scroll viewport if element not visible
     if (coll.length > 0) {
       dom.addClass(coll, Css.enabled);
 
       const first = coll[0];
-      if (typeof owner.options.scrollTo === 'function') {
-        owner.options.scrollTo(first);
+      if (scrollTo === 'function') {
+        try {
+          scrollTo(first);
+        } catch (x) {
+          logger.error('failed to scroll to highlight:', x);
+        }
       } else if (!dom.isInView(first)) {
         dom.scrollIntoView(first);
       }

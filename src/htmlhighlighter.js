@@ -82,7 +82,7 @@ class HtmlHighlighter extends EventEmitter {
       this.options.container = container;
     }
 
-    this.cursor = new Cursor(this);
+    this.cursor = new Cursor(this.markers);
 
     // Start by refreshing the internal document's text representation, which initialises
     // `this.content`.
