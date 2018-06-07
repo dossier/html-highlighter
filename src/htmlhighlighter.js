@@ -535,19 +535,19 @@ class HtmlHighlighter extends EventEmitter {
           break;
         }
 
-        // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
-        markers.add(querySet, count, hit);
         logger.log('highlighting:', hit);
 
         try {
           // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
-          highlighter.do(hit);
+          const id = highlighter.do(hit);
 
           // Contain state associated with query subject, if applicable.
           if (state != null) {
-            this.state.set(count, state);
+            this.state.set(id, state);
           }
 
+          // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
+          markers.add(querySet, id, hit);
           ++count;
         } catch (x) {
           logger.exception(`highlighting failed [query=${querySet.name}]: subject:`, subject, x);

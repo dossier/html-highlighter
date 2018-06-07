@@ -106,10 +106,10 @@ class Cursor extends EventEmitter {
       throw new Error('Invalid cursor index specified: ' + index);
     }
 
-    const ndx = this.markers.findNextHighlight(index, this.iterableQueries);
+    const marker = this.markers.find(index, this.iterableQueries);
 
     // If index overflown, set to first highlight
-    if (ndx == null) {
+    if (marker == null) {
       if (!dontRecurse) {
         return this.set(0, true);
       }
@@ -118,8 +118,7 @@ class Cursor extends EventEmitter {
 
     // Clear currently active highlight, if any, and set requested highlight active
     this.clearActive_();
-    const current: any = this.markers.get(ndx);
-    const coll = dom.getHighlightElements(current.query.highlightId + current.index);
+    const coll = dom.getHighlightElements(marker.id);
     // Scroll viewport if element not visible
     if (coll.length > 0) {
       dom.addClass(coll, Css.enabled);

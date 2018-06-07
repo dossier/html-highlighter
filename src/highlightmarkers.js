@@ -5,7 +5,7 @@ import type { QuerySet } from './typedefs';
 
 export type Marker = {|
   query: QuerySet,
-  index: number,
+  id: number,
   offset: number,
 |};
 
@@ -22,7 +22,7 @@ class HighlightMarkers {
     this.markers = [];
   }
 
-  add(query: QuerySet, index: number, hit: Range): void {
+  add(query: QuerySet, id: number, hit: Range): void {
     const offset = hit.start.marker.offset + hit.start.offset;
     let mid;
     let min = 0;
@@ -41,7 +41,7 @@ class HighlightMarkers {
     this.markers.splice(
       this.markers.length > 0 && this.markers[min].offset < offset ? min + 1 : min,
       0,
-      { query, index, offset }
+      { query, id, offset }
     );
   }
 
@@ -75,26 +75,26 @@ class HighlightMarkers {
     }, 0);
   }
 
-  findNextHighlight(fromPosition: number, queryNames: Array<string> | null): number | null {
-    let ndx: number | null = null;
+  find(at: number, queryNames: Array<string> | null): Marker | null {
+    let marker: Marker | null = null;
 
-    this.markers.some((m, i) => {
+    this.markers.some(m => {
       const q = m.query;
 
       if (!q.enabled) {
         return false;
-      } else if (queryNames !== null && queryNames.indexOf(q.name) < 0) {
+      } else if (queryNames != null && queryNames.indexOf(q.name) < 0) {
         return false;
-      } else if (fromPosition === 0) {
-        ndx = i;
+      } else if (at < 1) {
+        marker = m;
         return true;
       }
 
-      --fromPosition;
+      --at;
       return false;
     });
 
-    return ndx;
+    return marker;
   }
 
   assert(expectedSize: number): void {
@@ -102,7 +102,7 @@ class HighlightMarkers {
     let size = 0;
 
     this.markers.forEach(function(i) {
-      if (i.offset < lastOffset || i.index >= i.query.length) {
+      if (i.offset < lastOffset || i.id - i.query.highlightId >= i.query.length) {
         throw new Error('Invalid state: highlight out of position');
       }
 
