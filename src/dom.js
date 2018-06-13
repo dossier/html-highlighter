@@ -124,7 +124,7 @@ function scrollIntoView(el: HTMLElement, container: any): void {
   }
 
   const bbox = el.getBoundingClientRect();
-  container.scrollTo({ top: bbox.top + containerTop - (containerHeight - bbox.height) / 2 });
+  container.scrollTo(window.scrollX, bbox.top + containerTop - (containerHeight - bbox.height) / 2);
 }
 
 // Export "private" functions so they too can be tested.
