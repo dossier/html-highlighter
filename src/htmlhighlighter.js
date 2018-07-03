@@ -547,6 +547,9 @@ class HtmlHighlighter extends EventEmitter {
           // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
           markers.add(querySet, id, hit);
           ++count;
+
+          // Notify observers of creation of new highlight
+          this.emit('highlight', id, state);
         } catch (x) {
           logger.exception(`highlighting failed [query=${querySet.name}]: subject:`, subject, x);
         }
@@ -576,9 +579,12 @@ class HtmlHighlighter extends EventEmitter {
     --this.stats.queries;
     this.stats.total -= q.length;
 
-    for (let i = q.highlightId, l = i + q.length; i < l; ++i) {
-      unhighlighter.undo(i);
-      this.state.delete(i);
+    for (let id = q.highlightId, l = id + q.length; id < l; ++id) {
+      unhighlighter.undo(id);
+      this.state.delete(id);
+
+      // Notify observers of creation of new highlight
+      this.emit('unhighlight', id);
     }
 
     this.markers.removeAll(q);
