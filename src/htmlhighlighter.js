@@ -549,7 +549,7 @@ class HtmlHighlighter extends EventEmitter {
           ++count;
 
           // Notify observers of creation of new highlight
-          this.emit('highlight', id);
+          this.emit('highlight', id, state);
         } catch (x) {
           logger.exception(`highlighting failed [query=${querySet.name}]: subject:`, subject, x);
         }
