@@ -31,6 +31,7 @@ module.exports = {
     new webpack.DefinePlugin({
       PRODUCTION: false,
       BROWSER: false,
+      TEST: true,
     }),
   ],
   devtool: "source-map",
