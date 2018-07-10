@@ -16,6 +16,9 @@ env:
   es6: true
   jquery: true
 
+globals:
+  BROWSER: true
+
 # http://eslint.org/docs/rules/
 # enabled these someday:
 #    no-magic-numbers: 1

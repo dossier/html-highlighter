@@ -1,6 +1,7 @@
 // @flow
 
 import Range from './range';
+import * as dom from './dom';
 import type { QuerySet } from './typedefs';
 
 export type Marker = {|
@@ -75,15 +76,40 @@ class HighlightMarkers {
     }, 0);
   }
 
+  calculateTotalVisible(queryNames: Array<string> | null): number {
+    // Simple fix for now that accounts for when we're running in a JsDOM environment, under which
+    // there are never any visible highlights.  This measure prevents tests from failing.
+    if (!BROWSER) {
+      return this.calculateTotal(queryNames);
+    } else if (queryNames == null) {
+      return this.markers.reduce(
+        (acc, marker) => acc + Number(dom.isHighlightVisible(marker.id)),
+        0
+      );
+    }
+
+    return this.markers.reduce((acc, marker) => {
+      if ((queryNames: any).indexOf(marker.query.name) >= 0 && dom.isHighlightVisible(marker.id)) {
+        return acc + 1;
+      }
+
+      return acc;
+    }, 0);
+  }
+
   find(at: number, queryNames: Array<string> | null): Marker | null {
     let marker: Marker | null = null;
 
     this.markers.some(m => {
       const q = m.query;
 
+      // Queryset must be enabled and highlight visible.  Note that highlights are never visible
+      // in non-browser environments, in which case highlights are assumed to be visible.
       if (!q.enabled) {
         return false;
       } else if (queryNames != null && queryNames.indexOf(q.name) < 0) {
+        return false;
+      } else if (BROWSER && !dom.isHighlightVisible(m.id)) {
         return false;
       } else if (at < 1) {
         marker = m;

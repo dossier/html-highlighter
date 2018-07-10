@@ -56,6 +56,18 @@ function getAllHighlightElements(additionalClass: string | null = null): NodeLis
   return document.querySelectorAll(`.${Css.highlight}${otherClass}`);
 }
 
+function isHighlightVisible(id: number): boolean {
+  const elements = getHighlightElements(id);
+  if (elements.length < 1) {
+    return false;
+  }
+
+  // A highlight is considered to be visible if its first (and usually only) element possesses
+  // height and width greater than 0.
+  const bbox = elements[0].getBoundingClientRect();
+  return bbox.height > 0 && bbox.width > 0;
+}
+
 function createHighlightElement(node: HTMLElement | Node, className: string): HTMLElement {
   const span = document.createElement('span');
   span.className = className;
@@ -136,6 +148,7 @@ export {
   getHighlightElements,
   getForQuerySet,
   getAllHighlightElements,
+  isHighlightVisible,
   createHighlightElement,
   insertBefore,
   insertAfter,

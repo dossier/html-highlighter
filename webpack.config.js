@@ -76,6 +76,7 @@ const lib = {
     new webpack.DefinePlugin({
       PRODUCTION: isProduction,
       BROWSER: true,
+      TEST: false,
     }),
     new webpack.NoEmitOnErrorsPlugin(),
     new webpack.optimize.OccurrenceOrderPlugin(true),
