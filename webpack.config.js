@@ -26,6 +26,11 @@ function makeExampleConfig(name) {
       ],
     },
     plugins: [
+      new webpack.DefinePlugin({
+        PRODUCTION: isProduction,
+        BROWSER: true,
+        TEST: false,
+      }),
       new HtmlWebpackPlugin({
         title: 'HTML Highlighter -- main example',
         template: `./examples/${name}/main.html`,
@@ -52,7 +57,7 @@ const linters = [
 ];
 
 const jsLoader = {
-  test: /.js$/,
+  test: /\.js$/,
   loader: 'babel-loader',
   exclude: /node_modules/,
   query: {
