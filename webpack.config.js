@@ -32,7 +32,7 @@ function makeExampleConfig(name) {
         TEST: false,
       }),
       new HtmlWebpackPlugin({
-        title: 'HTML Highlighter -- main example',
+        title: `HTML Highlighter -- ${name} example`,
         template: `./examples/${name}/main.html`,
         filename: 'index.html',
       }),
