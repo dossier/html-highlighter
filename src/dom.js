@@ -9,6 +9,7 @@
 import { Css } from './consts';
 
 export type Position = {| x: number, y: number |};
+export type ForEachNodeCallback = Node => boolean;
 
 function classNameToSet(el: HTMLElement): Set<string> {
   return new Set(
@@ -139,6 +140,60 @@ function scrollIntoView(el: HTMLElement, container: any): void {
   container.scrollTo(window.scrollX, bbox.top + containerTop - (containerHeight - bbox.height) / 2);
 }
 
+/**
+ * Simple DOM visitor
+ *
+ * Given a starting node, visits every node while invoking a callback that is expected to produce a
+ * boolean value.  Ends when there are no more nodes to visit or the callback returns true.  Note
+ * that a truthy value will not terminate visitation; only an explicit `true` value will.
+ *
+ * @param {Node} node - Node to begin visiting
+ * @param {ForEachNodeCallback} callback - Callback to invoke for each node
+ *
+ * @returns {boolean} Result of last callback call
+ */
+function visitDOM(node: Node, callback: ForEachNodeCallback): boolean {
+  try {
+    if (callback(node) === true) {
+      return true;
+    }
+  } catch (x) {
+    console.error('exception raised while executing visitor callback:', x);
+  }
+
+  if (node.nodeType === Node.TEXT_NODE) {
+    return false;
+  }
+
+  for (const child of node.childNodes) {
+    if (visitDOM(child, callback)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Find last text node in given DOM sub-tree
+ *
+ * @param {HTMLElement} container - container element on whose tree to perform search
+ * @returns {Node | null} Last text node found or `null` if none
+ */
+function findLastTextNode(container: HTMLElement): Node | null {
+  let lastTextNode = null;
+
+  visitDOM(container, node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      lastTextNode = node;
+    }
+
+    return false;
+  });
+
+  return lastTextNode;
+}
+
 // Export "private" functions so they too can be tested.
 export { classNameToSet, ensureIterable };
 
@@ -155,4 +210,6 @@ export {
   getOffset,
   isInView,
   scrollIntoView,
+  visitDOM,
+  findLastTextNode,
 };
