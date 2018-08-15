@@ -372,8 +372,8 @@ class HtmlHighlighter extends EventEmitter {
     }
 
     // Account for selections where the start and end elements are the same *and* whitespace exists
-    // longer than one character.  For instance, The element `<p>a b</p>` is shown as `a b` by
-    // browsers, where the whitespace is rendered collapsed.  This means that in this particular
+    // longer than one character.  For instance, The element `<p>a   b</p>` is shown as `a b` by
+    // browsers with the whitespace rendered collapsed.  This means that in this particular
     // case, it is not possible to simply retrieve the length of the selection's text and use that
     // as the selection's end offset as it would be invalid.  The way to avoid calculating an
     // invalid end offset is by looking at the anchor and focus (start and end) offsets.
