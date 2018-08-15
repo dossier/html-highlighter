@@ -110,34 +110,6 @@ const assets = {
   },
 };
 
-const tests = {
-  entry: 'mocha-loader!./test/start.js',
-  output: {
-    path: path.join(__dirname, 'dist'),
-    filename: 'test.js',
-  },
-  module: {
-    rules: [
-      jsLoader,
-      { test: /\.html$/, loader: 'html-loader' },
-      { test: /\.json$/, loader: 'json-loader' },
-      { test: /\.css$/, loader: 'style-loader!css-loader' },
-    ].concat(linters),
-  },
-  plugins: [
-    new webpack.DefinePlugin({
-      PRODUCTION: isProduction,
-      BROWSER: true,
-    }),
-    new HtmlWebpackPlugin({
-      title: 'HTML Highlighter Tests',
-      template: './test/html/index.html',
-      filename: 'test.html',
-    }),
-  ],
-  devtool: '#inline-source-map',
-};
-
 if (isProduction) {
   // Documentation disabled for now.
   // --
@@ -166,7 +138,7 @@ if (isProduction) {
 const examples = [makeExampleConfig('monolith')];
 let build = [lib];
 if (!isProduction) {
-  build = build.concat(examples, [assets, tests]);
+  build = build.concat(examples, [assets]);
 }
 
 module.exports = build;
