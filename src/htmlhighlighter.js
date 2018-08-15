@@ -14,7 +14,7 @@ import TextContent from './textcontent';
 import HighlightMarkers from './highlightmarkers';
 import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
-import Range from './range';
+import TextRange from './textrange';
 import Cursor from './cursor';
 
 /**
@@ -338,14 +338,14 @@ class HtmlHighlighter extends EventEmitter {
 
   /* eslint-disable complexity */
   /**
-   * Return the current selected text range in the form of a `Range` object
+   * Return the current selected text range in the form of a `TextRange` object
    *
    * If there is no selected text, `null` is returned.
    *
-   * @returns {Range|null} The current selected text range or `null` if it could not be
+   * @returns {TextRange|null} The current selected text range or `null` if it could not be
    * computed.
    */
-  getSelectedRange(): Range | null {
+  getSelectedRange(): TextRange | null {
     const sel = window.getSelection();
 
     if (!(sel && sel.anchorNode)) {
@@ -391,26 +391,26 @@ class HtmlHighlighter extends EventEmitter {
       startOffset < endOffset ||
       (startOffset === endOffset && sel.anchorOffset < sel.focusOffset)
     ) {
-      startDescr = Range.descriptorRel(this.content.at(startOffset), sel.anchorOffset);
+      startDescr = TextRange.descriptorRel(this.content.at(startOffset), sel.anchorOffset);
 
       if (sel.focusNode === sel.anchorNode) {
         endDescr = merge({}, startDescr);
         endDescr.offset += len - 1;
       } else {
-        endDescr = Range.descriptorRel(this.content.at(endOffset), sel.focusOffset - 1);
+        endDescr = TextRange.descriptorRel(this.content.at(endOffset), sel.focusOffset - 1);
       }
     } else {
-      startDescr = Range.descriptorRel(this.content.at(endOffset), sel.focusOffset);
+      startDescr = TextRange.descriptorRel(this.content.at(endOffset), sel.focusOffset);
 
       if (sel.focusNode === sel.anchorNode) {
         endDescr = merge({}, startDescr);
         endDescr.offset += len - 1;
       } else {
-        endDescr = Range.descriptorRel(this.content.at(startOffset), sel.anchorOffset - 1);
+        endDescr = TextRange.descriptorRel(this.content.at(startOffset), sel.anchorOffset - 1);
       }
     }
 
-    return new Range(this.content, startDescr, endDescr);
+    return new TextRange(this.content, startDescr, endDescr);
   }
   /* eslint-enable complexity */
 

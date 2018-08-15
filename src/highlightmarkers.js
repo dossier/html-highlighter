@@ -1,6 +1,6 @@
 // @flow
 
-import Range from './range';
+import TextRange from './textrange';
 import * as dom from './dom';
 import type { QuerySet } from './typedefs';
 
@@ -23,7 +23,7 @@ class HighlightMarkers {
     this.markers = [];
   }
 
-  add(query: QuerySet, id: number, hit: Range): void {
+  add(query: QuerySet, id: number, hit: TextRange): void {
     const offset = hit.start.marker.offset + hit.start.offset;
     let mid;
     let min = 0;

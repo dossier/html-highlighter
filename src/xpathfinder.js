@@ -4,7 +4,7 @@ import type { XpathSubject } from './typedefs';
 import TextContent from './textcontent';
 import Finder from './finder';
 import TextNodeXpath from './textnodexpath';
-import Range from './range';
+import TextRange from './textrange';
 import logger from './logger';
 
 /**
@@ -77,10 +77,10 @@ class XpathFinder extends Finder {
   /**
    * Return next available match
    *
-   * @returns {Range | null} Returns a `Range` if a match is available, or `null` if no more
-   * matches are available.
+   * @returns {TextRange | null} Returns a `TextRange` if a match is available, or `null` if no
+   * more matches are available.
    */
-  next(): Range | null {
+  next(): TextRange | null {
     if (this.current >= this.results.length) {
       return null;
     }
@@ -93,7 +93,7 @@ class XpathFinder extends Finder {
 
     // TODO: we don't necessarily need to invoke getAt_ for the end offset.  A check has to be made
     // to ascertain if the end offset falls within the start node.
-    return new Range(this.content, this.getAt_(subject.start), this.getAt_(subject.end));
+    return new TextRange(this.content, this.getAt_(subject.start), this.getAt_(subject.end));
   }
 }
 

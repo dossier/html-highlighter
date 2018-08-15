@@ -20,7 +20,7 @@ export type RangeXpathDescriptor = {|
  * @param {Object} start - descriptor of start of range
  * @param {Object} end - descriptor of end of range
  */
-class Range {
+class TextRange {
   content: TextContent;
   start: RangeDescriptor;
   end: RangeDescriptor;
@@ -177,4 +177,4 @@ class Range {
   }
 }
 
-export default Range;
+export default TextRange;
