@@ -65,24 +65,28 @@ When hacking on the HTML Highlighter, running the following command frees one
 from having to manually compile the code with each iteration.  Bundles are
 automatically generated as changes are made, making development a breeze.
 
+Generated assets can be accessed on a browser via the URL
+`http://localhost:8080`, however the port can be customized via the environment
+variable `NODE_PORT`.
+
 ```sh
 $ yarn start
 ```
 
-Access the generated assets on a browser via the URL `http://localhost:8080`.
-
 An alternative dynamic build mode relies on webpack's watch method for building
-bundles.  Bundles and assets are created in the directory `dist`.
+bundles incrementally as changes are made.  Assets are placed in the directory
+`dist`.
 
 ```sh
 $ yarn start:watch
 ```
 
-Finally, the command given below creates a **static** development build which
-is composed of a non-minified bundle of the HTML Highlighter library, as well
-as examples and tests.  All build artifacts are placed inside the `dist`
-directory.  Note that this command must be run each time changes are made to
-the code.
+Finally, the command given below creates a **static** development build which is
+composed of a minified bundle of the HTML Highlighter library with the suffix
+`.min.js` added to distinguish it from the development build artifact.  All
+artifacts are placed inside the `dist` directory and its existing contents are
+left untouched.  Note that this command must be run each time changes are made
+to the code.
 
 ```sh
 $ yarn build:min
@@ -90,34 +94,18 @@ $ yarn build:min
 
 ### Production
 
-Creating a **production** build requires running a simple command and results
-in *only* the HTML Highlighter library being built, optimized and minimized.
+Creating a **production** build requires running a simple command and results in
+*only* the HTML Highlighter library being built, fully optimized and minimized.
 Everything else is omitted.
 
 ```sh
-$ yarn build
+$ yarn prepublish
 ```
 
 ## Running tests
 
-Tests can be executed in the browser and terminal.
-
-### Browser
-
-To run tests in the browser, execute the following command from the
-repository's root directory:
-
-```sh
-$ yarn start
-```
-
-Then it is a simple matter of pointing the browser to
-`http://localhost:8080/test.html`.
-
-### Terminal
-
-Running tests in the terminal can be accomplished by executing the following
-command:
+Running tests requires a standard terminal environment and can be accomplished
+by executing the following command:
 
 ```sh
 $ yarn test
