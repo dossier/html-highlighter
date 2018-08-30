@@ -1,7 +1,13 @@
 /* global $ */
 /* eslint-disable no-use-before-define */
 
-import { HtmlHighlighter, XPathFinder, RangeHighlighter, setVerbose, setDebugging } from '../../src/main.js';
+import {
+  HtmlHighlighter,
+  XPathFinder,
+  RangeHighlighter,
+  setVerbose,
+  setDebugging,
+} from '../../src/main.js';
 
 import UI from './ui';
 import './theme.css';

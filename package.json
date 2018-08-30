@@ -21,7 +21,7 @@
     "build": "webpack --progress --color --display-error-details",
     "build:min": "NODE_ENV=production webpack --progress --color --display-error-details",
     "prepublish": "yarn run build && yarn run build:min",
-    "start": "webpack-dev-server --progress --color --content-base dist/ --hot --inline --hot --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
+    "start": "webpack-dev-server --progress --color --hot --inline --host 0.0.0.0 --port $([ -z \"$NODE_PORT\" ] && echo 8080 || echo $NODE_PORT)",
     "start:watch": "webpack --progress --color --display-error-details --watch",
     "test": "mocha-webpack --colors --webpack-config webpack.config-test.js 'test/start.js'",
     "lint": "sh/lint",

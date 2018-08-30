@@ -1,10 +1,10 @@
 // @flow
 
 import { Css } from './consts';
-import Range from './range';
+import TextRange from './textrange';
 
 /**
- * Convenience class for applying highlights on arbitrary `Range` instances
+ * Convenience class for applying highlights on arbitrary `TextRange` instances
  *
  * A `classes` attribute is cached at construction time with the CSS classes that will apply to all
  * created highlight instances, namely the:
@@ -46,14 +46,14 @@ class RangeHighlighter {
   }
 
   /**
-   * Highlight a `Range` instance
+   * Highlight a `TextRange` instance
    *
    * Causes the current highlight `id` attribute to be incremented.
    *
-   * @param {Range} range - Range instance to apply highlighting to
+   * @param {TextRange} range - TextRange instance to apply highlighting to
    * @returns {number} Unique highlight id
    */
-  do(range: Range): number {
+  do(range: TextRange): number {
     range.surround(`${this.classes} ${Css.highlight}-id-${this.id}`);
     return this.id++;
   }

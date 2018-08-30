@@ -4,8 +4,8 @@ import TextContent from './textcontent';
 /* eslint-disable camelcase */
 import * as util from './util';
 /* eslint-enable camelcase */
-import Range from './range';
-import type { RangeDescriptor } from './range';
+import TextRange from './textrange';
+import type { RangeDescriptor } from './textrange';
 
 /**
  * Abstract base class of all finder classes
@@ -32,18 +32,18 @@ class Finder {
    *
    * If no more matches available, returns `null`.
    *
-   * @returns {Range | null} Returns a `Range` if a match is available, or `null` if no more
-   * matches are available.
+   * @returns {TextRange | null} Returns a `TextRange` if a match is available, or `null` if no
+   * more matches are available.
    */
   // $FlowFixMe: below signature is needed in specialized classes
-  next(): Range | null {
+  next(): TextRange | null {
     util.abstract();
   }
 
   // Protected interface
   // -------------------
   /**
-   * Return a `Range` descriptor for a given offset
+   * Return a `TextRange` descriptor for a given offset
    * @access private
    *
    * @param {number} offset - Text offset
@@ -55,7 +55,7 @@ class Finder {
       throw new Error('Failed to retrieve marker for offset: ' + offset);
     }
 
-    return Range.descriptorAbs(this.content.at(index), offset);
+    return TextRange.descriptorAbs(this.content.at(index), offset);
   }
 }
 

@@ -5,7 +5,7 @@ import merge from 'merge';
 import type { TextSubject } from './typedefs';
 import TextContent from './textcontent';
 import Finder from './finder';
-import Range from './range';
+import TextRange from './textrange';
 
 /* FIXME: create a class for matching of regular expression subjects. */
 /**
@@ -49,10 +49,10 @@ class TextFinder extends Finder {
   /**
    * Return next available match
    *
-   * @returns {Range | null} Returns a `Range` if a match is available, or `null` if no more
-   * matches are available.
+   * @returns {TextRange | null} Returns a `TextRange` if a match is available, or `null` if no
+   * more matches are available.
    */
-  next(): Range | null {
+  next(): TextRange | null {
     if (this.current >= this.results.length) {
       return null;
     }
@@ -70,7 +70,7 @@ class TextFinder extends Finder {
       end = this.getAt_(match.index + length - 1);
     }
 
-    const range = new Range(this.content, start, end);
+    const range = new TextRange(this.content, start, end);
     ++this.current;
 
     return range;
