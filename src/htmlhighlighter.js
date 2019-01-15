@@ -9,13 +9,10 @@ import logger from './logger';
 import type { ClientOptions, Options, Stats, QuerySet, QuerySubject } from './typedefs';
 import { Css } from './consts';
 import * as dom from './dom';
-import * as selection from './selection';
-import * as factory from './factory';
 import TextContent from './textcontent';
 import HighlightMarkers from './highlightmarkers';
-import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
-import TextRange from './textrange';
+import Renderer from './renderer';
 import Cursor from './cursor';
 
 /**
@@ -35,6 +32,7 @@ import Cursor from './cursor';
  */
 class HtmlHighlighter extends EventEmitter {
   options: Options;
+  renderer: Renderer;
   cursor: Cursor;
   stats: Stats;
   lastId: number;
@@ -53,6 +51,10 @@ class HtmlHighlighter extends EventEmitter {
     maxHighlight: 1,
     useQueryAsClass: false,
     normalise: true,
+    rendering: {
+      async: false,
+      interval: 250, // In effect only if `async` is `true`; value in ms.
+    },
   };
 
   constructor(options: ClientOptions) {
@@ -84,6 +86,9 @@ class HtmlHighlighter extends EventEmitter {
       this.options.container = container;
     }
 
+    this.renderer = new Renderer(this.options);
+    this.renderer.on('highlight', this.onHighlightCreated);
+
     this.cursor = new Cursor(this.markers);
 
     // Start by refreshing the internal document's text representation, which initialises
@@ -97,11 +102,12 @@ class HtmlHighlighter extends EventEmitter {
    *
    * Should only be invoked when the HTML structure mutates.
    */
-  refresh() {
+  refresh(): void {
     this.content = new TextContent(this.options.container);
     if (globals.debugging) {
       this.assert();
     }
+    this.renderer.setContent(this.content);
     this.emit('refresh');
   }
 
@@ -119,14 +125,14 @@ class HtmlHighlighter extends EventEmitter {
    * @param {bool} enabled - If explicitly `false`, query set is disabled; otherwise enabled
    * @param {number} [reserve] - Number of highlights to reserve for query set
    *
-   * @returns {HtmlHighlighter} Self instance for chaining
+   * @returns {Promise<number>} Promise that resolves with number of highlights created
    */
-  add(
+  async add(
     name: string,
     queries: Array<any>,
     enabled: boolean = true,
     reserve: number | null = null
-  ): HtmlHighlighter {
+  ): Promise<number> {
     enabled = enabled === true;
     if (typeof reserve !== 'number' || reserve < 1) {
       reserve = null;
@@ -148,7 +154,7 @@ class HtmlHighlighter extends EventEmitter {
 
     this.queries.set(name, querySet);
 
-    const count = this.add_queries_(querySet, queries, enabled);
+    const count = await this.add_queries_(querySet, queries, enabled === true);
     if (reserve != null) {
       if (reserve > count) {
         this.lastId = reserve;
@@ -177,7 +183,7 @@ class HtmlHighlighter extends EventEmitter {
       this.assert();
     }
 
-    return this;
+    return count;
   }
 
   /**
@@ -191,15 +197,19 @@ class HtmlHighlighter extends EventEmitter {
    * @param {QuerySubject} queries - Array containing individual queries to highlight
    * @param {bool} enabled - If `true`, query set is also enabled
    *
-   * @returns {HtmlHighlighter} Self instance for chaining
+   * @returns {Promise<number>} Promise that resolves with number of highlights created
    */
-  append(name: string, queries: Array<QuerySubject>, enabled: boolean = true): HtmlHighlighter {
+  async append(
+    name: string,
+    queries: Array<QuerySubject>,
+    enabled: boolean = true
+  ): Promise<number> {
     const querySet = this.queries.get(name);
     if (querySet == null) {
       throw new Error('Invalid or query set not yet created');
     }
 
-    this.add_queries_(querySet, queries, enabled === true);
+    const count = await this.add_queries_(querySet, queries, enabled === true);
     this.cursor.clear();
     this.emit('append', name, querySet, queries);
 
@@ -207,7 +217,7 @@ class HtmlHighlighter extends EventEmitter {
       this.assert();
     }
 
-    return this;
+    return count;
   }
 
   /**
@@ -216,13 +226,11 @@ class HtmlHighlighter extends EventEmitter {
    * An exception is thrown if the query set does not exist.
    *
    * @param {string} name - Name of the query set to remove.
-   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  remove(name: string): HtmlHighlighter {
+  remove(name: string): void {
     this.remove_(name);
     this.cursor.clear();
     this.emit('remove', name);
-    return this;
   }
 
   /**
@@ -232,12 +240,11 @@ class HtmlHighlighter extends EventEmitter {
    * enabled, nothing is done.
    *
    * @param {string} name - Name of the query set to enable.
-   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  enable(name: string): HtmlHighlighter {
+  enable(name: string): void {
     const q = this.get_(name);
     if (q.enabled) {
-      return this;
+      return;
     }
 
     dom.removeClass(dom.getForQuerySet(q.queryId), Css.disabled);
@@ -246,7 +253,6 @@ class HtmlHighlighter extends EventEmitter {
     this.stats.total += q.length;
     this.cursor.clear();
     this.emit('enable', name);
-    return this;
   }
 
   /**
@@ -256,12 +262,11 @@ class HtmlHighlighter extends EventEmitter {
    * disabled, nothing is done.
    *
    * @param {string} name - Name of the query set to disable.
-   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  disable(name: string): HtmlHighlighter {
+  disable(name: string): void {
     const q = this.get_(name);
     if (!q.enabled) {
-      return this;
+      return;
     }
 
     dom.addClass(dom.getForQuerySet(q.queryId), Css.disabled);
@@ -270,7 +275,6 @@ class HtmlHighlighter extends EventEmitter {
     this.stats.total -= q.length;
     this.cursor.clear();
     this.emit('disable', name);
-    return this;
   }
 
   /**
@@ -279,9 +283,8 @@ class HtmlHighlighter extends EventEmitter {
    * Optionally, the last query set id can be reset.
    *
    * @param {boolean} reset - Last query set id is reset, if `true`.
-   * @returns {HtmlHighlighter} Self instance for chaining
    */
-  clear(reset: boolean): HtmlHighlighter {
+  clear(reset: boolean): void {
     for (const [name] of this.queries) {
       this.remove_(name);
     }
@@ -296,152 +299,6 @@ class HtmlHighlighter extends EventEmitter {
 
     if (globals.debugging) {
       this.assert();
-    }
-
-    return this;
-  }
-
-  /**
-   * Set the queries that the cursor will visit when the `prev` and `next` methods are invoked
-   *
-   * If `null`, all queries will be visited.
-   *
-   * @param {Array} queries - Array containing query set names
-   */
-  setIterableQueries(queries: Array<string> | null = null): void {
-    this.cursor.setIterableQueries(queries);
-  }
-
-  /**
-   * Move cursor position to the previous query in the active query set
-   *
-   * If the cursor moves past the first query in the active query set, the active query set moves
-   * to the previous available one and the cursor position to its last query.  If the current query
-   * set is the first in the collection and thus it is not possible to move to the previous query
-   * set, the last query set is made active instead, thus ensuring that the cursor always rolls
-   * over.
-   */
-  prev(): void {
-    this.cursor.prev();
-  }
-
-  /**
-   * Move cursor position to the next query in the active query set
-   *
-   * If the cursor moves past the last query in the active query set, the active query set moves to
-   * the next available one and the cursor position to its first query.  If the current query set
-   * is the last in the collection and thus it is not possible to move to the next query set, the
-   * first query set is made active instead, thus ensuring that the cursor always rolls over.
-   */
-  next(): void {
-    this.cursor.next();
-  }
-
-  /* eslint-disable complexity, max-statements */
-  /**
-   * Return the current selected text range in the form of a `TextRange` object
-   *
-   * If there is no selected text, `null` is returned.
-   *
-   * @returns {TextRange|null} The current selected text range or `null` if it could not be
-   * computed.
-   */
-  getSelectedRange(): TextRange | null {
-    const sel = window.getSelection();
-    if (sel == null) {
-      return null;
-    }
-
-    const range = sel.getRangeAt(0);
-    if (range == null) {
-      return null;
-    }
-
-    let start, end;
-    try {
-      start = selection.getNormalizedStartBoundaryPoint(range);
-      end = selection.getNormalizedEndBoundaryPoint(range);
-    } catch (x) {
-      logger.error('unable to compute boundary points:', x);
-      return null;
-    }
-
-    if (start.node.nodeType !== Node.TEXT_NODE || end.node.nodeType !== Node.TEXT_NODE) {
-      logger.info('selection anchor or focus node(s) not text: ignoring');
-      return null;
-    }
-
-    // Account for selections where the start and end elements are the same *and* whitespace exists
-    // longer than one character.  For instance, The element `<p>a   b</p>` is shown as `a b` by
-    // browsers with the whitespace rendered collapsed.  This means that in this particular
-    // case, it is not possible to simply retrieve the length of the selection's text and use that
-    // as the selection's end offset as it would be invalid.  The way to avoid calculating an
-    // invalid end offset is by looking at the anchor and focus (start and end) offsets.
-    // Strangely, if the selection spans more than one element, one may simply use the length of
-    // the selected text regardless of the occurrence of whitespace in between.
-    const len =
-      start.node === end.node ? Math.abs(end.offset - start.offset) : sel.toString().length;
-    if (len <= 0) {
-      return null;
-    }
-
-    // Determine start and end indices in text offset markers array
-    const startOffset = this.content.find(start.node);
-    const endOffset = start.node === end.node ? startOffset : this.content.find(end.node);
-    if (startOffset < 0 || endOffset < 0) {
-      logger.error(
-        'unable to retrieve offset of selection anchor or focus node(s):',
-        sel.anchorNode,
-        start.node,
-        sel.focusNode,
-        end.node
-      );
-      return null;
-    }
-
-    // Create start and end range descriptors, whilst accounting for inverse selection where the
-    // user selects text in a right to left orientation.
-    let startDescr, endDescr;
-    if (startOffset < endOffset || (startOffset === endOffset && start.offset < end.offset)) {
-      startDescr = TextRange.descriptorRel(this.content.at(startOffset), start.offset);
-
-      if (start.node === end.node) {
-        endDescr = merge({}, startDescr);
-        endDescr.offset += len - 1;
-      } else {
-        endDescr = TextRange.descriptorRel(this.content.at(endOffset), end.offset - 1);
-      }
-    } else {
-      startDescr = TextRange.descriptorRel(this.content.at(endOffset), end.offset);
-
-      if (end.node === start.node) {
-        endDescr = merge({}, startDescr);
-        endDescr.offset += len - 1;
-      } else {
-        endDescr = TextRange.descriptorRel(this.content.at(startOffset), start.offset - 1);
-      }
-    }
-
-    return new TextRange(this.content, startDescr, endDescr);
-  }
-  /* eslint-enable complexity, max-statements */
-
-  /**
-   * Clear the current text selection
-   *
-   * Only the Chrome and Firefox implementations are supported.
-   */
-  clearSelectedRange(): void {
-    // From: http://stackoverflow.com/a/3169849/3001914
-    // Note that we don't support IE at all.
-    if (window.getSelection) {
-      if (window.getSelection().empty) {
-        // Chrome
-        window.getSelection().empty();
-      } else if (window.getSelection().removeAllRanges) {
-        // Firefox
-        window.getSelection().removeAllRanges();
-      }
     }
   }
 
@@ -486,6 +343,26 @@ class HtmlHighlighter extends EventEmitter {
     return l > 0 ? q.highlightId + l - 1 : -1;
   }
 
+  /**
+   * @event
+   * Handle highlight creation
+   *
+   * Contains state associated with highlight and exposes event for clients.
+   *
+   * @param {QuerySet} querySet - associated highlight query set
+   * @param {TextRange} hit - highlight text range
+   * @param {number} id - highlight ID
+   * @param {any} state - associated highlight state
+   */
+  onHighlightCreated = (querySet: QuerySet, hit: TextRange, id: number, state: any): void => {
+    // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
+    this.markers.add(querySet, id, hit);
+    if (state != null) {
+      this.state.set(id, state);
+    }
+    this.emit('highlight', id, state);
+  };
+
   // Private interface
   // -----------------
   /**
@@ -497,77 +374,13 @@ class HtmlHighlighter extends EventEmitter {
    *
    * @returns {number} number of highlights added.
    * */
-  add_queries_(querySet: QuerySet, queries: Array<QuerySubject>, enabled: boolean): number {
-    const content = this.content;
-    const markers = this.markers;
-    const reserve =
-      querySet.reserve != null && querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
-
-    let count = 0;
-    let csscl = null;
-
-    if (this.options.useQueryAsClass) {
-      csscl = Css.highlight + '-' + querySet.name;
-    }
-
-    let highlighter = new RangeHighlighter(
-      querySet.queryId,
-      querySet.highlightId + querySet.length,
-      enabled,
-      csscl
-    );
-
+  async add_queries_(
+    querySet: QuerySet,
+    queries: Array<QuerySubject>,
+    enabled: boolean
+  ): Promise<number> {
     logger.log(`adding queries for: ${querySet.name}`);
-
-    // For each query, perform a lookup in the internal text representation and highlight each hit.
-    // The global offset of each highlight is recorded by the `markers´ object.  The offset
-    // is used by the `Cursor´ class to compute the next/previous highlight to show.
-    queries.forEach((subject: any): void => {
-      let hit, finder;
-
-      try {
-        finder = factory.finder(content, subject);
-      } catch (x) {
-        logger.exception(
-          `subject finder instantiation failed [query=${querySet.name}]: subject:`,
-          subject,
-          x
-        );
-        return;
-      }
-
-      logger.log('processing subject:', subject);
-      const state = subject.state;
-
-      while ((hit = finder.next()) != null) {
-        if (reserve !== null && count >= reserve) {
-          logger.error('highlight reserve exceeded');
-          break;
-        }
-
-        logger.log('highlighting:', hit);
-
-        try {
-          // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
-          const id = highlighter.do(hit);
-
-          // Contain state associated with query subject, if applicable.
-          if (state != null) {
-            this.state.set(id, state);
-          }
-
-          // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
-          markers.add(querySet, id, hit);
-          ++count;
-
-          // Notify observers of creation of new highlight
-          this.emit('highlight', id, state);
-        } catch (x) {
-          logger.exception(`highlighting failed [query=${querySet.name}]: subject:`, subject, x);
-        }
-      }
-    });
-
+    const count = await this.renderer.add(querySet, queries, enabled);
     querySet.length += count;
     if (enabled) {
       this.stats.total += count;
@@ -631,6 +444,9 @@ class HtmlHighlighter extends EventEmitter {
     return q;
   }
 
+  /**
+   * Perform assorted debugging assertions
+   */
   assert(): void {
     this.content.assert();
 
