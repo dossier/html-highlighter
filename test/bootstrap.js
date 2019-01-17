@@ -1,6 +1,7 @@
-/* global BROWSER */
+/* global global, BROWSER */
 /* eslint-disable import/unambiguous */
 import jsdom from 'jsdom-global';
+import 'babel-polyfill';
 
 // The following block taken verbatim from the diffeo-recommend-ui repository
 // --
@@ -27,6 +28,19 @@ function init(view) {
   // and we should always turn it on.  It must be turned on before
   // anything tries to import jQuery.
   jsdom(view);
+
+  // Jsdom does not suppport `requestAnimationFrame`, which forces us to provide a very simple
+  // polyfill alternative.
+  //
+  // IMPORTANT!  Note that assigning the polyfill(s) to either the `window` or `global` object
+  // without also assigning to the other is incorrect practice.  BOTH objects must receive the
+  // polyfill since `global` !== `window`; rather, `window` is `global.window` and we want
+  // a polyfill `window.thisPolyfill` to also be accessible via the valid form `thisPolyfill`.
+  if (typeof window.requestAnimationFrame !== 'function') {
+    global.requestAnimationFrame = window.requestAnimationFrame = function(callback) {
+      setTimeout(callback); // simply defer to next execution tick
+    };
+  }
 }
 
 export default init;

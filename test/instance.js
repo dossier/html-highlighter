@@ -1,5 +1,8 @@
 /* global BROWSER */
 /* eslint-disable no-use-before-define */
+
+import merge from 'merge';
+
 import * as hh from '../src/main';
 
 import bootstrap from './bootstrap';
@@ -9,7 +12,10 @@ import html from './html/index.html';
 
 bootstrap(html);
 
-// Test-wide attributes
+const defaultOptions = { maxHighlight: 100, rendering: { async: true, interval: 250 } };
+let options = merge({}, defaultOptions);
+
+// Test-wide global attributes
 let container;
 let instance;
 let full = false;
@@ -73,8 +79,16 @@ function isFull() {
   return full;
 }
 
+function setOptions(newOptions) {
+  options = merge({}, defaultOptions, newOptions);
+}
+
+function resetOptions() {
+  options = setOptions({});
+}
+
 function getOptions() {
-  return { container, maxHighlight: 100 };
+  return merge({}, options, { container });
 }
 
 function get(what) {
@@ -103,4 +117,4 @@ function querySelectorAll(selector) {
   return container.querySelectorAll(selector);
 }
 
-export { init, initFull, isFull, get, querySelector, querySelectorAll };
+export { setOptions, resetOptions, init, initFull, isFull, get, querySelector, querySelectorAll };
