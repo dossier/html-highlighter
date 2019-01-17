@@ -5,6 +5,7 @@ import EventEmitter from 'events';
 import logger from './logger';
 import type { Options, QuerySet } from './typedefs';
 import { Css } from './consts';
+import Finder from './finder';
 import * as factory from './factory';
 import RangeHighlighter from './rangehighlighter';
 import TextContent from './textcontent';
@@ -20,6 +21,8 @@ class QueryRenderer extends EventEmitter {
   enabled: boolean;
   options: Options;
   state: Map<number, any>;
+  reserve: ?number;
+  pass: number;
   count: number;
   done: boolean;
 
@@ -31,18 +34,22 @@ class QueryRenderer extends EventEmitter {
     this.enabled = enabled;
     this.options = options;
     this.state = new Map();
+    this.reserve = null;
+    this.pass = 0;
     this.count = 0;
     this.done = false;
   }
 
-  render(content: TextContent): void {
+  async render(content: TextContent): Promise<void> {
     if (this.done) {
       logger.error('query rendering already done');
       return;
+    } else if (this.pass > 0) {
+      throw new Error('rendering already in progress');
     }
 
     const querySet = this.querySet;
-    const reserve =
+    this.reserve =
       querySet.reserve != null && querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
 
     let csscl = null;
@@ -61,9 +68,8 @@ class QueryRenderer extends EventEmitter {
     // For each query, perform a lookup in the internal text representation and highlight each hit.
     // The global offset of each highlight is recorded by the `markers´ object.  The offset
     // is used by the `Cursor´ class to compute the next/previous highlight to show.
-    this.queries.forEach((subject: any): void => {
-      let hit, finder;
-
+    for (const subject of this.queries) {
+      let finder;
       try {
         finder = factory.finder(content, subject);
       } catch (x) {
@@ -76,31 +82,59 @@ class QueryRenderer extends EventEmitter {
       }
 
       logger.log('processing subject:', subject);
-      const state = subject.state;
-
-      while ((hit = finder.next()) != null) {
-        if (reserve !== null && this.count >= reserve) {
-          logger.error('highlight reserve exceeded');
-          break;
-        }
-
-        logger.log('highlighting:', hit);
-
-        try {
-          // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
-          const id = highlighter.do(hit);
-
-          // Notify observers of creation of new highlight
-          this.emit('highlight', hit, id, state);
-          ++this.count;
-        } catch (x) {
-          logger.exception(`highlighting failed [query=${querySet.name}]: subject:`, subject, x);
-        }
-      }
-    });
+      await this.begin(content, finder, highlighter, subject);
+    }
 
     this.done = true;
     this.emit('done', this.count);
+  }
+
+  async begin(content: TextContent, finder, highlighter, subject): Promise<void> {
+    return new Promise(resolve => {
+      this.onRender(content, finder, highlighter, subject, resolve);
+    });
+  }
+
+  onRender(
+    content: TextContent,
+    finder: Finder,
+    highlighter: RangeHighlighter,
+    subject: any,
+    resolve: () => void
+  ): void {
+    let hit;
+    const { async: isAsync, interval } = this.options.rendering;
+    const deferTime = isAsync ? Date.now() + interval : 0;
+
+    ++this.pass;
+    logger.log(`rendering pass #${this.pass} [${this.querySet.name}]`);
+
+    while ((hit = finder.next()) != null) {
+      if (this.reserve != null && this.count >= this.reserve) {
+        logger.error('highlight reserve exceeded');
+        break;
+      }
+
+      logger.log('highlighting:', hit);
+
+      try {
+        // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
+        const id = highlighter.do(hit);
+
+        // Notify observers of creation of new highlight
+        this.emit('highlight', hit, id, subject.state);
+        ++this.count;
+      } catch (x) {
+        logger.exception(`highlighting failed [query=${this.querySet.name}]: subject:`, subject, x);
+      }
+
+      if (isAsync && Date.now() >= deferTime) {
+        requestAnimationFrame(() => this.onRender(content, finder, highlighter, subject, resolve));
+        return;
+      }
+    }
+
+    resolve();
   }
 }
 
@@ -123,6 +157,8 @@ class Renderer extends EventEmitter {
     this.queue = [];
     this.active = null;
     this.content = null;
+
+    logger.log(`async rendering mode: ${String(this.options.rendering.async)}`);
   }
 
   setContent(content: TextContent): void {
@@ -146,6 +182,7 @@ class Renderer extends EventEmitter {
       });
 
       renderer.on('done', (count: number): void => {
+        logger.log(`rendering done [${name}]`);
         this.sets.delete(querySet.name);
         const idx = this.queue.indexOf(renderer);
         this.queue.splice(idx, 1);

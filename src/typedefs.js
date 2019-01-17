@@ -22,6 +22,10 @@ export type Options = {|
   maxHighlight: number,
   useQueryAsClass: boolean,
   normalise: boolean,
+  rendering: {
+    async: boolean,
+    interval: number,
+  },
 |};
 
 export type Stats = {|
