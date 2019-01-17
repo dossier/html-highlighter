@@ -42,7 +42,7 @@ class HtmlHighlighter extends EventEmitter {
   state: Map<number, any>;
 
   // Default options.  Note that we cannot declare this map as `Options` since not all attributes
-  // are defined.
+  // are defined (e.g. `container`).
   static defaults: ClientOptions = {
     // Sometimes it is useful for the client to determine how to bring an element into view via
     // scrolling. If `scrollTo` is set, then it is called as a function with a `Node` to scroll
