@@ -2,6 +2,7 @@
 
 import type { TextSubject, XpathSubject } from './typedefs';
 import TextContent from './textcontent';
+import Finder from './finder';
 import TextFinder from './textfinder';
 import XpathFinder from './xpathfinder';
 
@@ -15,7 +16,7 @@ import XpathFinder from './xpathfinder';
  *
  * @returns {Finder} finder instance ready for use
  */
-function finder(content: TextContent, subject: TextSubject | XpathSubject) {
+function finder(content: TextContent, subject: TextSubject | XpathSubject): Finder {
   // FIXME: employ more robust check below that doesn't assume Xpath finder by default
   return TextFinder.isSubject(subject)
     ? new TextFinder(content, (subject: any))
