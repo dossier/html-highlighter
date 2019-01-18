@@ -11,9 +11,9 @@ import { Css } from './consts';
 import * as dom from './dom';
 import TextContent from './textcontent';
 import HighlightMarkers from './highlightmarkers';
-import RangeUnhighlighter from './rangeunhighlighter';
 import Renderer from './renderer';
 import Cursor from './cursor';
+import { createPromiseCapabilities } from './util';
 
 /**
  * Main class of the HTML Highlighter module, which exposes an API enabling
@@ -88,6 +88,7 @@ class HtmlHighlighter extends EventEmitter {
 
     this.renderer = new Renderer(this.options);
     this.renderer.on('highlight', this.onHighlightCreated);
+    this.renderer.on('unhighlight', this.onHighlightRemoved);
 
     this.cursor = new Cursor(this.markers);
 
@@ -122,7 +123,7 @@ class HtmlHighlighter extends EventEmitter {
    *
    * @param {string} name - Name of the query set
    * @param {Array<any>} queries - Array containing individual queries to highlight
-   * @param {bool} enabled - If explicitly `false`, query set is disabled; otherwise enabled
+   * @param {boolean} enabled - If explicitly `false`, query set is disabled; otherwise enabled
    * @param {number} [reserve] - Number of highlights to reserve for query set
    *
    * @returns {Promise<number>} Promise that resolves with number of highlights created
@@ -138,52 +139,76 @@ class HtmlHighlighter extends EventEmitter {
       reserve = null;
     }
 
-    // Remove query set if it exists
-    if (this.queries.has(name)) {
-      this.remove(name);
-    }
-
     const querySet: QuerySet = {
       name,
       enabled,
-      queryId: this.stats.highlight,
-      highlightId: this.lastId,
+      queryId: -1,
+      highlightId: -1,
       length: 0,
       reserve: null,
     };
 
-    this.queries.set(name, querySet);
+    // Enqueue query set removal rendering operation by default to ensure that we succeed in adding
+    // this query.  This measure results in no rendering if the query set does not exist.
+    this.remove_(name, true);
 
-    const count = await this.add_queries_(querySet, queries, enabled === true);
-    if (reserve != null) {
-      if (reserve > count) {
-        this.lastId = reserve;
-        querySet.reserve = reserve;
-      } else {
-        logger.error('invalid or insufficient reserve specified');
-        querySet.reserve = count;
+    const renderer = this.renderer.add(name, queries);
+    renderer.on('init', () => {
+      // Don't process query set if it turns out to already exist
+      if (this.queries.has(name)) {
+        renderer.abort();
+        return;
       }
-    } else {
-      this.lastId += count;
-    }
 
-    // Update global statistics
-    ++this.stats.queries;
+      logger.log(`adding queries to: ${querySet.name}`);
+      this.queries.set(name, querySet);
+      querySet.queryId = this.stats.highlight;
+      querySet.highlightId = this.lastId;
+      renderer.init(querySet);
+    });
 
-    // Ensure CSS highlight class rolls over on overflow
-    ++this.stats.highlight;
-    if (this.stats.highlight >= this.options.maxHighlight) {
-      this.stats.highlight = 0;
-    }
+    const promise = createPromiseCapabilities();
+    renderer.on('done', (count: number): void => {
+      querySet.length += count;
+      if (enabled) {
+        this.stats.total += count;
+      }
 
-    this.cursor.clear();
-    this.emit('add', name, querySet, queries);
+      if (reserve != null) {
+        if (reserve > count) {
+          this.lastId = reserve;
+          querySet.reserve = reserve;
+        } else {
+          logger.error('invalid or insufficient reserve specified');
+          querySet.reserve = count;
+        }
+      } else {
+        this.lastId += count;
+      }
 
-    if (globals.debugging) {
-      this.assert();
-    }
+      // Update global statistics
+      ++this.stats.queries;
 
-    return count;
+      // Ensure CSS highlight class rolls over on overflow
+      ++this.stats.highlight;
+      if (this.stats.highlight >= this.options.maxHighlight) {
+        this.stats.highlight = 0;
+      }
+
+      this.cursor.clear();
+      this.emit('add', name, querySet, queries);
+
+      if (globals.debugging) {
+        this.assert();
+      }
+
+      promise.resolve(count);
+    });
+
+    renderer.on('abort', () => promise.resolve());
+
+    this.renderer.next();
+    return promise.instance;
   }
 
   /**
@@ -195,29 +220,49 @@ class HtmlHighlighter extends EventEmitter {
    *
    * @param {string} name - Name of the query set
    * @param {QuerySubject} queries - Array containing individual queries to highlight
-   * @param {bool} enabled - If `true`, query set is also enabled
    *
    * @returns {Promise<number>} Promise that resolves with number of highlights created
    */
-  async append(
-    name: string,
-    queries: Array<QuerySubject>,
-    enabled: boolean = true
-  ): Promise<number> {
-    const querySet = this.queries.get(name);
-    if (querySet == null) {
-      throw new Error('Invalid or query set not yet created');
-    }
+  async append(name: string, queries: Array<QuerySubject>): Promise<number> {
+    let querySet;
+    const renderer = this.renderer.add(name, queries);
+    let promise = createPromiseCapabilities();
+    renderer.on('init', () => {
+      querySet = this.queries.get(name);
+      if (querySet == null) {
+        renderer.abort();
+        return;
+      }
 
-    const count = await this.add_queries_(querySet, queries, enabled === true);
-    this.cursor.clear();
-    this.emit('append', name, querySet, queries);
+      logger.log(`appending queries to: ${querySet.name}`);
+      renderer.init(querySet);
+    });
 
-    if (globals.debugging) {
-      this.assert();
-    }
+    renderer.on('done', (count: number): void => {
+      // Should never happen
+      if (querySet == null) {
+        return;
+      }
 
-    return count;
+      querySet.length += count;
+      if (querySet.enabled) {
+        this.stats.total += count;
+      }
+
+      this.cursor.clear();
+      this.emit('append', name, querySet, queries);
+
+      if (globals.debugging) {
+        this.assert();
+      }
+
+      promise.resolve(count);
+    });
+
+    renderer.on('abort', () => promise.resolve());
+
+    this.renderer.next();
+    return promise.instance;
   }
 
   /**
@@ -227,8 +272,8 @@ class HtmlHighlighter extends EventEmitter {
    *
    * @param {string} name - Name of the query set to remove.
    */
-  remove(name: string): void {
-    this.remove_(name);
+  async remove(name: string): Promise<void> {
+    await this.remove_(name, false);
     this.cursor.clear();
     this.emit('remove', name);
   }
@@ -284,10 +329,13 @@ class HtmlHighlighter extends EventEmitter {
    *
    * @param {boolean} reset - Last query set id is reset, if `true`.
    */
-  clear(reset: boolean): void {
+  async clear(reset: boolean): Promise<void> {
+    let promises = [];
     for (const [name] of this.queries) {
-      this.remove_(name);
+      promises.push(this.remove_(name, false));
     }
+
+    await Promise.all(promises);
 
     if (reset) {
       this.lastId = 0;
@@ -363,32 +411,21 @@ class HtmlHighlighter extends EventEmitter {
     this.emit('highlight', id, state);
   };
 
+  /**
+   * @event
+   * Handle highlight removal
+   *
+   * Removes state associated with highlight and exposes event for clients.
+   *
+   * @param {number} id - highlight ID
+   */
+  onHighlightRemoved = (id: number): void => {
+    this.state.delete(id);
+    this.emit('unhighlight', id);
+  };
+
   // Private interface
   // -----------------
-  /**
-   * Add or append queries to a query set, either enabled or disabled
-   *
-   * @param {QuerySet} querySet - query set descriptor.
-   * @param {Array<QuerySubject>} queries - array containing the queries to add or append.
-   * @param {boolean} enabled - highlights are enabled if `true`
-   *
-   * @returns {number} number of highlights added.
-   * */
-  async add_queries_(
-    querySet: QuerySet,
-    queries: Array<QuerySubject>,
-    enabled: boolean
-  ): Promise<number> {
-    logger.log(`adding queries for: ${querySet.name}`);
-    const count = await this.renderer.add(querySet, queries, enabled);
-    querySet.length += count;
-    if (enabled) {
-      this.stats.total += count;
-    }
-
-    return count;
-  }
-
   /**
    * Remove a query set by name
    *
@@ -396,36 +433,58 @@ class HtmlHighlighter extends EventEmitter {
    * @access private
    *
    * @param {string} name - The name of the query set to remove.
+   * @param {boolean} enqueue - When `true` causes rendering to be enqueued and not started.
+   *
+   * @returns {Promise<void>} Promise that resolves upon completion
    */
-  remove_(name: string): void {
-    const q = this.get_(name);
-    let unhighlighter = new RangeUnhighlighter();
+  async remove_(name: string, enqueue: boolean): Promise<void> {
+    let querySet;
+    const promise = createPromiseCapabilities();
+    const renderer = this.renderer.remove();
+    renderer.on('init', () => {
+      querySet = this.queries.get(name);
+      if (querySet == null) {
+        renderer.abort();
+        return;
+      }
 
-    --this.stats.queries;
-    this.stats.total -= q.length;
+      logger.log(`remove query set: ${querySet.name}`);
+      renderer.init(querySet);
+    });
 
-    for (let id = q.highlightId, l = id + q.length; id < l; ++id) {
-      unhighlighter.undo(id);
-      this.state.delete(id);
+    renderer.on('done', () => {
+      // Should never happen
+      if (querySet == null) {
+        return;
+      }
 
-      // Notify observers of creation of new highlight
-      this.emit('unhighlight', id);
+      this.markers.removeAll(querySet);
+      this.queries.delete(name);
+
+      --this.stats.queries;
+      this.stats.total -= querySet.length;
+
+      // TODO: Unfortunately, using the built-in `normalize` `HTMLElement` method to normalise text
+      // nodes means we have to refresh the offsets of the text nodes, which may not be desirable.
+      // There must be a better way.
+      if (this.options.normalise) {
+        this.options.container.normalize();
+        this.refresh();
+      }
+
+      if (globals.debugging) {
+        this.assert();
+      }
+
+      promise.resolve();
+    });
+
+    renderer.on('abort', () => promise.resolve());
+
+    if (!enqueue) {
+      this.renderer.next();
     }
-
-    this.markers.removeAll(q);
-    this.queries.delete(name);
-
-    // TODO: Unfortunately, using the built-in `normalize` `HTMLElement` method to normalise text
-    // nodes means we have to refresh the offsets of the text nodes, which may not be desirable.
-    // There must be a better way.
-    if (this.options.normalise) {
-      this.options.container.normalize();
-      this.refresh();
-    }
-
-    if (globals.debugging) {
-      this.assert();
-    }
+    return promise.instance;
   }
 
   /**

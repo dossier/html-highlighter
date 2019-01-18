@@ -8,62 +8,104 @@ import { Css } from './consts';
 import Finder from './finder';
 import * as factory from './factory';
 import RangeHighlighter from './rangehighlighter';
+import RangeUnhighlighter from './rangeunhighlighter';
 import TextContent from './textcontent';
+import * as util from './util';
 
 /**
- * Query set renderer
- *
- * Concerned with rendering a particular query set.
+ * Query set renderer abstract base class
  */
 class QueryRenderer extends EventEmitter {
-  querySet: QuerySet;
-  queries: Array<any>;
-  enabled: boolean;
-  options: Options;
-  state: Map<number, any>;
-  reserve: ?number;
+  querySet: ?QuerySet;
   pass: number;
-  count: number;
   done: boolean;
 
-  constructor(querySet: QuerySet, queries: Array<any>, enabled: boolean, options: Options) {
+  constructor() {
     super();
-
-    this.querySet = querySet;
-    this.queries = queries;
-    this.enabled = enabled;
-    this.options = options;
-    this.state = new Map();
-    this.reserve = null;
+    this.querySet = null;
     this.pass = 0;
-    this.count = 0;
     this.done = false;
   }
 
-  async render(content: TextContent): Promise<void> {
+  prerender(): ?QuerySet {
     if (this.done) {
       logger.error('query rendering already done');
-      return;
+      return null;
     } else if (this.pass > 0) {
       throw new Error('rendering already in progress');
     }
 
-    const querySet = this.querySet;
-    this.reserve =
-      querySet.reserve != null && querySet.reserve > 0 ? querySet.reserve - querySet.length : null;
-
-    let csscl = null;
-
-    if (this.options.useQueryAsClass) {
-      csscl = Css.highlight + '-' + querySet.name;
+    // Instruct client to initialize renderer with query set.  Note that client may abort
+    // rendering.
+    this.emit('init');
+    const q = this.querySet;
+    if (this.done) {
+      return null;
+    } else if (q == null) {
+      this.abort();
+      return null;
     }
 
-    let highlighter = new RangeHighlighter(
-      querySet.queryId,
-      querySet.highlightId + querySet.length,
-      this.enabled,
-      csscl
-    );
+    return this.querySet;
+  }
+
+  async render(_content: TextContent): Promise<void> {
+    util.abstract();
+  }
+
+  abort(): void {
+    if (!this.done) {
+      logger.log('aborting query render:', this.getQuerySetName());
+      this.done = true;
+      this.emit('abort');
+    }
+  }
+
+  init(querySet: QuerySet): void {
+    if (!this.done && this.pass < 1) {
+      this.querySet = querySet;
+    }
+  }
+
+  getQuerySetName(): string {
+    return this.querySet != null ? this.querySet.name : '<unknown>';
+  }
+}
+
+/**
+ * Query set highlighter
+ *
+ * Concerned with rendering a particular query set.
+ */
+class QueryHighlighter extends QueryRenderer {
+  queries: Array<any>;
+  options: Options;
+  reserve: ?number;
+  count: number;
+
+  constructor(queries: Array<any>, options: Options) {
+    super();
+
+    this.queries = queries;
+    this.options = options;
+    this.reserve = null;
+    this.count = 0;
+  }
+
+  async render(content: TextContent): Promise<void> {
+    const q = this.prerender();
+    if (q == null) {
+      return;
+    }
+
+    this.reserve = q.reserve != null && q.reserve > 0 ? q.reserve - q.length : null;
+
+    let csscl = null;
+    if (this.options.useQueryAsClass) {
+      csscl = Css.highlight + '-' + q.name;
+    }
+
+    let highlighter = new RangeHighlighter(q.queryId, q.highlightId + q.length, q.enabled, csscl);
 
     // For each query, perform a lookup in the internal text representation and highlight each hit.
     // The global offset of each highlight is recorded by the `markers´ object.  The offset
@@ -74,7 +116,7 @@ class QueryRenderer extends EventEmitter {
         finder = factory.finder(content, subject);
       } catch (x) {
         logger.exception(
-          `subject finder instantiation failed [query=${querySet.name}]: subject:`,
+          `subject finder instantiation failed [query=${q.name}]: subject:`,
           subject,
           x
         );
@@ -107,7 +149,7 @@ class QueryRenderer extends EventEmitter {
     const deferTime = isAsync ? Date.now() + interval : 0;
 
     ++this.pass;
-    logger.log(`rendering pass #${this.pass} [${this.querySet.name}]`);
+    logger.log(`rendering pass #${this.pass} [${this.getQuerySetName()}]`);
 
     while ((hit = finder.next()) != null) {
       if (this.reserve != null && this.count >= this.reserve) {
@@ -125,7 +167,11 @@ class QueryRenderer extends EventEmitter {
         this.emit('highlight', hit, id, subject.state);
         ++this.count;
       } catch (x) {
-        logger.exception(`highlighting failed [query=${this.querySet.name}]: subject:`, subject, x);
+        logger.exception(
+          `highlighting failed [query=${this.getQuerySetName()}]: subject:`,
+          subject,
+          x
+        );
       }
 
       if (isAsync && Date.now() >= deferTime) {
@@ -139,13 +185,42 @@ class QueryRenderer extends EventEmitter {
 }
 
 /**
+ * Query set unhighlighter
+ *
+ * Concerned with removing all highlights associated with a particular query set.
+ */
+class QueryUnhighlighter extends QueryRenderer {
+  reserve: ?number;
+  pass: number;
+  count: number;
+  done: boolean;
+
+  async render(_content: TextContent): Promise<void> {
+    const q = this.prerender();
+    if (q == null) {
+      return;
+    }
+
+    ++this.pass;
+    let unhighlighter = new RangeUnhighlighter();
+
+    for (let id = q.highlightId, l = id + q.length; id < l; ++id) {
+      unhighlighter.undo(id);
+      this.emit('unhighlight', id);
+    }
+
+    this.done = true;
+    this.emit('done');
+  }
+}
+
+/**
  * Master renderer component
  *
  * Responsible for managing rendering of individual query sets.
  */
 class Renderer extends EventEmitter {
   options: Options;
-  sets: Set<string>;
   queue: Array<QueryRenderer>;
   active: ?QueryRenderer;
   content: ?TextContent;
@@ -153,7 +228,6 @@ class Renderer extends EventEmitter {
   constructor(options: Options) {
     super();
     this.options = options;
-    this.sets = new Set();
     this.queue = [];
     this.active = null;
     this.content = null;
@@ -165,48 +239,58 @@ class Renderer extends EventEmitter {
     this.content = content;
   }
 
-  async add(querySet: QuerySet, queries: Array<any>, enabled: boolean): Promise<number> {
-    const name = querySet.name;
-    if (this.sets.has(name)) {
-      return -1;
-    }
-
-    this.sets.add(name);
-    const renderer = new QueryRenderer(querySet, queries, enabled, this.options);
-    this.queue.push(renderer);
-
-    return new Promise(resolve => {
-      // Simply pass event through
-      renderer.on('highlight', (hit: TextRange, id: number, state: any): void => {
-        this.emit('highlight', querySet, hit, id, state);
-      });
-
-      renderer.on('done', (count: number): void => {
-        logger.log(`rendering done [${name}]`);
-        this.sets.delete(querySet.name);
-        const idx = this.queue.indexOf(renderer);
-        this.queue.splice(idx, 1);
-        resolve(count);
-      });
-
-      this.next();
+  add(name: string, queries: Array<any>): QueryRenderer {
+    const renderer = new QueryHighlighter(queries, this.options);
+    renderer.on('highlight', (hit: TextRange, id: number, state: any): void => {
+      this.emit('highlight', renderer.querySet, hit, id, state);
     });
+
+    this.enqueue(renderer);
+    return renderer;
   }
 
-  async next(): Promise<void> {
+  remove(): QueryRenderer {
+    const renderer = new QueryUnhighlighter();
+    renderer.on('unhighlight', (id: number): void => {
+      this.emit('unhighlight', id);
+    });
+
+    this.enqueue(renderer);
+    return renderer;
+  }
+
+  next(): void {
     if (this.queue.length < 1 || this.active != null || this.content == null) {
       return;
     }
 
     const active = (this.active = this.queue[0]);
-    active.on('done', this.onRendered);
+    active.once('done', this.onNext);
+    active.once('abort', this.onNext);
     // $FlowFixMe: `content` guaranteed not `null` here
     active.render(this.content);
   }
 
-  onRendered = (): void => {
+  enqueue(renderer: QueryRenderer): void {
+    const cleanup = (): void => {
+      logger.log(`${renderer.constructor.name}: rendering done [${renderer.getQuerySetName()}]`);
+      const idx = this.queue.indexOf(renderer);
+      this.queue.splice(idx, 1);
+    };
+
+    renderer.once('done', cleanup);
+    renderer.once('abort', cleanup);
+    this.queue.push(renderer);
+  }
+
+  onNext = (): void => {
     this.active = null;
     this.next();
+
+    // Signal completion of last rendering queue if not rendering anything right now.
+    if (this.active == null) {
+      this.emit('done');
+    }
   };
 }
 
