@@ -12,7 +12,7 @@ import html from './html/index.html';
 
 bootstrap(html);
 
-const defaultOptions = { maxHighlight: 100, rendering: { async: true, interval: 250 } };
+const defaultOptions = { maxHighlight: 100, rendering: { async: false, interval: 250 } };
 let options = merge({}, defaultOptions);
 
 // Test-wide global attributes
@@ -117,4 +117,24 @@ function querySelectorAll(selector) {
   return container.querySelectorAll(selector);
 }
 
-export { setOptions, resetOptions, init, initFull, isFull, get, querySelector, querySelectorAll };
+function snapshot() {
+  const hl = get();
+  return {
+    stats: merge({}, hl.stats),
+    lastId: hl.lastId,
+    queries: new Map(hl.queries),
+    state: new Map(hl.state),
+  };
+}
+
+export {
+  setOptions,
+  resetOptions,
+  init,
+  initFull,
+  isFull,
+  get,
+  querySelector,
+  querySelectorAll,
+  snapshot,
+};
