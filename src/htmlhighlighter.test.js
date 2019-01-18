@@ -8,6 +8,8 @@ import * as ops from '../test/operations';
 import { counts, tests } from '../test/tests';
 import * as attest from '../test/attest';
 
+import { createPromiseCapabilities } from './util';
+
 const { assert } = chai;
 
 let hl;
@@ -113,8 +115,7 @@ function describeGeneralTests() {
     it('removes query set when only one exists', async function() {
       await hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
-
-      hl.remove('test-the');
+      await hl.remove('test-the');
       attest.clear();
     });
 
@@ -125,8 +126,72 @@ function describeGeneralTests() {
       await hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
-      hl.remove('test-the');
+      await hl.remove('test-the');
       attest.totalHighlights(counts.viber, 1);
+    });
+
+    it('processes multiple adds without waiting I', function(done) {
+      hl.add('test-the', ['the']);
+      hl.add('test-viber', ['viber']);
+
+      hl.renderer.once('done', () => {
+        attest.totalHighlights(counts.the + counts.viber, 2);
+        done();
+      });
+    });
+
+    it('processes multiple adds without waiting II', async function() {
+      await hl.add('test-the', ['the']);
+      attest.totalHighlights(counts.the, 1);
+
+      await hl.add('test-viber', ['viber']);
+      attest.totalHighlights(counts.the + counts.viber, 2);
+      const sequential = instance.snapshot();
+
+      await hl.clear(true);
+
+      // Assert the following asynchronous operations are equivalent to running them
+      // asynchronously.
+      hl.add('test-the', ['the']);
+      hl.add('test-viber', ['viber']);
+
+      const promise = createPromiseCapabilities();
+      hl.renderer.once('done', () => {
+        attest.snapshot(sequential);
+        promise.resolve();
+      });
+
+      return promise.instance;
+    });
+
+    it('processes multiple adds with and without waiting', async function() {
+      await hl.add('test-the', ['the']);
+      attest.totalHighlights(counts.the, 1);
+
+      await hl.add('test-viber', ['viber']);
+      attest.totalHighlights(counts.the + counts.viber, 2);
+
+      hl.add('test-the', ['the']);
+      hl.add('test-viber', ['viber']);
+
+      const promise = createPromiseCapabilities();
+      hl.renderer.once('done', () => {
+        attest.totalHighlights(counts.the + counts.viber, 2);
+        promise.resolve();
+      });
+
+      return promise.instance;
+    });
+
+    it('processes multiple adds with a removal without waiting', function(done) {
+      hl.add('test-the', ['the']);
+      hl.add('test-viber', ['viber']);
+      hl.remove('test-the');
+
+      hl.renderer.once('done', () => {
+        attest.totalHighlights(counts.viber, 1);
+        done();
+      });
     });
 
     it('removes all query sets when multiple queries exist', async function() {
@@ -136,10 +201,10 @@ function describeGeneralTests() {
       await hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
-      hl.remove('test-the');
+      await hl.remove('test-the');
       attest.totalHighlights(counts.viber, 1);
 
-      hl.remove('test-viber');
+      await hl.remove('test-viber');
       attest.clear();
     });
 
@@ -147,7 +212,7 @@ function describeGeneralTests() {
       await hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
 
-      hl.clear();
+      await hl.clear();
       attest.clear();
     });
 
@@ -158,7 +223,7 @@ function describeGeneralTests() {
       await hl.add('test-viber', ['viber']);
       attest.totalHighlights(counts.the + counts.viber, 2);
 
-      hl.clear();
+      await hl.clear();
       attest.clear();
     });
 
@@ -167,7 +232,7 @@ function describeGeneralTests() {
       await hl.add('custom', tests.overlapping.queries);
       attest.totalHighlights(counts.overlapping);
 
-      hl.clear();
+      await hl.clear();
       assert.strictEqual(document.body.textContent, text);
     });
   });
@@ -281,7 +346,7 @@ function describeCursorMovementTests() {
 
     it('invokes cursor "update" event on removing query set', function(done) {
       hl.add('test-the', ['the']).then(() => {
-        hl.cursor.on('update', (index, total) => {
+        hl.cursor.once('update', (index, total) => {
           assert.strictEqual(index, -1);
           assert.strictEqual(total, 0);
           done();
@@ -293,7 +358,7 @@ function describeCursorMovementTests() {
 
     it('invokes cursor "update" event when clearing state', function(done) {
       hl.add('test-the', ['the']).then(() => {
-        hl.cursor.on('update', (index, total) => {
+        hl.cursor.once('update', (index, total) => {
           assert.strictEqual(index, -1);
           assert.strictEqual(total, 0);
           done();
