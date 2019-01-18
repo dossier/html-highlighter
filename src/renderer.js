@@ -200,6 +200,8 @@ class QueryUnhighlighter extends QueryRenderer {
   count: number;
   done: boolean;
 
+  // TODO(mg): current algoritum is insufficient because it does not support async mechanics (see
+  // QueryHighlighter::render).
   async render(_content: TextContent): Promise<void> {
     const q = this.prerender();
     if (q == null) {
