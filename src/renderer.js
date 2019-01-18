@@ -57,7 +57,7 @@ class QueryRenderer extends EventEmitter {
     if (!this.done) {
       logger.log('aborting query render:', this.getQuerySetName());
       this.done = true;
-      this.emit('abort');
+      this.end('abort');
     }
   }
 
@@ -65,6 +65,11 @@ class QueryRenderer extends EventEmitter {
     if (!this.done && this.pass < 1) {
       this.querySet = querySet;
     }
+  }
+
+  end(event: string, ...args: Array<any>): void {
+    this.emit(event, ...args);
+    this.emit('end');
   }
 
   getQuerySetName(): string {
@@ -128,7 +133,7 @@ class QueryHighlighter extends QueryRenderer {
     }
 
     this.done = true;
-    this.emit('done', this.count);
+    this.end('done', this.count);
   }
 
   async begin(content: TextContent, finder, highlighter, subject): Promise<void> {
@@ -210,7 +215,7 @@ class QueryUnhighlighter extends QueryRenderer {
     }
 
     this.done = true;
-    this.emit('done');
+    this.end('done');
   }
 }
 
@@ -265,10 +270,18 @@ class Renderer extends EventEmitter {
     }
 
     const active = (this.active = this.queue[0]);
-    active.once('done', this.onNext);
-    active.once('abort', this.onNext);
+    active.once('end', this.onNext);
     // $FlowFixMe: `content` guaranteed not `null` here
     active.render(this.content);
+  }
+
+  async wait(): Promise<void> {
+    const active = this.active;
+    if (active == null) {
+      return;
+    }
+
+    await new Promise(resolver => this.once('done', resolver));
   }
 
   enqueue(renderer: QueryRenderer): void {
@@ -278,8 +291,7 @@ class Renderer extends EventEmitter {
       this.queue.splice(idx, 1);
     };
 
-    renderer.once('done', cleanup);
-    renderer.once('abort', cleanup);
+    renderer.once('end', cleanup);
     this.queue.push(renderer);
   }
 

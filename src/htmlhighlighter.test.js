@@ -164,6 +164,14 @@ function describeGeneralTests() {
       return promise.instance;
     });
 
+    it('processes multiple adds with explicit wait', async function() {
+      hl.add('test-the', ['the']);
+      hl.add('test-viber', ['viber']);
+
+      await hl.renderer.wait();
+      attest.totalHighlights(counts.the + counts.viber, 2);
+    });
+
     it('processes multiple adds with and without waiting', async function() {
       await hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
