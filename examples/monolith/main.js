@@ -5,6 +5,7 @@ import {
   HtmlHighlighter,
   XPathFinder,
   RangeHighlighter,
+  SelectedRange,
   setVerbose,
   setDebugging,
 } from '../../src/main.js';
@@ -45,7 +46,7 @@ let $selector, container, $widgetSelection, $widgetMain, $search, $add;
 let count = 0;
 let mouseDown = 0;
 let highlighter;
-let ui;
+let ui; // eslint-disable-line no-unused-vars
 
 function init() {
   $selector = $('#filter-data');
@@ -97,7 +98,8 @@ function init() {
           return;
         }
 
-        const range = highlighter.getSelectedRange();
+        const selectedRange = SelectedRange.fromHtmlHighlighter(highlighter);
+        const range = selectedRange.get();
         if (range === null) {
           $widgetSelection.removeClass('enabled');
           return;
@@ -137,7 +139,7 @@ function init() {
           highlighter.add('custom', [{ start: xpath.start, end: xpath.end }], true, 100);
         }
 
-        highlighter.clearSelectedRange();
+        selectedRange.clear();
         $widgetSelection.addClass('enabled');
       }, 150);
     },
