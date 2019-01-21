@@ -1,6 +1,11 @@
 /* global $ */
 /* eslint-disable no-use-before-define */
 
+// Required to enable Babel's runtime mechanism to support async functions.
+// TODO(mg): ask KG/investigate possibility of avoiding the runtime module(s) altogether while
+// being mindful that this might, in fact, be a benign measure.
+import 'babel-polyfill';
+
 import {
   HtmlHighlighter,
   XPathFinder,
