@@ -17,6 +17,12 @@ function clear() {
   totalHighlights(0, 0);
 }
 
+/**
+ * Total highlights and query set assertion
+ *
+ * @param {number} hc - Highlight count
+ * @param {number} qc - Query set count
+ */
 function totalHighlights(hc, qc = 1) {
   const queries = new Set();
   const highlights = new Set();
@@ -97,6 +103,11 @@ function classNameAll(elements, classNames) {
   }
 }
 
+function snapshot(old) {
+  const current = instance.snapshot();
+  assert.deepEqual(current, old);
+}
+
 export {
   clear,
   totalHighlights,
@@ -106,4 +117,5 @@ export {
   currentHighlight,
   className,
   classNameAll,
+  snapshot,
 };

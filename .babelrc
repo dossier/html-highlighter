@@ -5,7 +5,8 @@
     "transform-class-properties",
     "transform-regenerator",
     "transform-es2015-classes",
-    "transform-export-extensions"
+    "transform-export-extensions",
+    "transform-async-to-generator",
   ],
   "presets": [
     "es2015",

@@ -67,8 +67,8 @@ class UI {
       }
     });
 
-    this.nodes.next.click(() => this.highlighter.next());
-    this.nodes.prev.click(() => this.highlighter.prev());
+    this.nodes.next.click(() => this.highlighter.cursor.next());
+    this.nodes.prev.click(() => this.highlighter.cursor.prev());
 
     highlighter.on('add', this.onQuerySetAdded);
     highlighter.on('remove', this.onQuerySetRemoved);

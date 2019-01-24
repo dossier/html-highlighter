@@ -8,6 +8,10 @@ export type ClientOptions = {|
   maxHighlight?: number,
   useQueryAsClass?: boolean,
   normalise?: boolean,
+  rendering?: {
+    async: boolean,
+    interval?: number,
+  },
 |};
 
 // This type is structurally the same as `ClientOptions` with the difference that all properties are
@@ -18,6 +22,10 @@ export type Options = {|
   maxHighlight: number,
   useQueryAsClass: boolean,
   normalise: boolean,
+  rendering: {
+    async: boolean,
+    interval: number,
+  },
 |};
 
 export type Stats = {|

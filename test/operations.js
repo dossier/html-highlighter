@@ -137,8 +137,10 @@ function highlight(name, qsetname) {
 
   const hl = instance.get();
   const test = tests[name];
-  hl.add('test-' + qsetname, [test.xpath]);
-  attest.highlight(hl.lastId - 1, test.text);
+  return hl.add('test-' + qsetname, [test.xpath]).then(result => {
+    attest.highlight(hl.lastId - 1, test.text);
+    return result;
+  });
 }
 
 function getHighlightID(cl) {

@@ -6,6 +6,7 @@ import HtmlHighlighter from './htmlhighlighter';
 import RangeHighlighter from './rangehighlighter';
 import TextFinder from './textfinder';
 import XPathFinder from './xpathfinder';
+import SelectedRange from './selectedrange';
 import type { ClientOptions, TextSubject, XpathSubject } from './typedefs';
 
 export type { ClientOptions, TextSubject, XpathSubject };
@@ -14,6 +15,7 @@ export {
   RangeHighlighter,
   TextFinder,
   XPathFinder,
+  SelectedRange,
   setVerbose,
   getVerbose,
   setDebugging,
