@@ -156,12 +156,12 @@ class HtmlHighlighter extends EventEmitter {
     // this query.  This measure results in no rendering if the query set does not exist.
     this.remove_(name, true);
 
-    const renderer = QueryHighlighter.instantiate(this.renderer, queries);
-    renderer.on('highlight', this.onHighlightCreated);
-    renderer.on('init', () => {
+    const highlighter = QueryHighlighter.instantiate(this.renderer, queries);
+    highlighter.on('highlight', this.onHighlightCreated);
+    highlighter.on('init', () => {
       // Don't process query set if it turns out to already exist
       if (this.queries.has(name)) {
-        renderer.abort();
+        highlighter.abort();
         return;
       }
 
@@ -169,11 +169,11 @@ class HtmlHighlighter extends EventEmitter {
       this.queries.set(name, querySet);
       querySet.queryId = this.stats.highlight;
       querySet.highlightId = this.lastId;
-      renderer.init(querySet);
+      highlighter.init(querySet);
     });
 
     const promise = createPromiseCapabilities();
-    renderer.on('done', (count: number): void => {
+    highlighter.on('done', (count: number): void => {
       querySet.length += count;
       if (enabled) {
         this.stats.total += count;
@@ -210,9 +210,9 @@ class HtmlHighlighter extends EventEmitter {
       promise.resolve(count);
     });
 
-    renderer.on('abort', () => promise.resolve());
+    highlighter.on('abort', () => promise.resolve());
 
-    this.renderer.enqueue(renderer);
+    this.renderer.enqueue(highlighter);
     this.renderer.next();
     return promise.instance;
   }
@@ -231,20 +231,20 @@ class HtmlHighlighter extends EventEmitter {
    */
   async append(name: string, queries: Array<QuerySubject>): Promise<number> {
     let querySet;
-    const renderer = QueryHighlighter.instantiate(this.renderer, queries);
+    const highlighter = QueryHighlighter.instantiate(this.renderer, queries);
     let promise = createPromiseCapabilities();
-    renderer.on('init', () => {
+    highlighter.on('init', () => {
       querySet = this.queries.get(name);
       if (querySet == null) {
-        renderer.abort();
+        highlighter.abort();
         return;
       }
 
       logger.log(`appending queries to: ${querySet.name}`);
-      renderer.init(querySet);
+      highlighter.init(querySet);
     });
 
-    renderer.on('done', (count: number): void => {
+    highlighter.on('done', (count: number): void => {
       // Should never happen
       if (querySet == null) {
         return;
@@ -265,9 +265,9 @@ class HtmlHighlighter extends EventEmitter {
       promise.resolve(count);
     });
 
-    renderer.on('abort', () => promise.resolve());
+    highlighter.on('abort', () => promise.resolve());
 
-    this.renderer.enqueue(renderer);
+    this.renderer.enqueue(highlighter);
     this.renderer.next();
     return promise.instance;
   }
@@ -447,20 +447,20 @@ class HtmlHighlighter extends EventEmitter {
   async remove_(name: string, enqueue: boolean): Promise<void> {
     let querySet;
     const promise = createPromiseCapabilities();
-    const renderer = QueryUnhighlighter.instantiate(this.renderer);
-    renderer.on('unhighlight', this.onHighlightRemoved);
-    renderer.on('init', () => {
+    const unhighlighter = QueryUnhighlighter.instantiate(this.renderer);
+    unhighlighter.on('unhighlight', this.onHighlightRemoved);
+    unhighlighter.on('init', () => {
       querySet = this.queries.get(name);
       if (querySet == null) {
-        renderer.abort();
+        unhighlighter.abort();
         return;
       }
 
       logger.log(`remove query set: ${querySet.name}`);
-      renderer.init(querySet);
+      unhighlighter.init(querySet);
     });
 
-    renderer.on('done', () => {
+    unhighlighter.on('done', () => {
       // Should never happen
       if (querySet == null) {
         return;
@@ -487,9 +487,9 @@ class HtmlHighlighter extends EventEmitter {
       promise.resolve();
     });
 
-    renderer.on('abort', () => promise.resolve());
+    unhighlighter.on('abort', () => promise.resolve());
 
-    this.renderer.enqueue(renderer);
+    this.renderer.enqueue(unhighlighter);
     if (!enqueue) {
       this.renderer.next();
     }
