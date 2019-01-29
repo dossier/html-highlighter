@@ -278,6 +278,7 @@ class HtmlHighlighter extends EventEmitter {
    * An exception is thrown if the query set does not exist.
    *
    * @param {string} name - Name of the query set to remove.
+   * @returns {Promise<void>} Promise that resolves when specified query set is removed
    */
   async remove(name: string): Promise<void> {
     await this.remove_(name, false);
@@ -335,6 +336,7 @@ class HtmlHighlighter extends EventEmitter {
    * Optionally, the last query set id can be reset.
    *
    * @param {boolean} reset - Last query set id is reset, if `true`.
+   * @returns {Promise<void>} Promise that resolves when all query sets have been removed
    */
   async clear(reset: boolean): Promise<void> {
     let promises = [];
