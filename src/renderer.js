@@ -88,7 +88,7 @@ class QueryHighlighter extends QueryRenderer {
   deferTime: ?number;
   count: number;
 
-  static instantiate(queries: Array<any>, renderer: Renderer): QueryHighlighter {
+  static instantiate(renderer: Renderer, queries: Array<any>): QueryHighlighter {
     return new QueryHighlighter(queries, renderer.options);
   }
 

@@ -156,7 +156,7 @@ class HtmlHighlighter extends EventEmitter {
     // this query.  This measure results in no rendering if the query set does not exist.
     this.remove_(name, true);
 
-    const renderer = QueryHighlighter.instantiate(queries, this.renderer);
+    const renderer = QueryHighlighter.instantiate(this.renderer, queries);
     renderer.on('highlight', this.onHighlightCreated);
     renderer.on('init', () => {
       // Don't process query set if it turns out to already exist
@@ -231,7 +231,7 @@ class HtmlHighlighter extends EventEmitter {
    */
   async append(name: string, queries: Array<QuerySubject>): Promise<number> {
     let querySet;
-    const renderer = QueryHighlighter.instantiate(queries, this.renderer);
+    const renderer = QueryHighlighter.instantiate(this.renderer, queries);
     let promise = createPromiseCapabilities();
     renderer.on('init', () => {
       querySet = this.queries.get(name);
