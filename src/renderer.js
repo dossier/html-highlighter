@@ -88,6 +88,10 @@ class QueryHighlighter extends QueryRenderer {
   deferTime: ?number;
   count: number;
 
+  static instantiate(queries: Array<any>, renderer: Renderer): QueryHighlighter {
+    return new QueryHighlighter(queries, renderer.options);
+  }
+
   constructor(queries: Array<any>, options: Options) {
     super();
 
@@ -146,7 +150,7 @@ class QueryHighlighter extends QueryRenderer {
           const id = highlighter.do(hit);
 
           // Notify observers of creation of new highlight
-          this.emit('highlight', hit, id, subject.state);
+          this.emit('highlight', this.querySet, hit, id, subject.state);
           ++this.count;
         } catch (x) {
           logger.exception(
@@ -190,6 +194,10 @@ class QueryUnhighlighter extends QueryRenderer {
   pass: number;
   count: number;
   done: boolean;
+
+  static instantiate(_renderer: Renderer): QueryUnhighlighter {
+    return new QueryUnhighlighter();
+  }
 
   // TODO(mg): current algoritum is insufficient because it does not support async mechanics (see
   // QueryHighlighter::render).
@@ -237,26 +245,6 @@ class Renderer extends EventEmitter {
     this.content = content;
   }
 
-  add(name: string, queries: Array<any>): QueryRenderer {
-    const renderer = new QueryHighlighter(queries, this.options);
-    renderer.on('highlight', (hit: TextRange, id: number, state: any): void => {
-      this.emit('highlight', renderer.querySet, hit, id, state);
-    });
-
-    this.enqueue(renderer);
-    return renderer;
-  }
-
-  remove(): QueryRenderer {
-    const renderer = new QueryUnhighlighter();
-    renderer.on('unhighlight', (id: number): void => {
-      this.emit('unhighlight', id);
-    });
-
-    this.enqueue(renderer);
-    return renderer;
-  }
-
   next(): void {
     if (this.queue.length < 1 || this.active != null || this.content == null) {
       return;
@@ -300,3 +288,4 @@ class Renderer extends EventEmitter {
 }
 
 export default Renderer;
+export { QueryHighlighter, QueryUnhighlighter };

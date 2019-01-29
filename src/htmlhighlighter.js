@@ -11,7 +11,7 @@ import { Css } from './consts';
 import * as dom from './dom';
 import TextContent from './textcontent';
 import HighlightMarkers from './highlightmarkers';
-import Renderer from './renderer';
+import Renderer, { QueryHighlighter, QueryUnhighlighter } from './renderer';
 import Cursor from './cursor';
 import { createPromiseCapabilities } from './util';
 
@@ -87,9 +87,6 @@ class HtmlHighlighter extends EventEmitter {
     }
 
     this.renderer = new Renderer(this.options);
-    this.renderer.on('highlight', this.onHighlightCreated);
-    this.renderer.on('unhighlight', this.onHighlightRemoved);
-
     this.cursor = new Cursor(this.markers);
 
     // Start by refreshing the internal document's text representation, which initialises
@@ -159,7 +156,8 @@ class HtmlHighlighter extends EventEmitter {
     // this query.  This measure results in no rendering if the query set does not exist.
     this.remove_(name, true);
 
-    const renderer = this.renderer.add(name, queries);
+    const renderer = QueryHighlighter.instantiate(queries, this.renderer);
+    renderer.on('highlight', this.onHighlightCreated);
     renderer.on('init', () => {
       // Don't process query set if it turns out to already exist
       if (this.queries.has(name)) {
@@ -214,6 +212,7 @@ class HtmlHighlighter extends EventEmitter {
 
     renderer.on('abort', () => promise.resolve());
 
+    this.renderer.enqueue(renderer);
     this.renderer.next();
     return promise.instance;
   }
@@ -232,7 +231,7 @@ class HtmlHighlighter extends EventEmitter {
    */
   async append(name: string, queries: Array<QuerySubject>): Promise<number> {
     let querySet;
-    const renderer = this.renderer.add(name, queries);
+    const renderer = QueryHighlighter.instantiate(queries, this.renderer);
     let promise = createPromiseCapabilities();
     renderer.on('init', () => {
       querySet = this.queries.get(name);
@@ -268,6 +267,7 @@ class HtmlHighlighter extends EventEmitter {
 
     renderer.on('abort', () => promise.resolve());
 
+    this.renderer.enqueue(renderer);
     this.renderer.next();
     return promise.instance;
   }
@@ -278,7 +278,6 @@ class HtmlHighlighter extends EventEmitter {
    * An exception is thrown if the query set does not exist.
    *
    * @param {string} name - Name of the query set to remove.
-   * @returns {Promise<void>} Promise that resolves when specified query set is removed
    */
   async remove(name: string): Promise<void> {
     await this.remove_(name, false);
@@ -336,7 +335,6 @@ class HtmlHighlighter extends EventEmitter {
    * Optionally, the last query set id can be reset.
    *
    * @param {boolean} reset - Last query set id is reset, if `true`.
-   * @returns {Promise<void>} Promise that resolves when all query sets have been removed
    */
   async clear(reset: boolean): Promise<void> {
     let promises = [];
@@ -449,7 +447,8 @@ class HtmlHighlighter extends EventEmitter {
   async remove_(name: string, enqueue: boolean): Promise<void> {
     let querySet;
     const promise = createPromiseCapabilities();
-    const renderer = this.renderer.remove();
+    const renderer = QueryUnhighlighter.instantiate(this.renderer);
+    renderer.on('unhighlight', this.onHighlightRemoved);
     renderer.on('init', () => {
       querySet = this.queries.get(name);
       if (querySet == null) {
@@ -490,6 +489,7 @@ class HtmlHighlighter extends EventEmitter {
 
     renderer.on('abort', () => promise.resolve());
 
+    this.renderer.enqueue(renderer);
     if (!enqueue) {
       this.renderer.next();
     }
