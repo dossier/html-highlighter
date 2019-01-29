@@ -99,6 +99,13 @@ class HtmlHighlighter extends EventEmitter {
   }
 
   /**
+   * Wait until the rendering pipeline is empty
+   */
+  async wait(): Promise<void> {
+    await this.renderer.wait();
+  }
+
+  /**
    * Refreshes the internal representation of the text.
    *
    * Should only be invoked when the HTML structure mutates.
