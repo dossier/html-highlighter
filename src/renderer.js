@@ -5,7 +5,6 @@ import EventEmitter from 'events';
 import logger from './logger';
 import type { Options, QuerySet } from './typedefs';
 import { Css } from './consts';
-import Finder from './finder';
 import * as factory from './factory';
 import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
@@ -86,6 +85,7 @@ class QueryHighlighter extends QueryRenderer {
   queries: Array<any>;
   options: Options;
   reserve: ?number;
+  deferTime: ?number;
   count: number;
 
   constructor(queries: Array<any>, options: Options) {
@@ -94,6 +94,7 @@ class QueryHighlighter extends QueryRenderer {
     this.queries = queries;
     this.options = options;
     this.reserve = null;
+    this.deferTime = null;
     this.count = 0;
   }
 
@@ -129,63 +130,53 @@ class QueryHighlighter extends QueryRenderer {
       }
 
       logger.log('processing subject:', subject);
-      await this.begin(content, finder, highlighter, subject);
+      ++this.pass;
+
+      let hit;
+      while ((hit = finder.next()) != null) {
+        if (this.reserve != null && this.count >= this.reserve) {
+          logger.error('highlight reserve exceeded');
+          break;
+        }
+
+        logger.log('highlighting:', hit);
+
+        try {
+          // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
+          const id = highlighter.do(hit);
+
+          // Notify observers of creation of new highlight
+          this.emit('highlight', hit, id, subject.state);
+          ++this.count;
+        } catch (x) {
+          logger.exception(
+            `highlighting failed [query=${this.getQuerySetName()}]: subject:`,
+            subject,
+            x
+          );
+        }
+
+        await this.wait();
+      }
     }
 
     this.done = true;
     this.end('done', this.count);
   }
 
-  async begin(content: TextContent, finder, highlighter, subject): Promise<void> {
-    return new Promise(resolve => {
-      this.onRender(content, finder, highlighter, subject, resolve);
-    });
-  }
-
-  onRender(
-    content: TextContent,
-    finder: Finder,
-    highlighter: RangeHighlighter,
-    subject: any,
-    resolve: () => void
-  ): void {
-    let hit;
+  wait(): Promise<void> {
     const { async: isAsync, interval } = this.options.rendering;
-    const deferTime = isAsync ? Date.now() + interval : 0;
-
-    ++this.pass;
-    logger.log(`rendering pass #${this.pass} [${this.getQuerySetName()}]`);
-
-    while ((hit = finder.next()) != null) {
-      if (this.reserve != null && this.count >= this.reserve) {
-        logger.error('highlight reserve exceeded');
-        break;
-      }
-
-      logger.log('highlighting:', hit);
-
-      try {
-        // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
-        const id = highlighter.do(hit);
-
-        // Notify observers of creation of new highlight
-        this.emit('highlight', hit, id, subject.state);
-        ++this.count;
-      } catch (x) {
-        logger.exception(
-          `highlighting failed [query=${this.getQuerySetName()}]: subject:`,
-          subject,
-          x
-        );
-      }
-
-      if (isAsync && Date.now() >= deferTime) {
-        requestAnimationFrame(() => this.onRender(content, finder, highlighter, subject, resolve));
-        return;
-      }
+    if (!isAsync) {
+      return Promise.resolve();
     }
 
-    resolve();
+    const deferTime = this.deferTime;
+    if (deferTime != null && Date.now() < deferTime) {
+      return Promise.resolve();
+    }
+
+    this.deferTime = Date.now() + interval;
+    return new Promise(r => requestAnimationFrame((r: any)));
   }
 }
 
