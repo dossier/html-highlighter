@@ -15,15 +15,19 @@ import * as util from './util';
  * Query set renderer abstract base class
  */
 class QueryRenderer extends EventEmitter {
-  querySet: ?QuerySet;
-  pass: number;
+  options: Options;
   done: boolean;
+  pass: number;
+  querySet: ?QuerySet;
+  deferTime: ?number;
 
-  constructor() {
+  constructor(options: Options) {
     super();
-    this.querySet = null;
-    this.pass = 0;
+    this.options = options;
     this.done = false;
+    this.pass = 0;
+    this.querySet = null;
+    this.deferTime = null;
   }
 
   prerender(): ?QuerySet {
@@ -66,6 +70,21 @@ class QueryRenderer extends EventEmitter {
     }
   }
 
+  wait(): Promise<void> {
+    const { async: isAsync, interval } = this.options.rendering;
+    if (!isAsync) {
+      return Promise.resolve();
+    }
+
+    const deferTime = this.deferTime;
+    if (deferTime != null && Date.now() < deferTime) {
+      return Promise.resolve();
+    }
+
+    this.deferTime = Date.now() + interval;
+    return new Promise(r => requestAnimationFrame((r: any)));
+  }
+
   end(event: string, ...args: Array<any>): void {
     this.emit(event, ...args);
     this.emit('end');
@@ -83,22 +102,18 @@ class QueryRenderer extends EventEmitter {
  */
 class QueryHighlighter extends QueryRenderer {
   queries: Array<any>;
-  options: Options;
   reserve: ?number;
-  deferTime: ?number;
   count: number;
 
   static instantiate(renderer: Renderer, queries: Array<any>): QueryHighlighter {
-    return new QueryHighlighter(queries, renderer.options);
+    return new QueryHighlighter(renderer.options, queries);
   }
 
-  constructor(queries: Array<any>, options: Options) {
-    super();
+  constructor(options: Options, queries: Array<any>) {
+    super(options);
 
     this.queries = queries;
-    this.options = options;
     this.reserve = null;
-    this.deferTime = null;
     this.count = 0;
   }
 
@@ -167,21 +182,6 @@ class QueryHighlighter extends QueryRenderer {
     this.done = true;
     this.end('done', this.count);
   }
-
-  wait(): Promise<void> {
-    const { async: isAsync, interval } = this.options.rendering;
-    if (!isAsync) {
-      return Promise.resolve();
-    }
-
-    const deferTime = this.deferTime;
-    if (deferTime != null && Date.now() < deferTime) {
-      return Promise.resolve();
-    }
-
-    this.deferTime = Date.now() + interval;
-    return new Promise(r => requestAnimationFrame((r: any)));
-  }
 }
 
 /**
@@ -190,13 +190,8 @@ class QueryHighlighter extends QueryRenderer {
  * Concerned with removing all highlights associated with a particular query set.
  */
 class QueryUnhighlighter extends QueryRenderer {
-  reserve: ?number;
-  pass: number;
-  count: number;
-  done: boolean;
-
-  static instantiate(_renderer: Renderer): QueryUnhighlighter {
-    return new QueryUnhighlighter();
+  static instantiate(renderer: Renderer): QueryUnhighlighter {
+    return new QueryUnhighlighter(renderer.options);
   }
 
   // TODO(mg): current algoritum is insufficient because it does not support async mechanics (see
@@ -213,6 +208,7 @@ class QueryUnhighlighter extends QueryRenderer {
     for (let id = q.highlightId, l = id + q.length; id < l; ++id) {
       unhighlighter.undo(id);
       this.emit('unhighlight', id);
+      await this.wait();
     }
 
     this.done = true;

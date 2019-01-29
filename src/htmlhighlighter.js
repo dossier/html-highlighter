@@ -154,7 +154,7 @@ class HtmlHighlighter extends EventEmitter {
 
     // Enqueue query set removal rendering operation by default to ensure that we succeed in adding
     // this query.  This measure results in no rendering if the query set does not exist.
-    this.remove_(name, true);
+    this.remove_(name);
 
     const highlighter = QueryHighlighter.instantiate(this.renderer, queries);
     highlighter.on('highlight', this.onHighlightCreated);
@@ -280,7 +280,9 @@ class HtmlHighlighter extends EventEmitter {
    * @param {string} name - Name of the query set to remove.
    */
   async remove(name: string): Promise<void> {
-    await this.remove_(name, false);
+    const promise = this.remove_(name);
+    this.renderer.next();
+    await promise;
     this.cursor.clear();
     this.emit('remove', name);
   }
@@ -339,9 +341,10 @@ class HtmlHighlighter extends EventEmitter {
   async clear(reset: boolean): Promise<void> {
     let promises = [];
     for (const [name] of this.queries) {
-      promises.push(this.remove_(name, false));
+      promises.push(this.remove_(name));
     }
 
+    this.renderer.next();
     await Promise.all(promises);
 
     if (reset) {
@@ -440,11 +443,9 @@ class HtmlHighlighter extends EventEmitter {
    * @access private
    *
    * @param {string} name - The name of the query set to remove.
-   * @param {boolean} enqueue - When `true` causes rendering to be enqueued and not started.
-   *
    * @returns {Promise<void>} Promise that resolves upon completion
    */
-  async remove_(name: string, enqueue: boolean): Promise<void> {
+  async remove_(name: string): Promise<void> {
     let querySet;
     const promise = createPromiseCapabilities();
     const unhighlighter = QueryUnhighlighter.instantiate(this.renderer);
@@ -490,9 +491,6 @@ class HtmlHighlighter extends EventEmitter {
     unhighlighter.on('abort', () => promise.resolve());
 
     this.renderer.enqueue(unhighlighter);
-    if (!enqueue) {
-      this.renderer.next();
-    }
     return promise.instance;
   }
 
