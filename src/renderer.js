@@ -5,7 +5,6 @@ import EventEmitter from 'events';
 import logger from './logger';
 import type { Options, QuerySet } from './typedefs';
 import { Css } from './consts';
-import Finder from './finder';
 import * as factory from './factory';
 import RangeHighlighter from './rangehighlighter';
 import RangeUnhighlighter from './rangeunhighlighter';
@@ -16,15 +15,19 @@ import * as util from './util';
  * Query set renderer abstract base class
  */
 class QueryRenderer extends EventEmitter {
-  querySet: ?QuerySet;
-  pass: number;
+  options: Options;
   done: boolean;
+  pass: number;
+  querySet: ?QuerySet;
+  deferTime: ?number;
 
-  constructor() {
+  constructor(options: Options) {
     super();
-    this.querySet = null;
-    this.pass = 0;
+    this.options = options;
     this.done = false;
+    this.pass = 0;
+    this.querySet = null;
+    this.deferTime = null;
   }
 
   prerender(): ?QuerySet {
@@ -67,6 +70,21 @@ class QueryRenderer extends EventEmitter {
     }
   }
 
+  wait(): Promise<void> {
+    const { async: isAsync, interval } = this.options.rendering;
+    if (!isAsync) {
+      return Promise.resolve();
+    }
+
+    const deferTime = this.deferTime;
+    if (deferTime != null && Date.now() < deferTime) {
+      return Promise.resolve();
+    }
+
+    this.deferTime = Date.now() + interval;
+    return new Promise(r => requestAnimationFrame((r: any)));
+  }
+
   end(event: string, ...args: Array<any>): void {
     this.emit(event, ...args);
     this.emit('end');
@@ -84,15 +102,17 @@ class QueryRenderer extends EventEmitter {
  */
 class QueryHighlighter extends QueryRenderer {
   queries: Array<any>;
-  options: Options;
   reserve: ?number;
   count: number;
 
-  constructor(queries: Array<any>, options: Options) {
-    super();
+  static instantiate(renderer: Renderer, queries: Array<any>): QueryHighlighter {
+    return new QueryHighlighter(renderer.options, queries);
+  }
+
+  constructor(options: Options, queries: Array<any>) {
+    super(options);
 
     this.queries = queries;
-    this.options = options;
     this.reserve = null;
     this.count = 0;
   }
@@ -129,63 +149,38 @@ class QueryHighlighter extends QueryRenderer {
       }
 
       logger.log('processing subject:', subject);
-      await this.begin(content, finder, highlighter, subject);
+      ++this.pass;
+
+      let hit;
+      while ((hit = finder.next()) != null) {
+        if (this.reserve != null && this.count >= this.reserve) {
+          logger.error('highlight reserve exceeded');
+          break;
+        }
+
+        logger.log('highlighting:', hit);
+
+        try {
+          // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
+          const id = highlighter.do(hit);
+
+          // Notify observers of creation of new highlight
+          this.emit('highlight', this.querySet, hit, id, subject.state);
+          ++this.count;
+        } catch (x) {
+          logger.exception(
+            `highlighting failed [query=${this.getQuerySetName()}]: subject:`,
+            subject,
+            x
+          );
+        }
+
+        await this.wait();
+      }
     }
 
     this.done = true;
     this.end('done', this.count);
-  }
-
-  async begin(content: TextContent, finder, highlighter, subject): Promise<void> {
-    return new Promise(resolve => {
-      this.onRender(content, finder, highlighter, subject, resolve);
-    });
-  }
-
-  onRender(
-    content: TextContent,
-    finder: Finder,
-    highlighter: RangeHighlighter,
-    subject: any,
-    resolve: () => void
-  ): void {
-    let hit;
-    const { async: isAsync, interval } = this.options.rendering;
-    const deferTime = isAsync ? Date.now() + interval : 0;
-
-    ++this.pass;
-    logger.log(`rendering pass #${this.pass} [${this.getQuerySetName()}]`);
-
-    while ((hit = finder.next()) != null) {
-      if (this.reserve != null && this.count >= this.reserve) {
-        logger.error('highlight reserve exceeded');
-        break;
-      }
-
-      logger.log('highlighting:', hit);
-
-      try {
-        // $FlowFixMe: `hit` cannot be `null` here as per condition in `while` above
-        const id = highlighter.do(hit);
-
-        // Notify observers of creation of new highlight
-        this.emit('highlight', hit, id, subject.state);
-        ++this.count;
-      } catch (x) {
-        logger.exception(
-          `highlighting failed [query=${this.getQuerySetName()}]: subject:`,
-          subject,
-          x
-        );
-      }
-
-      if (isAsync && Date.now() >= deferTime) {
-        requestAnimationFrame(() => this.onRender(content, finder, highlighter, subject, resolve));
-        return;
-      }
-    }
-
-    resolve();
   }
 }
 
@@ -195,10 +190,9 @@ class QueryHighlighter extends QueryRenderer {
  * Concerned with removing all highlights associated with a particular query set.
  */
 class QueryUnhighlighter extends QueryRenderer {
-  reserve: ?number;
-  pass: number;
-  count: number;
-  done: boolean;
+  static instantiate(renderer: Renderer): QueryUnhighlighter {
+    return new QueryUnhighlighter(renderer.options);
+  }
 
   // TODO(mg): current algoritum is insufficient because it does not support async mechanics (see
   // QueryHighlighter::render).
@@ -214,6 +208,7 @@ class QueryUnhighlighter extends QueryRenderer {
     for (let id = q.highlightId, l = id + q.length; id < l; ++id) {
       unhighlighter.undo(id);
       this.emit('unhighlight', id);
+      await this.wait();
     }
 
     this.done = true;
@@ -244,26 +239,6 @@ class Renderer extends EventEmitter {
 
   setContent(content: TextContent): void {
     this.content = content;
-  }
-
-  add(name: string, queries: Array<any>): QueryRenderer {
-    const renderer = new QueryHighlighter(queries, this.options);
-    renderer.on('highlight', (hit: TextRange, id: number, state: any): void => {
-      this.emit('highlight', renderer.querySet, hit, id, state);
-    });
-
-    this.enqueue(renderer);
-    return renderer;
-  }
-
-  remove(): QueryRenderer {
-    const renderer = new QueryUnhighlighter();
-    renderer.on('unhighlight', (id: number): void => {
-      this.emit('unhighlight', id);
-    });
-
-    this.enqueue(renderer);
-    return renderer;
   }
 
   next(): void {
@@ -309,3 +284,4 @@ class Renderer extends EventEmitter {
 }
 
 export default Renderer;
+export { QueryHighlighter, QueryUnhighlighter };

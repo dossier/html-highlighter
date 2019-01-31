@@ -87,6 +87,22 @@ function describeGeneralTests() {
       assert.strictEqual(hl.stats.total, counts.the);
     });
 
+    it('adds query set and emits event', async function() {
+      let count = 0;
+      hl.on('highlight', _id => ++count);
+      await hl.add('test-the', ['the']);
+      attest.totalHighlights(counts.the, 1);
+      assert.strictEqual(count, counts.the);
+    });
+
+    it('adds query set and emits event for each unique highlight', async function() {
+      let set = new Set();
+      hl.on('highlight', id => set.add(id));
+      await hl.add('test-the', ['the']);
+      attest.totalHighlights(counts.the, 1);
+      assert.strictEqual(set.size, counts.the);
+    });
+
     it('adds a query set with multiple mentions', async function() {
       const id = hl.lastId;
       await hl.add('test-the-viber', ['the', 'viber']);
@@ -116,6 +132,26 @@ function describeGeneralTests() {
       await hl.add('test-the', ['the']);
       attest.totalHighlights(counts.the, 1);
       await hl.remove('test-the');
+      attest.clear();
+    });
+
+    it('removes query set and emits event', async function() {
+      await hl.add('test-the', ['the']);
+      attest.totalHighlights(counts.the, 1);
+      let count = 0;
+      hl.on('unhighlight', _id => ++count);
+      await hl.remove('test-the');
+      assert.strictEqual(count, counts.the);
+      attest.clear();
+    });
+
+    it('removes query set and emits event for each unique highlight', async function() {
+      await hl.add('test-the', ['the']);
+      attest.totalHighlights(counts.the, 1);
+      let set = new Set();
+      hl.on('unhighlight', id => set.add(id));
+      await hl.remove('test-the');
+      assert.strictEqual(set.size, counts.the);
       attest.clear();
     });
 
