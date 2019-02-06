@@ -4,6 +4,7 @@
   "description": "Highlight and select phrases in HTML pages.",
   "version": "0.4.1",
   "main": "dist/htmlhighlighter.js",
+  "module": "src/htmlhighlighter.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dossier/html-highlighter.git"
@@ -33,6 +34,7 @@
     "check-fmt": "sh/check-fmt:js && sh/check-fmt:json"
   },
   "files": [
+    "src/*",
     "dist/*"
   ],
   "dependencies": {
