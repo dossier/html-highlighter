@@ -4,6 +4,7 @@
     "transform-object-rest-spread",
     "transform-class-properties",
     "transform-regenerator",
+    "transform-runtime",
     "transform-es2015-classes",
     "transform-export-extensions",
     "transform-async-to-generator",
