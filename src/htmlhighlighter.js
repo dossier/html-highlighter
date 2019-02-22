@@ -105,8 +105,11 @@ class HtmlHighlighter extends EventEmitter {
   /**
    * Dynamically assign new highlights container
    *
-   * Removes all query sets and highlights, and generally resets internal state.
-   * A new container is finally set within which highlights can be created.
+   * Removes all query sets and highlights, and generally resets internal state.  A new container
+   * is finally set within which highlights can be created.
+   *
+   * Note that assigning the current container results in reassignment occurring and all the
+   * side-effects described above still taking place.
    *
    * @param { HTMLElement } container - New highlights container
    */
