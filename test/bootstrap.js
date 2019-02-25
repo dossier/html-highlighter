@@ -1,4 +1,4 @@
-/* global global, BROWSER */
+/* global global */
 /* eslint-disable import/unambiguous */
 import jsdom from 'jsdom-global';
 import 'babel-polyfill';
@@ -6,7 +6,7 @@ import 'babel-polyfill';
 // The following block taken verbatim from the diffeo-recommend-ui repository
 // --
 // Get useful backtraces from original source files.
-if (!BROWSER) {
+if (process.env.TEST_ENV !== 'jsdom') {
   // The module will not even load in a non-Node context so don"t try.
   /* eslint-disable global-require */
   const sourceMapSupport = require('source-map-support');

@@ -1,4 +1,4 @@
-/* global BROWSER, describe, beforeEach, afterEach, it */
+/* global process, describe, beforeEach, afterEach, it */
 /* eslint-disable no-use-before-define */
 
 import chai from 'chai';
@@ -916,8 +916,8 @@ function describeSpecialCharacterHandlingTests() {
 }
 
 function describeFullDocumentTests() {
-  if (BROWSER) {
-    throw new Error('Full document tests not available in browser mode');
+  if (process.env.TEST_ENV !== 'jsdom') {
+    throw new Error('Full document tests only available in a jsdom virtual environment');
   }
 
   describe('Full document tests', function() {

@@ -27,9 +27,9 @@ function makeExampleConfig(name) {
     },
     plugins: [
       new webpack.DefinePlugin({
-        PRODUCTION: isProduction,
-        BROWSER: true,
-        TEST: false,
+        'process.env': {
+          NODE_ENV: JSON.stringify(env.NODE_ENV),
+        },
       }),
       new HtmlWebpackPlugin({
         title: `HTML Highlighter -- ${name} example`,

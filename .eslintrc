@@ -17,7 +17,7 @@ env:
   jquery: true
 
 globals:
-  BROWSER: true
+  process: true
 
 # http://eslint.org/docs/rules/
 # enabled these someday:

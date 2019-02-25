@@ -36,9 +36,11 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      PRODUCTION: false,
-      BROWSER: false,
-      TEST: true,
+      'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV),
+        TEST_ENV: JSON.stringify('jsdom'),
+        TEST_ENV_JSDOM: JSON.stringify(true),
+      },
     }),
   ],
   devtool: 'source-map',
