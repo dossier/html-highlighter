@@ -1,4 +1,3 @@
-/* global BROWSER */
 /* eslint-disable no-use-before-define */
 
 import merge from 'merge';
@@ -62,7 +61,7 @@ function initFull(ndx) {
   assertJsDOM();
   clear();
 
-  if (BROWSER) {
+  if (process.env.TEST_ENV !== 'jsdom') {
     throw new Error('Full mode can only be run in non-browser mode');
   }
 

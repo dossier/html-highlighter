@@ -79,7 +79,7 @@ class HighlightMarkers {
   calculateTotalVisible(queryNames: Array<string> | null): number {
     // Simple fix for now that accounts for when we're running in a JsDOM environment, under which
     // there are never any visible highlights.  This measure prevents tests from failing.
-    if (!BROWSER) {
+    if (process.env.TEST_ENV_JSDOM) {
       return this.calculateTotal(queryNames);
     } else if (queryNames == null) {
       return this.markers.reduce(
@@ -109,7 +109,7 @@ class HighlightMarkers {
         return false;
       } else if (queryNames != null && queryNames.indexOf(q.name) < 0) {
         return false;
-      } else if (BROWSER && !dom.isHighlightVisible(m.id)) {
+      } else if (!process.env.TEST_ENV_JSDOM && !dom.isHighlightVisible(m.id)) {
         return false;
       } else if (at < 1) {
         marker = m;

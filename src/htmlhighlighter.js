@@ -103,6 +103,26 @@ class HtmlHighlighter extends EventEmitter {
   }
 
   /**
+   * Dynamically assign new highlights container
+   *
+   * Removes all query sets and highlights, and generally resets internal state.  A new container
+   * is finally set within which highlights can be created.
+   *
+   * Note that assigning the current container results in reassignment occurring and all the
+   * side-effects described above still taking place.
+   *
+   * @param { HTMLElement } container - New highlights container
+   */
+  async setContainer(container: HTMLElement): Promise<void> {
+    await this.wait();
+    await this.clear(true);
+    this.options.container = container;
+    this.renderer = new Renderer(this.options);
+    this.refresh();
+    logger.log('new container set');
+  }
+
+  /**
    * Refreshes the internal representation of the text.
    *
    * Should only be invoked when the HTML structure mutates.
